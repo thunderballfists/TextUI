@@ -25,7 +25,9 @@ Usage
 
 To use TextUI, see the main.py for now.
 ```
-    from textui import MyApp
+
+...
+
 
     markup = """
 <container>
