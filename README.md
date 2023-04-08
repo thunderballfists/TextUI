@@ -24,7 +24,7 @@ Usage
 -----
 
 To use TextUI, see the main.py for now.
-
+```
     from textui import MyApp
 
     markup = """
@@ -52,10 +52,11 @@ To use TextUI, see the main.py for now.
     <button>This button has default styling.</button>
     <footer/>
 </container>
-    """
+"""
 
     app = MyApp(markup)
     app.run()
+```
 
 License
 -------
