@@ -1,0 +1,24 @@
+<container>
+    <style>
+        .test {
+            background: blue;
+        }
+        Header {
+            background: green;
+            color:blue;
+        }
+        Footer {
+            background: blue;
+        }
+        .accent {
+            background: red;
+        }
+    </style>
+    <header/>
+    <label id="accent">Welcome to the sample XML file</label>
+    <label class="accent">label with accent styling.</label>
+    <label class="test">label with blue styling.</label>
+    <button class="accent">This button has the "accent" class, which applies HSL color.</button>
+    <button>This button has default styling.</button>
+    <footer/>
+</container>
