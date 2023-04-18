@@ -9,7 +9,6 @@ from textual.widget import Widget
 from validate_css import validate_css
 from widgets.widget_factory import ElementWidgetFactory
 from lxml import html
-from lark import Lark, UnexpectedInput
 
 logging.getLogger().setLevel(logging.DEBUG)
 

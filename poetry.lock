@@ -64,23 +64,6 @@ files = [
 ]
 
 [[package]]
-name = "lark-parser"
-version = "0.12.0"
-description = "a modern parsing library"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "lark-parser-0.12.0.tar.gz", hash = "sha256:15967db1f1214013dca65b1180745047b9be457d73da224fcda3d9dd4e96a138"},
-    {file = "lark_parser-0.12.0-py2.py3-none-any.whl", hash = "sha256:0eaf30cb5ba787fe404d73a7d6e61df97b21d5a63ac26c5008c78a494373c675"},
-]
-
-[package.extras]
-atomic-cache = ["atomicwrites"]
-nearley = ["js2py"]
-regex = ["regex"]
-
-[[package]]
 name = "linkify-it-py"
 version = "2.0.0"
 description = "Links recognition library with FULL unicode support."
@@ -520,4 +503,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "418a796282edd85c469f81b15dd6915ecfecf7192bb67ca6f30f43ed43d62861"
+content-hash = "82bd9acc6590ad3248bc64d038d37db77dafcb2d3bd7581402d7c28b90497861"

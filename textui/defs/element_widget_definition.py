@@ -45,13 +45,7 @@ def preprocess_width_height(element: Element, _: App = None) -> bool:
 def preprocess_style(element: Element, app: App) -> bool:
     css_data = element.text
 
-    # try:
-    #     # Attempt to parse the incorrect CSS
-    #     # css_data = validate_css(css_data)
-    # except Exception as error:
-    #     # Handle the parsing error
-    #     print(f"Parsing error: {error}")
-
+    css_data = validate_css(css_data)
     app.stylesheet.add_source(css_data, path="embedded_style", is_default_css=False)
     app.stylesheet.parse()
     return False
