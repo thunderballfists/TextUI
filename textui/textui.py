@@ -1,20 +1,34 @@
 import logging
+import os
 import uuid
-from typing import Union, Optional
-from xml.etree import ElementTree
+from typing import Optional
 from xml.etree.ElementTree import Element
 from textual.app import App, ComposeResult
 from textual.widget import Widget
-from widget_factory import ElementWidgetFactory
+
+from validate_css import validate_css
+from widgets.widget_factory import ElementWidgetFactory
+from lxml import html
+from lark import Lark, UnexpectedInput
 
 logging.getLogger().setLevel(logging.DEBUG)
 
 
 class TextUI(App):
-    def __init__(self, markup: str) -> None:
+    def __init__(self, input: str) -> None:
         super().__init__()
-        self.markup = markup
         self.widget_factory = ElementWidgetFactory()
+
+        if os.path.isfile(input):
+            self.markup_path = os.path.abspath(input)
+            self.load_file(self.markup_path)
+        else:
+            self.markup = input
+            self.markup_path = None
+
+    def load_file(self, file_name: str):
+        with open(file_name, "r") as markup_file:
+            self.markup = markup_file.read()
 
     def parse_element(self, element: Element) -> Optional[Widget]:
         tag = element.tag.lower()
@@ -49,6 +63,8 @@ class TextUI(App):
             else:
                 selector = f"#{element.attrib['id']}"
             inline_style_rule = f"{selector} {{ {inline_style} }}"
+
+            inline_style_rule = validate_css(inline_style_rule)
             self.stylesheet.add_source(inline_style_rule, path=f"{widget.name}_inline_style")
             self.stylesheet.parse()
 
@@ -64,7 +80,9 @@ class TextUI(App):
         return widget
 
     def parse_markup(self, markup: str) -> ComposeResult:
-        root = ElementTree.fromstring(markup)
+        root = html.fromstring(self.markup)
+
+        # root = ElementTree.fromstring(markup)
         for child in root:
             element = self.parse_element(child)
             if element is not None:
@@ -78,6 +96,4 @@ class TextUI(App):
 
 
 if __name__ == "__main__":
-    with open("sample_markup.xml", "r") as markup_file:
-        markup = markup_file.read()
-    TextUI(markup).run()
+    TextUI("../examples/sample_markup.xml").run()
