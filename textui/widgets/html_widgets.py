@@ -9,30 +9,6 @@ from textual_imageview.img import ImageView
 from PIL import Image
 from pathlib import Path
 
-from element_widget_definition import ElementWidgetDefinition
-
-
-def preprocess_width_height(element: Element, _: App = None) -> None:
-    width = element.attrib.pop("width", None)
-    height = element.attrib.pop("height", None)
-
-    if width or height:
-        style = element.attrib.get("style", "")
-        if style and not style.endswith(";"):
-            style += ";"
-        if width:
-            style += f" width: {width};"
-        if height:
-            style += f" height: {height};"
-        element.attrib["style"] = style
-    return True
-
-def preprocess_style(element: Element, app: App) -> bool:
-    css_data = element.text
-    app.stylesheet.add_source(css_data, path="embedded_style", is_default_css=False)
-    app.stylesheet.parse()
-    return False
-
 
 class Img(Widget):
     DEFAULT_CSS = """
@@ -75,7 +51,6 @@ class Img(Widget):
     def render(self) -> RenderResult:
         return self.image
 
-
 class Div(Widget):
     DEFAULT_CSS = """
     Div {
@@ -85,33 +60,23 @@ class Div(Widget):
     }
     """
 
-
 class P(Widget):
     DEFAULT_CSS = """
     P {
         height: auto;
         layout: vertical;
         overflow: auto;
-        margin-top: 1em;
-        margin-bottom: 1em;
+        margin-top: 1;
+        margin-bottom: 1;
     }
     """
-
 
 class Span(Widget):
     DEFAULT_CSS = """
     Span {
         height: auto;
-        layout: inline;
         overflow: auto;
     }
     """
 
 
-HTML_WIDGETS = [
-    ElementWidgetDefinition(tag="style", preprocessor=preprocess_style),
-    ElementWidgetDefinition(tag="img", widget_class=Img, preprocessor=preprocess_width_height),
-    ElementWidgetDefinition(tag="div", widget_class=Div),
-    ElementWidgetDefinition(tag="p", widget_class=P),
-    ElementWidgetDefinition(tag="span", widget_class=Span),
-]

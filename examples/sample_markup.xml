@@ -1,28 +1,37 @@
 <container>
     <style>
         .test {
-            background: blue;
+        background: blue;
         }
         Header {
-            background: blue;
-            color:white;
+        background: blue;
+        color:white;
         }
         Footer {
-            background: green;
+        background: green;
         }
         .red {
-            background: red;
+        background: red;
         }
         .yellow{
-            background:yellow;
+        background:yellow;
         }
     </style>
     <header/>
-    <horizontal_scroll><middle><checkbox>Check Me Out !</checkbox><img src="cat.png" width="50" height="50"/></middle><middle><img src="image643.png" width="50" height="50"/></middle></horizontal_scroll>
+    <horizontal_scroll>
+        <middle>
+            <checkbox>Check Me Out !</checkbox>
+            <img src="cat.png" width="50" height="50"/>
+        </middle>
+        <middle>
+            <img src="image643.png" width="50" height="50"/>
+        </middle>
+    </horizontal_scroll>
     <label id="accent">Welcome to the sample XML file</label>
-    <center><button class="red">
-        <label class="test">label inside a red button with blue inner styling.</label>
-    </button>
+    <center>
+        <button class="red">
+            <label class="test">label inside a red button with blue inner styling.</label>
+        </button>
     </center>
     <label class="yellow">
         <button class="test">button with blue inner styling.</button>
