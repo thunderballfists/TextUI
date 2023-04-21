@@ -3,7 +3,7 @@ from validate_css import validate_css
 import logging
 
 css = """
-#id_52afdec2-c6a0-4185-b641-962a53b0b30d {  width: 50; height: 50; }
+#id_52999992-c6a0-4185-b641-962a53b0b30d {  width: 50; height: 50; }
 
 Container {
   color: rgb( 12 ,45 , 4 , .23 );
@@ -35,7 +35,6 @@ foo {
   text-style: underline;
 }
 """
-
 
 
 def test_validate_css():

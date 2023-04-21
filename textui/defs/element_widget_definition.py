@@ -1,8 +1,6 @@
-import os
 from typing import Optional, Type, Callable, Any, Union
 from xml.etree.ElementTree import Element
 
-from lark import UnexpectedInput
 from textual.app import App
 from textual.widget import Widget
 
@@ -18,7 +16,7 @@ def get_absolute_path(file_path, abs_path):
         return os.path.abspath(os.path.join(os.path.dirname(abs_path), file_path))
 
 
-def preprocess_src(element: Element, app: App) -> bool:
+def preprocess_src(element: Element, app: App):
     src = element.attrib.get('src')
     if src:
         if app.markup_path:

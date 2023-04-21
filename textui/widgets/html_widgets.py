@@ -1,8 +1,7 @@
 import math
-from xml.etree.ElementTree import Element
 
 from textual import events
-from textual.app import RenderResult, App
+from textual.app import RenderResult
 from textual.widget import Widget
 from textual_imageview.img import ImageView
 
@@ -51,6 +50,7 @@ class Img(Widget):
     def render(self) -> RenderResult:
         return self.image
 
+
 class Div(Widget):
     DEFAULT_CSS = """
     Div {
@@ -59,6 +59,7 @@ class Div(Widget):
         overflow: auto;
     }
     """
+
 
 class P(Widget):
     DEFAULT_CSS = """
@@ -71,6 +72,7 @@ class P(Widget):
     }
     """
 
+
 class Span(Widget):
     DEFAULT_CSS = """
     Span {
@@ -78,5 +80,3 @@ class Span(Widget):
         overflow: auto;
     }
     """
-
-

@@ -82,13 +82,35 @@ styles = {
     "width": "<scalar>|<percentage>",
 }
 
-named_colors_regex = "aliceblue|ansi_black|ansi_blue|ansi_bright_black|ansi_bright_blue|ansi_bright_cyan|ansi_bright_green|ansi_bright_magenta|ansi_bright_red|ansi_bright_white|ansi_bright_yellow|ansi_cyan|ansi_green|ansi_magenta|ansi_red|ansi_white|ansi_yellow|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen"
+named_web_colors_regex = "aliceblue|ansi_black|ansi_blue|ansi_bright_black|ansi_bright_blue|ansi_bright_cyan" \
+                         "|ansi_bright_green|ansi_bright_magenta|ansi_bright_red|ansi_bright_white|ansi_bright_yellow" \
+                         "|ansi_cyan|ansi_green|ansi_magenta|ansi_red|ansi_white|ansi_yellow|antiquewhite|aqua" \
+                         "|aquamarine|azure|beige|bisque|black|blanchedalmond|blue|blueviolet|brown|burlywood" \
+                         "|cadetblue|chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|darkblue" \
+                         "|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|darkkhaki|darkmagenta|darkolivegreen" \
+                         "|darkorange|darkorchid|darkred|darksalmon|darkseagreen|darkslateblue|darkslategray" \
+                         "|darkslategrey|darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|dodgerblue" \
+                         "|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|ghostwhite|gold|goldenrod|gray|green" \
+                         "|greenyellow|grey|honeydew|hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush" \
+                         "|lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|lightgoldenrodyellow|lightgray" \
+                         "|lightgreen|lightgrey|lightpink|lightsalmon|lightseagreen|lightskyblue|lightslategray" \
+                         "|lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|magenta|maroon" \
+                         "|mediumaquamarine|mediumblue|mediumorchid|mediumpurple|mediumseagreen|mediumslateblue" \
+                         "|mediumspringgreen|mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose" \
+                         "|moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|orchid|palegoldenrod" \
+                         "|palegreen|paleturquoise|palevioletred|papayawhip|peachpuff|peru|pink|plum|powderblue" \
+                         "|purple|rebeccapurple|red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen" \
+                         "|seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|springgreen|steelblue" \
+                         "|tan|teal|thistle|tomato|turquoise|violet|wheat|white|whitesmoke|yellow|yellowgreen"
+named_ansi_colors_regex = "ansi_black|ansi_red|ansi_green|ansi_yellow|ansi_blue|ansi_magenta|ansi_cyan|ansi_white" \
+                          "|ansi_bright_black|ansi_bright_red|ansi_bright_green|ansi_bright_yellow|ansi_bright_blue" \
+                          "|ansi_bright_magenta|ansi_bright_cyan|ansi_bright_white"
 
 color_value_regex = (
         "(#(?:[0-9a-f]{6}|[0-9a-f]{3})(?:[0-9a-f]{2})?|" +
         "rgba?\\(\\s*(?:\\d{1,3}\\s*,\\s*){2}\\d{1,3}\\s*(?:,\\s*(?:0?\\.\\d{1,2}|1(\\.0)?|0))?\\s*\\)|" +
         "hsla?\\(\\s*\\d{1,3}\\s*(?:,\\s*\\d{1,3}%\\s*){2}(?:,\\s*(?:0?\\.\\d{1,2}|1(\\.0)?|0))?\\s*\\)|"
-        + named_colors_regex + ")"
+        + named_web_colors_regex + "|transparent|" + named_ansi_colors_regex + ")"
 )
 
 values = {
@@ -155,15 +177,15 @@ def split_css_into_blocks(css):
     css_blocks = []
 
     # Remove comments
-    comment_pattern = re.compile(r'(?:\/\*(?:[\s\S]*?)\*\/)|(?:\/\/(?:.*)$)', re.MULTILINE)
+    comment_pattern = re.compile(r'/\*[\s\S]*?\*/|//.*$', re.MULTILINE)
     css = comment_pattern.sub('', css)
 
     # Match variable declarations
     var_pattern = re.compile(r'\$[\w-]+\s*:\s*[^;]+(?:;|$)')
-    vars = var_pattern.findall(css)
+    variables = var_pattern.findall(css)
 
     # Process variable declarations
-    for var in vars:
+    for var in variables:
         var = re.sub(r'\s*;$', '', var)
         var = re.sub(r"\s+", ' ', var)
         css_blocks.append({'type': 'variable', 'definition': var.strip()})
@@ -171,7 +193,7 @@ def split_css_into_blocks(css):
         css = var_pattern.sub('', css, 1)
 
     # Match selectors and their rules
-    selector_pattern = re.compile(r'[\w\s\.,#&\[\]\(\)\^=:$*>\-]+(?:::?[\w-]+(?:\(.*?\))?)?(?:\s*{[^{}]*})', re.DOTALL)
+    selector_pattern = re.compile(r'[\w\s.,#&\[\]()^=:$*>\-]+(?:::?[\w-]+(?:\(.*?\))?)?\s*{[^{}]*}', re.DOTALL)
     selectors = selector_pattern.findall(css)
 
     for selector in selectors:
@@ -227,7 +249,7 @@ def validate_css(css):
                     variable_name = value.split()[0]
                     value_with_vars = variable_name  # keep the variables unexpanded for reconstruction
                     if variable_name in variables:
-                        value = value.replace(variable_name, variables[variable_name])  # but validate against expanded values
+                        value = value.replace(variable_name, variables[variable_name])
                     else:
                         logging.warning(f"Undefined variable: {variable_name}")
 

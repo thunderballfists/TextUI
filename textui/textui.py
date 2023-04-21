@@ -14,15 +14,15 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 
 class TextUI(App):
-    def __init__(self, input: str) -> None:
+    def __init__(self, markup: str) -> None:
         super().__init__()
         self.widget_factory = ElementWidgetFactory()
 
-        if os.path.isfile(input):
-            self.markup_path = os.path.abspath(input)
+        if os.path.isfile(markup):
+            self.markup_path = os.path.abspath(markup)
             self.load_file(self.markup_path)
         else:
-            self.markup = input
+            self.markup = markup
             self.markup_path = None
 
     def load_file(self, file_name: str):
@@ -78,7 +78,7 @@ class TextUI(App):
 
         return widget
 
-    def parse_markup(self, markup: str) -> ComposeResult:
+    def parse_markup(self) -> ComposeResult:
         root = html.fromstring(self.markup)
 
         # root = ElementTree.fromstring(markup)
@@ -88,7 +88,7 @@ class TextUI(App):
                 yield element
 
     def compose(self) -> ComposeResult:
-        composed_widgets = list(self.parse_markup(self.markup))
+        composed_widgets = list(self.parse_markup())
         for widget in composed_widgets:
             logging.info(f"Composed widget: {widget}")
             yield widget
