@@ -1,15 +1,14 @@
-from textual.containers import Center, Container, Content, Grid, Horizontal, HorizontalScroll, Middle, Vertical, \
+from textual.containers import Center, Container, Grid, Horizontal, HorizontalScroll, Middle, Vertical, \
     VerticalScroll
 from textual.widgets import Button, Checkbox, ContentSwitcher, DataTable, DirectoryTree, Footer, Header, Input, Label, \
     ListItem, ListView, LoadingIndicator, Markdown, MarkdownViewer, OptionList, Placeholder, Pretty, RadioButton, \
-    RadioSet, Static, Switch, TabbedContent, TabPane, Tab, Tabs, TextLog, Tree, Welcome
+    RadioSet, Static, Switch, TabbedContent, TabPane, Tab, Tabs, Log, Tree, Welcome
 
 from ..defs.element_widget_definition import ElementWidgetDefinition
 
 BUILT_IN_WIDGETS = [
     ElementWidgetDefinition(tag="center", widget_class=Center),
     ElementWidgetDefinition(tag="container", widget_class=Container),
-    ElementWidgetDefinition(tag="content", widget_class=Content),
     ElementWidgetDefinition(tag="grid", widget_class=Grid),
     ElementWidgetDefinition(tag="horizontal", widget_class=Horizontal),
     ElementWidgetDefinition(tag="horizontal_scroll", widget_class=HorizontalScroll),
@@ -41,7 +40,7 @@ BUILT_IN_WIDGETS = [
     ElementWidgetDefinition(tag="tab_pane", widget_class=TabPane),
     ElementWidgetDefinition(tag="tab", widget_class=Tab),
     ElementWidgetDefinition(tag="tabs", widget_class=Tabs),
-    ElementWidgetDefinition(tag="text_log", widget_class=TextLog),
+    ElementWidgetDefinition(tag="log", widget_class=Log),
     ElementWidgetDefinition(tag="tree", widget_class=Tree),
     ElementWidgetDefinition(tag="welcome", widget_class=Welcome),
 ]
