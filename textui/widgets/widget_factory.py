@@ -3,9 +3,9 @@ from typing import Optional
 from xml.etree.ElementTree import Element
 from textual.widget import Widget
 
-from widgets.builtin_widgets import BUILT_IN_WIDGETS
-from defs.element_widget_definition import ElementWidgetDefinition
-from defs.html_defs import HTML_DEFS
+from .builtin_widgets import BUILT_IN_WIDGETS
+from ..defs.element_widget_definition import ElementWidgetDefinition
+from ..defs.html_defs import HTML_DEFS
 
 
 class ElementWidgetFactory:
