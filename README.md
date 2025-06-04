@@ -57,6 +57,8 @@ To use TextUI, review `examples/sample_markup.xml` or the module `textui/textui.
 """
 
     app = MyApp(markup)
+    label = app.get_element_by_id("accent")
+    label_list = app.get_elements_by_id("accent")
     app.run()
 ```
 
@@ -72,6 +74,36 @@ logging.basicConfig(level=logging.DEBUG)
 ```
 
 Enabling debug output can be helpful when troubleshooting markup or CSS issues.
+
+Document and Window Helpers
+---------------------------
+
+Scripts executed via `<script>` tags receive a ``document`` helper and ``window``
+alias. ``window`` simply refers to the ``TextUI`` instance while ``document``
+offers DOM-like utilities:
+
+``get_element_by_id(id)`` / ``get_widget_by_id(id)``
+    Retrieve a widget by its ``id``.
+``get_elements_by_class_name(cls)``
+    Query widgets with the given class.
+``get_elements_by_tag_name(tag)``
+    Query widgets by tag name.
+``add_event_listener(widget, event_cls, callback)``
+    Attach a handler to a widget event.
+
+Example:
+
+```python
+markup = "<container><button id='ok'>OK</button></container>"
+app = TextUI(markup)
+
+def on_press(event):
+    print("button pressed")
+
+button = app.document.get_widget_by_id("ok")
+app.document.add_event_listener(button, Button.Pressed, on_press)
+```
+
 
 License
 -------

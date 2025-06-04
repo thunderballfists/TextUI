@@ -1,20 +1,24 @@
 import logging
 import os
 import uuid
-from typing import Optional
+from typing import Optional, List
 from xml.etree.ElementTree import Element
 from textual.app import App, ComposeResult
 from textual.widget import Widget
 
 from .validate_css import validate_css
 from .widgets.widget_factory import ElementWidgetFactory
+from .document import Document
 from lxml import html
 
 class TextUI(App):
     def __init__(self, markup: str) -> None:
         super().__init__()
         self.widget_factory = ElementWidgetFactory()
+
         self._scripts: list[str] = []
+        self.document = Document(self)
+        self.window = self
 
         if os.path.isfile(markup):
             self.markup_path = os.path.abspath(markup)
@@ -102,6 +106,29 @@ class TextUI(App):
 
     async def on_mount(self) -> None:
         self.run_scripts()
+
+    def get_element_by_id(self, element_id: str) -> Widget:
+        """Return a widget by its id.
+
+        This is a convenience wrapper around :meth:`get_widget_by_id` to
+        maintain backwards compatibility with older examples that refer to
+        elements instead of widgets.
+        """
+
+        return self.get_widget_by_id(element_id)
+
+    def get_elements_by_id(self, element_id: str) -> List[Widget]:
+        """Return a list with the widget matching ``element_id``.
+
+        Provided for API parity with the singular version. The list will
+        contain the widget if found, otherwise it will be empty.
+        """
+
+        try:
+            widget = self.get_widget_by_id(element_id)
+        except Exception:
+            return []
+        return [widget]
 
 
 if __name__ == "__main__":
