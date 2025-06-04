@@ -57,6 +57,8 @@ To use TextUI, review `examples/sample_markup.xml` or the module `textui/textui.
 """
 
     app = MyApp(markup)
+    label = app.get_element_by_id("accent")
+    label_list = app.get_elements_by_id("accent")
     app.run()
 ```
 
