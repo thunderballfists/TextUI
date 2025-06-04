@@ -6,7 +6,8 @@ from textual.widget import Widget
 
 import os
 
-from ..validate_css import validate_css
+from validate_css import validate_css
+import logging
 
 
 def get_absolute_path(file_path, abs_path):
@@ -46,6 +47,21 @@ def preprocess_style(element: Element, app: App) -> bool:
     css_data = validate_css(css_data)
     app.stylesheet.add_source(css_data, path="embedded_style", is_default_css=False)
     app.stylesheet.parse()
+    return False
+
+
+def preprocess_script(element: Element, app: App) -> bool:
+    """Execute the Python code contained in a <script> element.
+
+    The code is executed with the current :class:`TextUI` instance available as
+    ``app``. Any exceptions raised during execution are logged.
+    """
+    script_code = element.text or ""
+    if script_code.strip():
+        try:
+            exec(script_code, {"app": app})
+        except Exception:
+            logging.exception("Error executing script node")
     return False
 
 
