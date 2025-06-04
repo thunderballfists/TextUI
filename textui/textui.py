@@ -14,6 +14,7 @@ class TextUI(App):
     def __init__(self, markup: str) -> None:
         super().__init__()
         self.widget_factory = ElementWidgetFactory()
+        self._scripts: list[str] = []
 
         if os.path.isfile(markup):
             self.markup_path = os.path.abspath(markup)
@@ -89,6 +90,18 @@ class TextUI(App):
         for widget in composed_widgets:
             logging.info(f"Composed widget: {widget}")
             yield widget
+
+    def run_scripts(self) -> None:
+        """Execute scripts collected during preprocessing."""
+        for script in self._scripts:
+            try:
+                exec(script, {"app": self})
+            except Exception:
+                logging.exception("Error executing script node")
+        self._scripts.clear()
+
+    async def on_mount(self) -> None:
+        self.run_scripts()
 
 
 if __name__ == "__main__":
