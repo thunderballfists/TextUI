@@ -63,12 +63,11 @@ def preprocess_script(element: Element, app: App) -> bool:
     script_code = element.text or ""
 
     if language in ("py", "python") and script_code.strip():
-        try:
-            exec(script_code, {"app": app, "window": app, "document": app.document})
-        except Exception:
-            logging.exception("Error executing script node")
+        app._scripts.append(script_code)
     else:
-        logging.warning("Ignoring script with unsupported language '%s'", language)
+        logging.warning(
+            "Ignoring script with unsupported language '%s'", language
+        )
 
     return False
 
