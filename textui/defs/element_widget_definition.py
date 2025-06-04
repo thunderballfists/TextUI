@@ -64,7 +64,7 @@ def preprocess_script(element: Element, app: App) -> bool:
 
     if language in ("py", "python") and script_code.strip():
         try:
-            exec(script_code, {"app": app})
+            exec(script_code, {"app": app, "window": app, "document": app.document})
         except Exception:
             logging.exception("Error executing script node")
     else:

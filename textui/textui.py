@@ -8,12 +8,15 @@ from textual.widget import Widget
 
 from .validate_css import validate_css
 from .widgets.widget_factory import ElementWidgetFactory
+from .document import Document
 from lxml import html
 
 class TextUI(App):
     def __init__(self, markup: str) -> None:
         super().__init__()
         self.widget_factory = ElementWidgetFactory()
+        self.document = Document(self)
+        self.window = self
 
         if os.path.isfile(markup):
             self.markup_path = os.path.abspath(markup)
