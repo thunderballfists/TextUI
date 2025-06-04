@@ -47,7 +47,7 @@ def preprocess_style(element: Element, app: App) -> bool:
 
     css_data = validate_css(css_data)
     unique_path = f"embedded_style_{uuid.uuid4()}"
-    app.stylesheet.add_source(css_data, path=unique_path, is_default_css=False)
+    app.stylesheet.add_source(css_data, read_from=(unique_path, ""), is_default_css=False)
     app.stylesheet.parse()
     return False
 
