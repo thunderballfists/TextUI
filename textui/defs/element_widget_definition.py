@@ -51,17 +51,23 @@ def preprocess_style(element: Element, app: App) -> bool:
 
 
 def preprocess_script(element: Element, app: App) -> bool:
-    """Execute the Python code contained in a <script> element.
+    """Execute code contained in a ``<script>`` element.
 
-    The code is executed with the current :class:`TextUI` instance available as
-    ``app``. Any exceptions raised during execution are logged.
+    The language of the script is determined by the ``language`` attribute. If
+    no attribute is provided, ``python`` is assumed. Only Python scripts are
+    currently supported. Scripts using unsupported languages are ignored.
     """
+    language = element.attrib.get("language", "python").lower()
     script_code = element.text or ""
-    if script_code.strip():
+
+    if language in ("py", "python") and script_code.strip():
         try:
             exec(script_code, {"app": app})
         except Exception:
             logging.exception("Error executing script node")
+    else:
+        logging.warning("Ignoring script with unsupported language '%s'", language)
+
     return False
 
 
