@@ -3,9 +3,13 @@ from xml.etree.ElementTree import Element
 from textual.app import App
 from textual.containers import Container
 
-from defs.element_widget_definition import ElementWidgetDefinition, preprocess_width_height, preprocess_style, \
-    preprocess_src
-from widgets.html_widgets import Img, Div, P, Span
+from .element_widget_definition import (
+    ElementWidgetDefinition,
+    preprocess_width_height,
+    preprocess_style,
+    preprocess_src,
+)
+from ..widgets.html_widgets import Img, Div, P, Span
 
 
 def preprocess_img(element: Element, app: App) -> bool:

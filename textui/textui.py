@@ -6,8 +6,8 @@ from xml.etree.ElementTree import Element
 from textual.app import App, ComposeResult
 from textual.widget import Widget
 
-from validate_css import validate_css
-from widgets.widget_factory import ElementWidgetFactory
+from .validate_css import validate_css
+from .widgets.widget_factory import ElementWidgetFactory
 from lxml import html
 
 logging.getLogger().setLevel(logging.DEBUG)
