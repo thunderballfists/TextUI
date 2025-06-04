@@ -6,7 +6,7 @@ from textual.widget import Widget
 
 import os
 
-from validate_css import validate_css
+from ..validate_css import validate_css
 import logging
 
 
