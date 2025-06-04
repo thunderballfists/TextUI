@@ -154,24 +154,6 @@ def validate_selector(selector) -> bool:
         return False
 
 
-# Function to validate CSS declarations
-def validate_declarations(declarations):
-    valid = False
-    rules = [rule.strip() for rule in declarations.strip().split(';') if rule.strip()]
-    for rule in rules:
-        prop, value = [item.strip() for item in rule.split(':', 1)]
-        if prop in styles_regex:
-            pattern = styles_regex[prop]
-            if re.fullmatch(pattern, value):
-                logging.debug(f"  Valid: {prop}: {value}")
-                valid = True
-            else:
-                logging.warning(f"  Invalid: {prop}: {value}")
-        else:
-            logging.warning(f"  Unknown property: {prop}")
-    return valid
-
-
 # Function to split CSS into blocks
 def split_css_into_blocks(css):
     css_blocks = []
