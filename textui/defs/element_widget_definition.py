@@ -7,6 +7,7 @@ from textual.widget import Widget
 import os
 
 from ..validate_css import validate_css
+import uuid
 import logging
 
 
@@ -45,7 +46,8 @@ def preprocess_style(element: Element, app: App) -> bool:
     css_data = element.text
 
     css_data = validate_css(css_data)
-    app.stylesheet.add_source(css_data, path="embedded_style", is_default_css=False)
+    unique_path = f"embedded_style_{uuid.uuid4()}"
+    app.stylesheet.add_source(css_data, path=unique_path, is_default_css=False)
     app.stylesheet.parse()
     return False
 
