@@ -10,9 +10,6 @@ from .validate_css import validate_css
 from .widgets.widget_factory import ElementWidgetFactory
 from lxml import html
 
-logging.getLogger().setLevel(logging.DEBUG)
-
-
 class TextUI(App):
     def __init__(self, markup: str) -> None:
         super().__init__()

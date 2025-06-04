@@ -60,6 +60,19 @@ To use TextUI, review `examples/sample_markup.xml` or the module `textui/textui.
     app.run()
 ```
 
+Logging
+-------
+
+TextUI relies on Python's standard `logging` module. The package does not set a
+global logging level, so applications should configure logging as desired:
+
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+Enabling debug output can be helpful when troubleshooting markup or CSS issues.
+
 License
 -------
 
