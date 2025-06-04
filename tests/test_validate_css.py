@@ -41,9 +41,12 @@ foo {
 }
 """
 
+expected = validate_css(css)
+
 
 def test_validate_css():
     logging.getLogger().setLevel(logging.DEBUG)
     output = validate_css(css)
 
     logging.debug(output)
+    assert output == expected
