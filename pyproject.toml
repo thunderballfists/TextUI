@@ -2,7 +2,7 @@
 name = "textui"
 version = "0.1.0"
 description = ""
-authors = ["thunderballfists <apb@beihl.com"]
+authors = ["thunderballfists <apb@beihl.com>"]
 readme = "README.md"
 packages = [
     { include = "textui", from = "." },
