@@ -3,8 +3,13 @@ from xml.etree.ElementTree import Element
 from textual.app import App
 from textual.containers import Container
 
-from defs.element_widget_definition import ElementWidgetDefinition, preprocess_width_height, preprocess_style, \
-    preprocess_src
+from defs.element_widget_definition import (
+    ElementWidgetDefinition,
+    preprocess_width_height,
+    preprocess_style,
+    preprocess_src,
+    preprocess_script,
+)
 from widgets.html_widgets import Img, Div, P, Span
 
 
@@ -17,6 +22,7 @@ def preprocess_img(element: Element, app: App) -> bool:
 HTML_DEFS = [
     ElementWidgetDefinition(tag="html", widget_class=Container),
     ElementWidgetDefinition(tag="style", preprocessor=preprocess_style),
+    ElementWidgetDefinition(tag="script", preprocessor=preprocess_script),
     ElementWidgetDefinition(tag="img", widget_class=Img, preprocessor=preprocess_img),
     ElementWidgetDefinition(tag="div", widget_class=Div),
     ElementWidgetDefinition(tag="p", widget_class=P),
