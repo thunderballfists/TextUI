@@ -4,7 +4,7 @@ from textual.widgets import Button, Checkbox, ContentSwitcher, DataTable, Direct
     ListItem, ListView, LoadingIndicator, Markdown, MarkdownViewer, OptionList, Placeholder, Pretty, RadioButton, \
     RadioSet, Static, Switch, TabbedContent, TabPane, Tab, Tabs, TextLog, Tree, Welcome
 
-from defs.element_widget_definition import ElementWidgetDefinition
+from ..defs.element_widget_definition import ElementWidgetDefinition
 
 BUILT_IN_WIDGETS = [
     ElementWidgetDefinition(tag="center", widget_class=Center),

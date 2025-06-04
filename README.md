@@ -23,7 +23,7 @@ Features/Goals
 Usage
 -----
 
-To use TextUI, see the main.py for now.
+To use TextUI, review `examples/sample_markup.xml` or the module `textui/textui.py` for now.
 ```
 
 ...

@@ -6,7 +6,7 @@ from textual.widget import Widget
 
 import os
 
-from validate_css import validate_css
+from ..validate_css import validate_css
 
 
 def get_absolute_path(file_path, abs_path):
