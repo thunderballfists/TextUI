@@ -27,6 +27,13 @@ def test_display_controls_lower_typed_attributes():
     assert rule.attributes["line-style"] == "heavy"
 
 
+def test_radio_button_in_a_set_rejects_unreachable_changed_action():
+    with pytest.raises(DocumentValidationError, match="radio-set"):
+        DocumentLoader().from_string('''<ui>
+          <radio-set><radio-button on-changed="choose">Choice</radio-button></radio-set>
+        </ui>''')
+
+
 @pytest.mark.parametrize("markup", [
     '<ui><radio-set><label>Wrong</label></radio-set></ui>',
     '<ui><radio-set><radio-button value="true">A</radio-button><radio-button value="true">B</radio-button></radio-set></ui>',

@@ -1,7 +1,7 @@
 import pytest
-from textual.widgets import Select, Switch, TextArea
+from textual.widgets import Label, Select, Switch, TextArea
 
-from textui import DocumentLoader, DocumentValidationError, TextUI
+from textui import ComponentRegistry, ComponentSpec, DocumentLoader, DocumentValidationError, TextUI
 
 
 def load(markup: str):
@@ -22,6 +22,22 @@ def test_select_options_switch_and_verbatim_text_area_lower_as_markup():
     assert select.children[1].text == "Closed"
     assert switch.attributes["value"] is True
     assert area.text == "first\n  second"
+
+
+def test_custom_registry_can_reuse_compound_control_tag_names():
+    registry = ComponentRegistry()
+    registry.register(ComponentSpec(
+        "select", lambda context: Label("custom"), child_policy="widgets",
+    ))
+    registry.register(ComponentSpec(
+        "option", lambda context: Label(context.text or ""), text_policy="text",
+    ))
+
+    document = DocumentLoader(registry).from_string(
+        '<ui><select><option>Custom option</option></select></ui>'
+    )
+
+    assert document.nodes[0].children[0].text == "Custom option"
 
 
 @pytest.mark.parametrize("markup", [
