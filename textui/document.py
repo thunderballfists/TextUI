@@ -18,6 +18,7 @@ from .errors import (
 )
 from .nodes import ElementNode, StyleBlock
 from .registry import BuildContext, EventSpec
+from .widgets.modal import MarkupModal
 from .styling import apply_inline, commit_styles, prepare_styles
 
 # A factory may not recycle an instance across bindings, even before mounting.
@@ -116,7 +117,24 @@ class BoundDocument:
             raise
         self._widgets, self._bindings = widgets, bindings
         self._state = 'prepared'
-        return iter(roots)
+        return iter(widget for widget in roots if not isinstance(widget, MarkupModal))
+
+    def push_modal(self, modal_id: str):
+        """Push a declared modal and return a future resolved by dismissal."""
+        import asyncio
+
+        modal = self._widgets.get(modal_id)
+        if not isinstance(modal, MarkupModal):
+            raise ElementNotFoundError(f'No declared modal has ID {modal_id!r}')
+        future: asyncio.Future[object | None] = asyncio.get_running_loop().create_future()
+        self.app.push_screen(modal, callback=future.set_result)
+        return future
+
+    def dismiss_modal(self, value: object | None = None) -> None:
+        screen = self.app.screen
+        if not isinstance(screen, MarkupModal):
+            raise DocumentStateError('No TextUI modal is active')
+        screen.dismiss(value)
 
     def get_by_id(self, element_id: str) -> Widget:
         """Look up declared IDs only, and only while the widget is mounted."""
@@ -135,7 +153,12 @@ class BoundDocument:
             try:
                 result = self.actions[name](ActionContext(message, widget, self.app, self))
                 if isawaitable(result):
-                    await result
+                    import asyncio
+
+                    task = asyncio.create_task(result)
+                    await asyncio.sleep(0)
+                    if task.done():
+                        await task
             except Exception as error:
                 raise ActionExecutionError(f'Action {name!r} failed: {error}', location=node.location, value=name) from error
             return True

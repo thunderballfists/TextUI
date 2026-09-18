@@ -20,5 +20,13 @@ class ActionContext:
     app: App
     document: BoundDocument
 
+    def push_modal(self, modal_id: str):
+        """Push a declared modal and return its awaitable dismissal value."""
+        return self.document.push_modal(modal_id)
+
+    def dismiss_modal(self, value: object | None = None) -> None:
+        """Dismiss the active declared modal with an optional value."""
+        self.document.dismiss_modal(value)
+
 
 ActionCallback = Callable[[ActionContext], None | Awaitable[None]]

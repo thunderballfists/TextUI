@@ -32,6 +32,10 @@ The low-level `DocumentLoader`, `Document.bind`, and `TextUI(Document, actions=.
 
 ## Navigation and panes
 
+## Modals
+
+Declare a root-level `<modal id="pick" dismissable="true">` with normal widget content. An action may await `context.push_modal("pick")`; call `context.dismiss_modal(value)` from a modal action to return a value. Escape dismisses a dismissable modal with `None`; a non-dismissable modal ignores Escape. Focus returns to the prior screen after dismissal.
+
 Use `<split direction="horizontal">` with exactly two `<pane>` children. A pane can set `size` for its initial width (or height in a vertical split) and `min-size` for its lower bound. Drag the divider with the mouse or focus it and press arrow keys. Setting a pane's Textual `display` property to `False` hides it; setting it back to `True` restores the stored size. The split publishes `resized` and `toggled` events to `on-resized` and `on-toggled` actions.
 
 Use `<nav on-selected="show_page">` with `<nav-item target="home">Home</nav-item>` children. Each target must name a direct child of a `<content-switcher>`. The selected event carries `context.event.target`; an action can switch the native content area:
