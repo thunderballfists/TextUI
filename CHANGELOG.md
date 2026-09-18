@@ -1,0 +1,40 @@
+# Changelog
+
+All notable changes to TextUI are documented here.
+
+## [Unreleased]
+
+### Planned
+
+- Optional image components remain outside the core package.
+- Future releases may add capabilities without changing the strict document and lifecycle contracts established in 0.2.
+
+## [0.2.0] - 2026-09-18
+
+TextUI 0.2 is a breaking pre-1.0 reboot of the experimental 0.1 API.
+
+### Added
+
+- Strict UTF-8 XML loading through `DocumentLoader.from_string` and `from_file`.
+- Immutable document, node, registry, attribute, and event definitions.
+- Six native components: `vertical`, `horizontal`, `label`, `button`, `input`, and `checkbox`.
+- Explicit typed component registration and converter helpers for booleans, integers, and enums.
+- Native Textual bindings with single-use composition, mounted ID lookup, and independent bindings per App.
+- Explicit synchronous and asynchronous Python actions with contextual `ActionContext` errors.
+- Native TCSS blocks, literal inline styles, stylesheet staging, cascade tests, and custom component/message forwarding.
+- Runnable editor example, migration guide, Python 3.11/3.12/3.14 CI, and clean-wheel smoke checks.
+
+### Changed
+
+- Markup now requires one attribute-free `<ui>` root and lowercase kebab-case names.
+- Leaf text is literal and no longer interpreted as Rich/Textual markup.
+- Styling delegates validation and cascade behavior to Textual.
+- Package dependencies are bounded to Python `>=3.11,<4`, Textual `>=8.2.8,<9`, and lxml `>=6.1.3,<7`.
+
+### Removed
+
+- Embedded scripts, expression evaluation, browser-style DOM helpers, HTML aliases, custom CSS filtering, and core image widgets.
+- Mandatory Pillow and `textual-imageview` dependencies.
+
+[Unreleased]: https://github.com/thunderballfists/TextUI/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/thunderballfists/TextUI/releases/tag/v0.2.0

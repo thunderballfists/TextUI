@@ -2,7 +2,7 @@
 
 TextUI 0.2 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle.
 
-This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1 and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
+This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
 ## Install and run
 
@@ -130,13 +130,13 @@ Documents, actions, converters, and factories must be developer-controlled. This
 
 ## Development
 
-Use Poetry 2.4.3 in an isolated tool environment, for example `uvx --python 3.12 --from poetry==2.4.3 poetry` in place of `poetry` below:
+Use Poetry 2.4.3 in an isolated tool environment:
 
 ```sh
-poetry install --with test
-poetry run python -m pytest -q
-poetry run python -m examples.editor
-poetry build
+uvx --python 3.12 --from poetry==2.4.3 poetry install --with test
+uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q
+uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor
+uvx --python 3.12 --from poetry==2.4.3 poetry build
 ```
 
 Tests run headlessly and include actual Pilot interactions, computed styles, custom events, and the example form. CI runs Python 3.11/3.12/3.14, builds the distribution, and installs each wheel into a clean environment for an image-free headless smoke test.

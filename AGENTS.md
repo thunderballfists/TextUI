@@ -38,3 +38,5 @@ Retain the dependency boundary: importing or installing core must not pull in Pi
 ## Commits and Pull Requests
 
 Use concise imperative summaries. PRs explain behavior changes and validation commands/results, link relevant issues, and include screenshots for visible terminal changes where helpful. Update examples and migration guidance when markup changes. Preserve unrelated local edits and use isolated worktrees when needed.
+
+Update `CHANGELOG.md` for user-visible API, markup, styling, dependency, or migration changes. Keep entries grouped under `Added`, `Changed`, `Removed`, and `Fixed` where they apply; do not record internal refactors without a user-facing effect.
