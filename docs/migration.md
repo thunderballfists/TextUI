@@ -12,6 +12,7 @@ Version 0.2 replaces the experimental 0.1 interface. Documents and APIs intentio
 | Nested markup inside labels or buttons | Literal leaf text; use container widgets for composition |
 | Browser-style `get_element_by_id`, `get_widget_by_id`, class/tag queries | Mounted `bound_document.get_by_id("name")`; native App queries for selectors |
 | Custom CSS filtering and dimension rewriting | Native TCSS validation and `Widget.set_styles` for literal inline declarations |
+| Hand-built append-only transcript widgets | `<log>` with controller `append()`, `append_inline()`, and `commit_line()` methods |
 
 ## Load explicitly
 

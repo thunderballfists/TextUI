@@ -1,0 +1,13 @@
+#demo {
+    padding: 1 2;
+}
+
+#actions {
+    height: auto;
+}
+
+#transcript {
+    height: 1fr;
+    margin: 1 0;
+    border: round $primary;
+}
