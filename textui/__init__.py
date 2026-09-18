@@ -3,6 +3,7 @@
 from .actions import ActionCallback, ActionContext
 from .document import BoundDocument, Document
 from .textui import TextUI
+from .controllers import action
 from .errors import (
     ActionExecutionError,
     ComponentBuildError,
@@ -59,4 +60,5 @@ __all__ = [
     "boolean",
     "enum",
     "integer",
+    "action",
 ]
