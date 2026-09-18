@@ -5,9 +5,10 @@ import importlib.metadata
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 
 import textui
-from textui import ActionContext, DocumentLoader, TextUI
+from textui import ActionContext, DocumentLoader, ProjectApp, ProjectSource, TextUI
 from textual.content import Content
 
 
@@ -39,6 +40,14 @@ async def main() -> None:
     async with app.run_test() as pilot:
         assert await pilot.click("#save")
         assert str(app.document.get_by_id("status").render()) == "Saved wheel"
+    with tempfile.TemporaryDirectory() as directory:
+        project = Path(directory)
+        (project / "app.ui").write_text('<ui><script src="controller.py"/><button id="go" on-pressed="click">Go</button></ui>', encoding="utf-8")
+        (project / "controller.py").write_text('from textui import action\n@action\ndef click():\n    window.app.clicked = True\n', encoding="utf-8")
+        project_app = ProjectApp(ProjectSource.discover(project / "app.ui"))
+        async with project_app.run_test() as pilot:
+            assert await pilot.click("#go")
+            assert project_app.clicked is True
     assert not any(name == "PIL" or name.startswith("PIL.") or name == "textual_imageview" or name.startswith("textual_imageview.") for name in sys.modules)
     print(f"Clean wheel headless smoke passed: {package_path}")
     print({name: importlib.metadata.version(name) for name in ("textui", "textual", "lxml")})

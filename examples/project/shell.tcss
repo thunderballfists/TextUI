@@ -1,0 +1,19 @@
+#workspace {
+    padding: 1 2;
+}
+
+#heading {
+    text-style: bold;
+}
+
+#name {
+    width: 1fr;
+}
+
+#greet {
+    width: auto;
+}
+
+#status {
+    margin-top: 1;
+}

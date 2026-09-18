@@ -4,6 +4,12 @@ All notable changes to TextUI are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- A local `.ui` project runtime with `textui run`, nested markup includes, sourced TCSS, and linked Python controllers.
+- App-scoped `window`, explicit `@action` exports, setup/ready/close hooks, and Textual-backed one-shot and periodic timers.
+- A runnable project example and authoring guide.
+
 ### Planned
 
 - Optional image components remain outside the core package.

@@ -1,0 +1,9 @@
+<ui>
+  <style src="shell.tcss" />
+  <script src="controller.py" />
+  <vertical id="workspace">
+    <label id="heading">TextUI project runtime</label>
+    <include src="views/form.ui" />
+    <label id="clock">Waiting for timer</label>
+  </vertical>
+</ui>

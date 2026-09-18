@@ -1,0 +1,7 @@
+<ui>
+  <horizontal>
+    <input id="name" placeholder="Your name" />
+    <button id="greet" on-pressed="greet">Greet</button>
+  </horizontal>
+  <label id="status">Ready</label>
+</ui>

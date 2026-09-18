@@ -26,3 +26,6 @@ TextUI(document).run()
 ```
 
 The sample has no actions, so it is useful for checking structure and styling without application callbacks. See the main [README](../README.md) for custom components and explicit event forwarding.
+# Project runtime example
+
+Run `textui run examples/project/app.ui` from the repository root. The entry file loads `shell.tcss` and `controller.py`, then includes `views/form.ui`. The controller shows a greeting when the button is pressed and updates the clock once per second. Paths inside the project resolve from their declaring files, so the absolute entry path also works from another directory. See the [runtime guide](../docs/project-runtime.md).
