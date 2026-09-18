@@ -81,3 +81,11 @@ async def test_controls_example_mounts_and_handles_native_changes(tmp_path, monk
         await pilot.pause()
         assert tabs.active == "about"
         assert str(app.document.get_by_id("feedback").render()) == "Tab: about"
+        await pilot.click(list(tabs.query("ContentTab"))[2])
+        await pilot.pause()
+        assert tabs.active == "indicators"
+        assert app.document.get_by_id("choice").pressed_button.id == "high"
+        assert app.document.get_by_id("work").progress == 25.0
+        await pilot.click("#low")
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Priority: low"

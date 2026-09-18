@@ -34,6 +34,15 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
             initial = node.attributes.get("initial")
             if initial is not None and initial not in {child.common["id"] for child in node.children}:
                 raise DocumentValidationError("initial tab must name a child pane", location=node.location, attribute="initial")
+        if tag == "radio-set":
+            if not node.children or any(child.spec.tag != "radio-button" for child in node.children):
+                raise DocumentValidationError("radio-set requires radio-button children", location=node.location)
+            if sum(bool(child.attributes["value"]) for child in node.children) > 1:
+                raise DocumentValidationError("radio-set accepts at most one selected button", location=node.location)
+        if tag == "progress-bar":
+            total = node.attributes.get("total")
+            if total is not None and node.attributes["progress"] > total:
+                raise DocumentValidationError("progress cannot exceed total", location=node.location, attribute="progress")
         for child in node.children:
             visit(child, tag)
 

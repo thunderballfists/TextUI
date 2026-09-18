@@ -6,7 +6,7 @@ from typing import Any
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.widgets import Button, Checkbox, Input, Select, Switch, TabbedContent, TextArea
+from textual.widgets import Button, Checkbox, Collapsible, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TextArea
 from .widgets.split import Split
 from .widgets.navigation import Nav
 
@@ -88,6 +88,10 @@ class ProjectApp(App):
     @on(Switch.Changed)
     @on(TextArea.Changed)
     @on(TabbedContent.TabActivated)
-    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated) -> None:
+    @on(RadioButton.Changed)
+    @on(RadioSet.Changed)
+    @on(Collapsible.Collapsed)
+    @on(Collapsible.Expanded)
+    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded) -> None:
         if self.document is not None:
             await self.document.dispatch(event)

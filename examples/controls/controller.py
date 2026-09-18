@@ -23,3 +23,18 @@ def notes_changed(context) -> None:
 @action
 def tab_changed(context) -> None:
     _feedback(f"Tab: {context.event.pane.id}")
+
+
+@action
+def priority_changed(context) -> None:
+    _feedback(f"Priority: {context.event.pressed.id}")
+
+
+@action
+def details_collapsed() -> None:
+    _feedback("Details collapsed")
+
+
+@action
+def details_expanded() -> None:
+    _feedback("Details expanded")
