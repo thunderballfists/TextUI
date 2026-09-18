@@ -1,24 +1,17 @@
+"""Immutable document definitions produced by :class:`DocumentLoader`."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from .nodes import ElementNode, StyleBlock
+
+
+@dataclass(frozen=True, slots=True)
 class Document:
-    """Helper providing DOM-like methods for TextUI applications."""
+    nodes: tuple[ElementNode, ...]
+    styles: tuple[StyleBlock, ...]
+    source_name: str
 
-    def __init__(self, app):
-        self.app = app
-
-    def get_element_by_id(self, id):
-        """Return the first widget with the given id."""
-        return self.app.query_one(f"#{id}")
-
-    # Alias
-    get_widget_by_id = get_element_by_id
-
-    def get_elements_by_class_name(self, cls):
-        """Return widgets matching the given class name."""
-        return self.app.query(f".{cls}")
-
-    def get_elements_by_tag_name(self, tag):
-        """Return widgets matching the given tag name."""
-        return self.app.query(tag)
-
-    def add_event_listener(self, widget, event_cls, callback):
-        """Register an event handler on ``widget``."""
-        widget.on(event_cls, callback)
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "nodes", tuple(self.nodes))
+        object.__setattr__(self, "styles", tuple(self.styles))

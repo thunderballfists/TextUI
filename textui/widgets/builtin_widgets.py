@@ -1,48 +1,107 @@
-from textual.containers import Center, Container, Grid, Horizontal, HorizontalScroll, Middle, Vertical, \
-    VerticalScroll
-from textual.widgets import Button, Checkbox, ContentSwitcher, DataTable, DirectoryTree, Footer, Header, Input, Label, \
-    ListItem, ListView, LoadingIndicator, Markdown, MarkdownViewer, OptionList, Placeholder, Pretty, RadioButton, \
-    RadioSet, Static, Switch, TabbedContent, TabPane, Tab, Tabs, Log, Tree, Welcome
+"""The six deliberately small native Textual component adapters."""
+from __future__ import annotations
 
-from ..defs.element_widget_definition import ElementWidgetDefinition
+from textual.containers import Horizontal, Vertical
+from textual.content import Content
+from textual.widgets import Button, Checkbox, Input, Label
 
-BUILT_IN_WIDGETS = [
-    ElementWidgetDefinition(tag="center", widget_class=Center),
-    ElementWidgetDefinition(tag="container", widget_class=Container),
-    ElementWidgetDefinition(tag="grid", widget_class=Grid),
-    ElementWidgetDefinition(tag="horizontal", widget_class=Horizontal),
-    ElementWidgetDefinition(tag="horizontal_scroll", widget_class=HorizontalScroll),
-    ElementWidgetDefinition(tag="middle", widget_class=Middle),
-    ElementWidgetDefinition(tag="vertical", widget_class=Vertical),
-    ElementWidgetDefinition(tag="vertical_scroll", widget_class=VerticalScroll),
-    ElementWidgetDefinition(tag="button", widget_class=Button),
-    ElementWidgetDefinition(tag="checkbox", widget_class=Checkbox),
-    ElementWidgetDefinition(tag="content_switcher", widget_class=ContentSwitcher),
-    ElementWidgetDefinition(tag="data_table", widget_class=DataTable),
-    ElementWidgetDefinition(tag="directory_tree", widget_class=DirectoryTree),
-    ElementWidgetDefinition(tag="footer", widget_class=Footer),
-    ElementWidgetDefinition(tag="header", widget_class=Header),
-    ElementWidgetDefinition(tag="input", widget_class=Input),
-    ElementWidgetDefinition(tag="label", widget_class=Label),
-    ElementWidgetDefinition(tag="list_item", widget_class=ListItem),
-    ElementWidgetDefinition(tag="list_view", widget_class=ListView),
-    ElementWidgetDefinition(tag="loading_indicator", widget_class=LoadingIndicator),
-    ElementWidgetDefinition(tag="markdown", widget_class=Markdown),
-    ElementWidgetDefinition(tag="markdown_viewer", widget_class=MarkdownViewer),
-    ElementWidgetDefinition(tag="option_list", widget_class=OptionList),
-    ElementWidgetDefinition(tag="placeholder", widget_class=Placeholder),
-    ElementWidgetDefinition(tag="pretty", widget_class=Pretty),
-    ElementWidgetDefinition(tag="radio_button", widget_class=RadioButton),
-    ElementWidgetDefinition(tag="radio_set", widget_class=RadioSet),
-    ElementWidgetDefinition(tag="static", widget_class=Static),
-    ElementWidgetDefinition(tag="switch", widget_class=Switch),
-    ElementWidgetDefinition(tag="tabbed_content", widget_class=TabbedContent),
-    ElementWidgetDefinition(tag="tab_pane", widget_class=TabPane),
-    ElementWidgetDefinition(tag="tab", widget_class=Tab),
-    ElementWidgetDefinition(tag="tabs", widget_class=Tabs),
-    ElementWidgetDefinition(tag="log", widget_class=Log),
-    ElementWidgetDefinition(tag="tree", widget_class=Tree),
-    ElementWidgetDefinition(tag="welcome", widget_class=Welcome),
-]
+from ..registry import (
+    AttributeSpec,
+    BuildContext,
+    ComponentRegistry,
+    ComponentSpec,
+    EventSpec,
+    boolean,
+    enum,
+    integer,
+)
 
 
+def build_vertical(context: BuildContext) -> Vertical:
+    return Vertical(*context.children)
+
+
+def build_horizontal(context: BuildContext) -> Horizontal:
+    return Horizontal(*context.children)
+
+
+def build_label(context: BuildContext) -> Label:
+    return Label(Content(context.text or ""), markup=False)
+
+
+def build_button(context: BuildContext) -> Button:
+    return Button(Content(context.text or ""), variant=context.attributes["variant"])
+
+
+def build_input(context: BuildContext) -> Input:
+    options = dict(context.attributes)
+    if "max-length" in options:
+        options["max_length"] = options.pop("max-length")
+    return Input(**options)
+
+
+def build_checkbox(context: BuildContext) -> Checkbox:
+    return Checkbox(Content(context.text or ""), value=context.attributes["value"])
+
+
+def _button_source(event: Button.Pressed) -> Button:
+    return event.button
+
+
+def _input_source(event: Input.Changed | Input.Submitted) -> Input:
+    return event.input
+
+
+def _checkbox_source(event: Checkbox.Changed) -> Checkbox:
+    return event.checkbox
+
+
+def default_component_registry() -> ComponentRegistry:
+    registry = ComponentRegistry()
+    registry.register(
+        ComponentSpec(tag="vertical", factory=build_vertical, child_policy="widgets")
+    )
+    registry.register(
+        ComponentSpec(tag="horizontal", factory=build_horizontal, child_policy="widgets")
+    )
+    registry.register(ComponentSpec(tag="label", factory=build_label, text_policy="text"))
+    registry.register(
+        ComponentSpec(
+            tag="button",
+            factory=build_button,
+            text_policy="text",
+            attributes={
+                "variant": AttributeSpec(
+                    enum("default", "primary", "success", "warning", "error"),
+                    default="default",
+                )
+            },
+            events={"pressed": EventSpec(Button.Pressed, _button_source)},
+        )
+    )
+    registry.register(
+        ComponentSpec(
+            tag="input",
+            factory=build_input,
+            attributes={
+                "value": AttributeSpec(default=""),
+                "placeholder": AttributeSpec(default=""),
+                "password": AttributeSpec(boolean, default=False),
+                "max-length": AttributeSpec(integer(minimum=1)),
+            },
+            events={
+                "changed": EventSpec(Input.Changed, _input_source),
+                "submitted": EventSpec(Input.Submitted, _input_source),
+            },
+        )
+    )
+    registry.register(
+        ComponentSpec(
+            tag="checkbox",
+            factory=build_checkbox,
+            text_policy="text",
+            attributes={"value": AttributeSpec(boolean, default=False)},
+            events={"changed": EventSpec(Checkbox.Changed, _checkbox_source)},
+        )
+    )
+    return registry
