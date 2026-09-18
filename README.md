@@ -15,7 +15,7 @@ python -m pip install .
 python -m examples.editor
 ```
 
-The editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
+The editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. See [examples/README.md](examples/README.md) for the static sample document. Examples are included in the source distribution, not the installed library wheel.
 
 A self-contained application:
 

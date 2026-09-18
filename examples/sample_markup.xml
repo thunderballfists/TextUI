@@ -6,10 +6,10 @@
   </style>
   <vertical id="sample">
     <label class="accent">Welcome to TextUI [literal text]</label>
-    <input placeholder="Your name" />
-    <checkbox value="false">A native checkbox</checkbox>
+    <input id="name" placeholder="Your name" />
+    <checkbox id="notify" value="false">A native checkbox</checkbox>
     <horizontal>
-      <button variant="primary">A native button</button>
+      <button id="sample-button" variant="primary">A native button</button>
     </horizontal>
   </vertical>
 </ui>

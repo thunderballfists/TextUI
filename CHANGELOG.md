@@ -4,6 +4,10 @@ All notable changes to TextUI are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Expanded the examples with a documented static six-widget sample and regression coverage for loading it.
+
 ### Planned
 
 - Optional image components remain outside the core package.

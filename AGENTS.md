@@ -10,7 +10,7 @@ TextUI 0.2 turns strict XML into native Textual widgets. Read `README.md`, `docs
 - `textui/styling.py`: the only adapter for Textual stylesheet internals.
 - `textui/textui.py`: thin convenience App with four native message forwarders.
 - `textui/errors.py`: contextual public errors.
-- `examples/editor.py`, `examples/form.xml`: runnable normal-App integration and Save action.
+- `examples/README.md`, `examples/editor.py`, `examples/form.xml`, `examples/sample_markup.xml`: runnable normal-App integration and static markup examples.
 - `tests/`: headless loader, registry, runtime, styles, action, extension, and example tests.
 - `.github/workflows/tests.yml`: Python 3.11/3.12/3.14 plus build and clean-wheel verification.
 
