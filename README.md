@@ -1,12 +1,12 @@
 # TextUI
 
-TextUI 0.2 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle.
+TextUI 0.2.0 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle.
 
 This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
 ## Install and run
 
-Python 3.11 or newer is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
+Python `>=3.11,<4` is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
 
 From a checkout:
 
@@ -134,6 +134,7 @@ Use Poetry 2.4.3 in an isolated tool environment:
 
 ```sh
 uvx --python 3.12 --from poetry==2.4.3 poetry install --with test
+uvx --python 3.12 --from poetry==2.4.3 poetry check --lock
 uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q
 uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor
 uvx --python 3.12 --from poetry==2.4.3 poetry build
