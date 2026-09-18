@@ -6,7 +6,9 @@ from textual.widget import Widget
 
 import os
 
-from validate_css import validate_css
+from ..validate_css import validate_css
+import uuid
+import logging
 
 
 def get_absolute_path(file_path, abs_path):
@@ -44,8 +46,29 @@ def preprocess_style(element: Element, app: App) -> bool:
     css_data = element.text
 
     css_data = validate_css(css_data)
-    app.stylesheet.add_source(css_data, path="embedded_style", is_default_css=False)
+    unique_path = f"embedded_style_{uuid.uuid4()}"
+    app.stylesheet.add_source(css_data, read_from=(unique_path, ""), is_default_css=False)
     app.stylesheet.parse()
+    return False
+
+
+def preprocess_script(element: Element, app: App) -> bool:
+    """Execute code contained in a ``<script>`` element.
+
+    The language of the script is determined by the ``language`` attribute. If
+    no attribute is provided, ``python`` is assumed. Only Python scripts are
+    currently supported. Scripts using unsupported languages are ignored.
+    """
+    language = element.attrib.get("language", "python").lower()
+    script_code = element.text or ""
+
+    if language in ("py", "python") and script_code.strip():
+        app._scripts.append(script_code)
+    else:
+        logging.warning(
+            "Ignoring script with unsupported language '%s'", language
+        )
+
     return False
 
 

@@ -2,7 +2,7 @@
 name = "textui"
 version = "0.1.0"
 description = ""
-authors = ["thunderballfists <apb@beihl.com"]
+authors = ["thunderballfists <apb@beihl.com>"]
 readme = "README.md"
 packages = [
     { include = "textui", from = "." },
@@ -10,7 +10,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-textual = "^0.19.0"
+textual = "^3.3.0"
 textual-imageview = "^0.1.1"
 lxml = "^4.9.2"
 

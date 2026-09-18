@@ -113,9 +113,14 @@ color_value_regex = (
         + named_web_colors_regex + "|transparent|" + named_ansi_colors_regex + ")"
 )
 
+# Compiled regex objects for color validation
+named_web_colors_pattern = re.compile(named_web_colors_regex, re.IGNORECASE)
+named_ansi_colors_pattern = re.compile(named_ansi_colors_regex, re.IGNORECASE)
+color_value_pattern = re.compile(color_value_regex, re.IGNORECASE)
+
 values = {
     "<border>": "ascii|blank|dashed|double|heavy|hidden|hkey|inner|none|outer|round|solid|tall|thick|vkey|wide",
-    "<color>": color_value_regex,
+    "<color>": color_value_pattern,
     "<horizontal>": "left|right",
     "<vertical>": "top|bottom",
     "<percentage>": "(?:[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+))%",
@@ -139,7 +144,13 @@ styles_regex = {}
 # Function to compile regex patterns for styles validation
 def setup_styles_regex():
     for tag, pattern in styles.items():
-        styles_regex[tag] = re.sub("<([^>]+)>", lambda x: values[x.group()], pattern)
+        replaced = re.sub(
+            "<([^>]+)>",
+            lambda x: values[x.group()].pattern if isinstance(values[x.group()], re.Pattern) else values[x.group()],
+            pattern,
+        )
+        flags = re.IGNORECASE if "<color>" in pattern else 0
+        styles_regex[tag] = re.compile(replaced, flags)
 
 
 # Function to validate CSS selector
@@ -162,7 +173,7 @@ def validate_declarations(declarations):
         prop, value = [item.strip() for item in rule.split(':', 1)]
         if prop in styles_regex:
             pattern = styles_regex[prop]
-            if re.fullmatch(pattern, value):
+            if pattern.fullmatch(value):
                 logging.debug(f"  Valid: {prop}: {value}")
                 valid = True
             else:
@@ -260,7 +271,7 @@ def validate_css(css):
 
                 if prop in styles_regex:
                     pattern = styles_regex[prop]
-                    if re.fullmatch(pattern, value):
+                    if pattern.fullmatch(value):
                         logging.debug(f"Valid: {prop}: {value}")
                         if value_with_vars is not None:
                             value = value_with_vars
