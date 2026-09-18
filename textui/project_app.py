@@ -10,6 +10,7 @@ from textual.widgets import Button, Checkbox, Collapsible, DataTable, Input, Rad
 from .widgets.split import Split
 from .widgets.navigation import Nav
 from .widgets.runtime_list import RuntimeList
+from .accelerators import activate_tab, install_tab_accelerators
 
 from .actions import ActionCallback
 from .controllers import ControllerSet, ProjectWindow
@@ -47,6 +48,7 @@ class ProjectApp(App):
             finally:
                 self._textui_loading = False
             self.window._document = self.document
+            install_tab_accelerators(self, definition.nodes)
             self.window.phase = "bound"
         except BaseException:
             if self._setup_completed:
@@ -57,6 +59,11 @@ class ProjectApp(App):
         if self.document is None:
             raise RuntimeError("project document has not been bound")
         yield from self.document.compose()
+
+    def action_textui_activate_tab(self, pane_id: str) -> None:
+        if self.document is None:
+            raise RuntimeError("project document has not been bound")
+        activate_tab(self.document, pane_id)
 
     async def on_mount(self) -> None:
         self.window.phase = "ready"
