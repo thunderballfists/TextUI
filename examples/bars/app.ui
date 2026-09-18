@@ -1,0 +1,17 @@
+<ui>
+  <style src="bars.tcss" />
+  <vertical id="app">
+    <header id="app-header">
+      <left><label>⚡ DTN Agents</label></left>
+      <center><label id="identity">abe@example.com</label></center>
+      <right><label id="context">Production</label></right>
+    </header>
+    <vertical id="content">
+      <label>Header and status-bar slots use native layout.</label>
+    </vertical>
+    <status-bar id="app-status">
+      <left><label>Connected</label></left>
+      <right><label>3 agents online</label></right>
+    </status-bar>
+  </vertical>
+</ui>

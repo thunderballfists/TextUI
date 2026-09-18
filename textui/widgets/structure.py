@@ -9,6 +9,7 @@ from .data_widgets import build_cell, build_column, build_data_table, build_row,
 from .display_controls import build_progress_bar, build_radio_button, build_radio_set
 from .form_controls import build_option, build_select
 from .tabbed import build_tab_pane, build_tabbed_content
+from .bars import SLOT_FACTORIES, build_bar
 
 
 def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
@@ -51,6 +52,16 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
             total = node.attributes.get("total")
             if total is not None and node.attributes["progress"] > total:
                 raise DocumentValidationError("progress cannot exceed total", location=node.location, attribute="progress")
+        is_slot = node.spec.tag in SLOT_FACTORIES and node.spec.factory is SLOT_FACTORIES[node.spec.tag]
+        is_bar = node.spec.tag in {"header", "status-bar"} and node.spec.factory is build_bar
+        if is_slot and (parent is None or parent.spec.factory is not build_bar):
+            raise DocumentValidationError("slot must be a direct child of header or status-bar", location=node.location)
+        if is_bar:
+            slots = [child.spec.tag for child in node.children]
+            if any(slot not in SLOT_FACTORIES for slot in slots):
+                raise DocumentValidationError("header accepts only left, center, and right slots", location=node.location)
+            if len(slots) != len(set(slots)):
+                raise DocumentValidationError("header accepts each slot at most once", location=node.location)
         if is_builtin(node, build_column) and (parent is None or not is_builtin(parent, build_data_table)):
             raise DocumentValidationError("column has an invalid parent", location=node.location)
         if is_builtin(node, build_row) and (parent is None or not is_builtin(parent, build_data_table)):

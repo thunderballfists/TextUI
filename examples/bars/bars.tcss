@@ -1,0 +1,21 @@
+#app {
+    height: 100%;
+}
+
+#app-header, #app-status {
+    padding: 0 1;
+}
+
+#app-header {
+    background: $primary;
+    color: $text;
+}
+
+#app-status {
+    background: $surface-lighten-1;
+}
+
+#content {
+    height: 1fr;
+    padding: 1 2;
+}
