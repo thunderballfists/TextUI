@@ -2,7 +2,7 @@
 
 Date: 2026-09-17
 
-Status: proposed specification for review. The owner approved the audit's five architectural decisions; the detailed contracts below require review before implementation planning.
+Status: approved and implemented for the 0.2.0 core reboot, subject to the release acceptance gates below and final independent review. Validation evidence is recorded in the implementation task reports.
 
 Basis: [repository audit](../../audits/2026-09-17-repository-audit.md), including successful tests on Textual 3.3.0, 3.7.1, and 8.2.8 and the defects reproduced on both comparison releases.
 
@@ -16,7 +16,7 @@ Exclude embedded scripts, expressions, templates, automatic data binding, hot re
 
 ## 2. Public objects and data flow
 
-The names below define the proposed API, not implemented code.
+The names below define the implemented public API.
 
 | Object | Responsibility |
 | --- | --- |
@@ -160,7 +160,7 @@ Public errors derive from `TextUIError`: `DocumentLoadError`, `DocumentSyntaxErr
 
 Example: `form.xml:12 <checkbox> attribute 'value': expected true or false; got 'maybe'`.
 
-Initial implementation target: Python `>=3.11,<4`, Textual `>=8.2.8,<9`, and lxml `>=6.1.3,<7`. The audit's saved PyPI metadata identifies 6.1.3 as the current lxml release; this is a proposed upgrade from the tested 4.9.x parser, requiring compatibility checks. Use pytest and pytest-asyncio for tests. Run the release test matrix on Python 3.11, 3.12, and 3.14, recording exact resolved versions. The existing audit validates current Textual only on Python 3.12; do not present the broader matrix as already verified. Confirm installation and strict-parser behavior across that matrix before locking dependencies.
+Initial implementation target: Python `>=3.11,<4`, Textual `>=8.2.8,<9`, and lxml `>=6.1.3,<7`. The reboot upgrades the parser from the characterized 4.9.x release to 6.1.3; release checks must exercise this strict parser across the supported matrix. Use pytest and pytest-asyncio for tests. Run the release test matrix on Python 3.11, 3.12, and 3.14, recording exact resolved versions. The existing audit validates current Textual only on Python 3.12; do not present the broader matrix as already verified. Confirm installation and strict-parser behavior across that matrix before locking dependencies.
 
 Core installation must not install or import Pillow/textual-imageview. Images remain an optional follow-up extra and component registration, with dedicated file-path/load/resize/dimension tests; they are not a seventh core widget. Developer-authored documents and trusted callbacks/factories are the only supported trust model. A later untrusted mode needs separate capability and resource-limit design.
 
@@ -179,8 +179,8 @@ Export the loader, registry/spec types, Document/BoundDocument, ActionContext, T
 5. **Extensions:** application-defined typed component, fresh-instance enforcement, custom message forwarding, and constructor errors with source context, without edits to core.
 6. **Packaging/docs:** supported Python matrix, bounded Textual dependency, core without imaging packages, runnable README examples, and explicit migration/trust limitations. Existing local files are not silently incorporated or discarded during implementation.
 
-The audit's scripts/tests that assert removed behavior must be replaced with rejection or new-contract tests when their feature changes. Every behavioral change requires a meaningful failing test before implementation. No implementation is authorized merely by completing this document.
+The audit's scripts/tests that assert removed behavior must be replaced with rejection or new-contract tests when their feature changes. Every behavioral change requires a meaningful failing test before implementation. The owner approved the design and autonomous implementation; completion still requires the acceptance gates above.
 
-## Review checkpoint
+## Approved implementation checkpoint
 
-Approve this detailed specification before creating the task-by-task implementation plan. In particular, the API and lifecycle choices to review are explicit host message forwarding, one binding per App, single-use composition, App-wide embedded TCSS, and custom events forwarded by the host.
+The owner approved explicit host message forwarding, one binding per App, single-use composition, App-wide embedded TCSS, and host-forwarded custom events. Failed composition attempts also consume the binding. Native TCSS variables declared in an embedded block remain local to that source; theme variables are available from the host stylesheet context. Release validation and independent review remain required before declaring the branch complete.

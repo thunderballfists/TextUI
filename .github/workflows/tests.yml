@@ -1,0 +1,41 @@
+name: Tests and packaging
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.14"]
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install isolated Poetry
+        run: pipx install poetry==2.4.3
+      - name: Install locked project and tests
+        run: |
+          poetry env use "$(command -v python)"
+          poetry check --lock
+          poetry install --with test --no-interaction
+      - name: Run headless suite
+        run: poetry run python -m pytest -q
+      - name: Build distributions
+        run: poetry build
+      - name: Verify clean wheel installation outside checkout
+        run: |
+          python -m venv "$RUNNER_TEMP/textui-wheel"
+          "$RUNNER_TEMP/textui-wheel/bin/python" -m pip install dist/*.whl
+          "$RUNNER_TEMP/textui-wheel/bin/python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/textui-wheel/bin/python" -I "$GITHUB_WORKSPACE/tests/wheel_smoke.py"

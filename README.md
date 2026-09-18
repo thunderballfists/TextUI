@@ -1,116 +1,144 @@
+# TextUI
 
-This is very early and so far can render markup with styles both in a style tag or inline.
-Scripting and event handling are up next. Some of the following is more aspirational atm :
+TextUI 0.2 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle.
 
+This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1 and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
-TextUI: Build Text-based User Interfaces with HTML-like Syntax
-==============================================================
+## Install and run
 
-TextUI is a library built on top of the great and powerful [Textual](https://github.com/willmcgugan/textual) framework to create rich terminal applications using an HTML-like syntax. The goal of this project is to make building text user interfaces more accessible and easier to iterate, especially for those familiar with HTML based applications.
+Python 3.11 or newer is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
 
+From a checkout:
 
-
-Features/Goals
---------
-
-- Create terminal applications using a familiar HTML-like syntax
-- Easily style your applications with CSS
-- Event handling and scripting support (with Python)
-- Modular design for easy component addition and modification
-- Extensive documentation and examples to help you get started quickly
-
-
-Usage
------
-
-To use TextUI, review `examples/sample_markup.xml` or the module `textui/textui.py` for now.
+```sh
+python -m pip install .
+python -m examples.editor
 ```
 
-...
+The editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
-
-    markup = """
-<container>
-    <style>
-        .test {
-            background: blue;
-        }
-        Header {
-            background: green;
-            color:blue;
-        }
-        Footer {
-            background: blue;
-        }
-        .accent {
-            background: red;
-        }
-    </style>
-    <header/>
-    <label id="accent">Welcome to the sample XML file</label>
-    <label class="accent">label with accent styling.</label>
-    <label class="test">label with blue styling.</label>
-    <button class="accent">This button has the "accent" class, which applies HSL color.</button>
-    <button>This button has default styling.</button>
-    <footer/>
-</container>
-"""
-
-    app = MyApp(markup)
-    label = app.get_element_by_id("accent")
-    label_list = app.get_elements_by_id("accent")
-    app.run()
-```
-
-Logging
--------
-
-TextUI relies on Python's standard `logging` module. The package does not set a
-global logging level, so applications should configure logging as desired:
+A self-contained application:
 
 ```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
+from textual.content import Content
+from textui import ActionContext, DocumentLoader, TextUI
+
+
+def greet(context: ActionContext) -> None:
+    name = context.document.get_by_id("name").value
+    context.document.get_by_id("status").update(Content(f"Hello, {name}!"))
+
+
+document = DocumentLoader().from_string("""
+<ui>
+  <vertical>
+    <input id="name" placeholder="Your name" />
+    <button on-pressed="greet">Greet</button>
+    <label id="status">Ready</label>
+  </vertical>
+</ui>
+""")
+app = TextUI(document, actions={"greet": greet})
+app.run()
 ```
 
-Enabling debug output can be helpful when troubleshooting markup or CSS issues.
+Use `DocumentLoader().from_file("form.xml")` for UTF-8 files. `from_string` always receives markup and never guesses a filename. Errors retain source and element context and, where available, the original exception as their cause.
 
-Document and Window Helpers
----------------------------
+## Markup
 
-Scripts executed via `<script>` tags receive a ``document`` helper and ``window``
-alias. ``window`` simply refers to the ``TextUI`` instance while ``document``
-offers DOM-like utilities:
+Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is parsed strictly. Comments are allowed. Scripts, namespaces, DTDs, entities, unknown tags/attributes/events, and duplicate IDs are rejected. Text in leaf widgets is literal, with whitespace collapsed; nested markup in leaves and mixed text/widget content are unsupported.
 
-``get_element_by_id(id)`` / ``get_widget_by_id(id)``
-    Retrieve a widget by its ``id``.
-``get_elements_by_class_name(cls)``
-    Query widgets with the given class.
-``get_elements_by_tag_name(tag)``
-    Query widgets by tag name.
-``add_event_listener(widget, event_cls, callback)``
-    Attach a handler to a widget event.
+| Tag | Content | Attributes beyond common attributes | Events |
+| --- | --- | --- | --- |
+| `vertical`, `horizontal` | Widgets | None | None |
+| `label` | Text | None | None |
+| `button` | Text | `variant`: default, primary, success, warning, error | `pressed` |
+| `input` | None | `value`, `placeholder`, `password`, positive `max-length` | `changed`, `submitted` |
+| `checkbox` | Text | Boolean `value` | `changed` |
 
-Example:
+All widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
+
+## Integrate with a normal App
+
+Bind after `App.__init__` and before the App runs. Compose the binding through the normal Textual hook, then explicitly forward native messages. [The runnable editor](examples/editor.py) implements this complete pattern:
 
 ```python
-markup = "<container><button id='ok'>OK</button></container>"
-app = TextUI(markup)
+from textual import on
+from textual.app import App, ComposeResult
+from textual.widgets import Button, Checkbox, Input
+from textui import Document, DocumentLoader
 
-def on_press(event):
-    print("button pressed")
 
-button = app.document.get_widget_by_id("ok")
-app.document.add_event_listener(button, Button.Pressed, on_press)
+class Host(App):
+    def __init__(self, document: Document) -> None:
+        super().__init__()
+        self.document = document.bind(self, actions={})
+
+    def compose(self) -> ComposeResult:
+        yield from self.document.compose()
+
+    @on(Button.Pressed)
+    @on(Input.Changed)
+    @on(Input.Submitted)
+    @on(Checkbox.Changed)
+    async def forward_document_message(self, event) -> None:
+        await self.document.dispatch(event)
+
+
+Host(DocumentLoader().from_string("<ui><label>Hello</label></ui>")).run()
 ```
 
+`TextUI` supplies those four handlers for convenience. `get_by_id` returns only widgets with declared document IDs and requires them to be mounted. Use native `app.query()` / `app.query_one()` for general selectors. A `Document` can be reused in independent Apps; each binding constructs fresh widgets. There is one binding per App and a single composition attempt per binding. Recomposition, remounting, document replacement, and transparent attachment to a running App are unsupported.
 
-License
--------
+## Add components and events
+
+`ComponentRegistry()` starts empty. To extend the built-ins, use `default_component_registry` from `textui.widgets.builtin_widgets`, then register additional immutable `ComponentSpec` definitions. Construct `DocumentLoader(registry)` after registration; the loader snapshots the registry.
+
+A factory receives `BuildContext(attributes, text, children, location)` and must return a fresh, unmounted Textual `Widget`. Attributes have already been converted by the registered `AttributeSpec` converters; the common layer applies IDs, classes, disabled state, and inline styles. Factories for containers attach `context.children` exactly once.
+
+For example, a typed custom label:
+
+```python
+from textual.widgets import Label
+from textui import AttributeSpec, BuildContext, ComponentSpec, DocumentLoader, TextUI, integer
+from textui.widgets.builtin_widgets import default_component_registry
+
+
+def count_label(context: BuildContext) -> Label:
+    return Label(f"Count: {context.attributes['count']}", markup=False)
+
+
+registry = default_component_registry()
+registry.register(ComponentSpec(
+    tag="count-label",
+    factory=count_label,
+    attributes={"count": AttributeSpec(integer(minimum=0), default=0)},
+))
+loader = DocumentLoader(registry)
+TextUI(loader.from_string('<ui><count-label count="3" /></ui>')).run()
+```
+
+Declare custom events with `events={"updated": EventSpec(CustomMessage, lambda event: event.widget)}` on the component spec, using the message's actual source-widget property. The host must also implement `@on(CustomMessage)` and `await self.document.dispatch(event)`. Subclassing `TextUI` is sufficient. Dispatch matches the **exact registered message type** and originating widget identity; no handlers are discovered automatically. See the [tested custom component and message example](tests/test_extensions.py).
+
+## Styles and trust
+
+Embedded `<style>` blocks use native TCSS and are App-wide. They follow host `CSS` / `CSS_PATH` author rules and retain document block order at equal specificity and importance. Native specificity, `!important`, widget defaults, and inline priority still apply. Inline declarations use native `set_styles`; they may contain literal values but not variable references. Put variables in a `<style>` block or host TCSS. Theme variables are available, while variables declared within one embedded block are local to that source. External stylesheets belong in the host's `CSS_PATH`.
+
+Styles are validated before document widgets are yielded or document styles are installed. Native validation failures are reported; declarations are never silently removed. Stylesheet integration is isolated in `textui/styling.py` and must be checked when upgrading Textual.
+
+Documents, actions, converters, and factories must be developer-controlled. This is **not an untrusted-input sandbox**. No scripting, expressions, templates, automatic data binding, hot reload, or browser HTML compatibility is provided.
+
+## Development
+
+Use Poetry 2.4.3 in an isolated tool environment, for example `uvx --python 3.12 --from poetry==2.4.3 poetry` in place of `poetry` below:
+
+```sh
+poetry install --with test
+poetry run python -m pytest -q
+poetry run python -m examples.editor
+poetry build
+```
+
+Tests run headlessly and include actual Pilot interactions, computed styles, custom events, and the example form. CI runs Python 3.11/3.12/3.14, builds the distribution, and installs each wheel into a clean environment for an image-free headless smoke test.
 
 TextUI is released under the [MIT License](LICENSE).
-
-Credits
--------
-
-TextUI is built on top of the [Textual](https://github.com/Textualize/textual) framework by [Will McGugan](https://github.com/willmcgugan).
