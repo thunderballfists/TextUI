@@ -43,7 +43,7 @@ Each pane needs an ID and title. `initial` must name one of those panes; without
 <rule orientation="horizontal" line-style="dashed" />
 ```
 
-A radio set needs direct radio-button children and allows at most one initially selected button. Its `changed` event provides `context.event.pressed` and `context.event.index`; a standalone radio button also supports `on-changed`. Collapsible content uses native pointer and Enter-key toggling. Use `on-collapsed` and `on-expanded` for its two exact native message types.
+A radio set needs direct radio-button children and allows at most one initially selected button. Put `on-changed` on the set: its event provides `context.event.pressed` and `context.event.index`. A standalone radio button supports `on-changed`, but a button inside a set cannot declare events because Textual consumes its change message. Collapsible content uses native pointer and Enter-key toggling. Use `on-collapsed` and `on-expanded` for its two exact native message types.
 
 Progress values are finite numbers. `total` must be positive when supplied, `progress` cannot be negative or exceed a declared total, and omitted `total` creates an indeterminate bar. Controller code can call `window.document.get_by_id("work").update(advance=5)`. A rule can be horizontal or vertical and accepts Textual line styles such as `solid`, `dashed`, `heavy`, and `double`. The [Indicators tab](../examples/controls/app.ui) demonstrates these widgets together.
 

@@ -90,7 +90,7 @@ Bind after `App.__init__` and before the App runs. Compose the binding through t
 ```python
 from textual import on
 from textual.app import App, ComposeResult
-from textual.widgets import Button, Checkbox, Input
+from textual.widgets import Button, Checkbox, Input, Select, Switch, TabbedContent, TextArea
 from textui import Document, DocumentLoader
 
 
@@ -106,6 +106,10 @@ class Host(App):
     @on(Input.Changed)
     @on(Input.Submitted)
     @on(Checkbox.Changed)
+    @on(Select.Changed)
+    @on(Switch.Changed)
+    @on(TextArea.Changed)
+    @on(TabbedContent.TabActivated)
     async def forward_document_message(self, event) -> None:
         await self.document.dispatch(event)
 
@@ -113,7 +117,7 @@ class Host(App):
 Host(DocumentLoader().from_string("<ui><label>Hello</label></ui>")).run()
 ```
 
-`TextUI` supplies those four handlers for convenience. `get_by_id` returns only widgets with declared document IDs and requires them to be mounted. Use native `app.query()` / `app.query_one()` for general selectors. A `Document` can be reused in independent Apps; each binding constructs fresh widgets. There is one binding per App and a single composition attempt per binding. Recomposition, remounting, document replacement, and transparent attachment to a running App are unsupported.
+`TextUI` supplies these built-in handlers for convenience. Add decorators for any other component messages used by your document. `get_by_id` returns only widgets with declared document IDs and requires them to be mounted. Use native `app.query()` / `app.query_one()` for general selectors. A `Document` can be reused in independent Apps; each binding constructs fresh widgets. There is one binding per App and a single composition attempt per binding. Recomposition, remounting, document replacement, and transparent attachment to a running App are unsupported.
 
 ## Add components and events
 
