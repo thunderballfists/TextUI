@@ -66,12 +66,31 @@ def build_data_table(context: BuildContext) -> DataTable:
     return SeededDataTable(columns, rows, cursor_type=context.attributes["cursor-type"])
 
 
+def build_column(context: BuildContext) -> TableColumn:
+    return TableColumn(context.text or "", context.attributes["key"])
+
+
+def build_cell(context: BuildContext) -> TableCell:
+    return TableCell(context.text or "")
+
+
+def build_row(context: BuildContext) -> TableRow:
+    return TableRow(context.attributes["key"], context.children)
+
+
+def build_tree_node(context: BuildContext) -> TreeSeedNode:
+    return TreeSeedNode(
+        context.attributes["key"], context.attributes["label"],
+        context.attributes["expanded"], context.children,
+    )
+
+
 def build_tree(context: BuildContext) -> Tree[str]:
     tree: Tree[str] = Tree(Text(context.attributes["label"]))
     tree.show_root = context.attributes["show-root"]
 
     def add(parent, seed: TreeSeedNode) -> None:
-        if seed.seed_children:
+        if seed.seed_children or seed.expanded:
             node = parent.add(Text(seed.label), data=seed.key, expand=seed.expanded)
             for child in seed.seed_children:
                 add(node, child)
@@ -86,14 +105,14 @@ def build_tree(context: BuildContext) -> Tree[str]:
 
 def register_data_widgets(registry: ComponentRegistry) -> None:
     registry.register(ComponentSpec(
-        tag="column", factory=lambda context: TableColumn(context.text or "", context.attributes["key"]),
+        tag="column", factory=build_column,
         text_policy="text", attributes={"key": AttributeSpec(nonempty_key, required=True)},
     ))
     registry.register(ComponentSpec(
-        tag="cell", factory=lambda context: TableCell(context.text or ""), text_policy="text",
+        tag="cell", factory=build_cell, text_policy="text",
     ))
     registry.register(ComponentSpec(
-        tag="row", factory=lambda context: TableRow(context.attributes["key"], context.children),
+        tag="row", factory=build_row,
         child_policy="widgets", attributes={"key": AttributeSpec(nonempty_key, required=True)},
     ))
     registry.register(ComponentSpec(
@@ -105,10 +124,7 @@ def register_data_widgets(registry: ComponentRegistry) -> None:
         },
     ))
     registry.register(ComponentSpec(
-        tag="tree-node", factory=lambda context: TreeSeedNode(
-            context.attributes["key"], context.attributes["label"],
-            context.attributes["expanded"], context.children,
-        ),
+        tag="tree-node", factory=build_tree_node,
         child_policy="widgets",
         attributes={
             "key": AttributeSpec(nonempty_key, required=True),
