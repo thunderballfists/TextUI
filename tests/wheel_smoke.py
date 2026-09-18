@@ -14,7 +14,7 @@ from textual.content import Content
 async def main() -> None:
     package_path = Path(textui.__file__).resolve()
     assert package_path.is_relative_to(Path(sys.prefix).resolve()), package_path
-    assert importlib.metadata.version("textui") == "0.2.0"
+    assert importlib.metadata.version("textui") == "0.2.1"
     installed = {dist.metadata["Name"].lower().replace("_", "-") for dist in importlib.metadata.distributions()}
     assert "pillow" not in installed
     assert "textual-imageview" not in installed
