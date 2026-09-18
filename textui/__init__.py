@@ -4,6 +4,7 @@ from .actions import ActionCallback, ActionContext
 from .document import BoundDocument, Document
 from .textui import TextUI
 from .controllers import action
+from .timers import every
 from .errors import (
     ActionExecutionError,
     ComponentBuildError,
@@ -61,4 +62,5 @@ __all__ = [
     "enum",
     "integer",
     "action",
+    "every",
 ]

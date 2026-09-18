@@ -58,6 +58,8 @@ class ProjectApp(App):
     async def on_mount(self) -> None:
         self.window.phase = "ready"
         await self.controllers.hook("on_ready")
+        for seconds, callback, thread in self.controllers.periodic:
+            self.window.every(seconds, callback, thread=thread)
 
     async def on_unmount(self) -> None:
         await self._close_once()
@@ -67,6 +69,7 @@ class ProjectApp(App):
             return
         self._closed = True
         self.window.phase = "closing"
+        self.window.timers.close()
         try:
             await self.controllers.hook("on_close")
         finally:

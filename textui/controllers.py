@@ -13,6 +13,7 @@ from .actions import ActionContext
 from .document import BoundDocument
 from .errors import DocumentStateError, DocumentValidationError, SourceLocation, TextUIError
 from .registry import ComponentRegistry
+from .timers import RuntimeTimers
 
 
 def action(function: Callable[..., Any]) -> Callable[..., Any]:
@@ -38,6 +39,7 @@ class ProjectWindow:
         self.registry = registry
         self._document: BoundDocument | None = None
         self.phase = "created"
+        self.timers = RuntimeTimers(app, self)
 
     @property
     def document(self) -> BoundDocument:
@@ -45,12 +47,24 @@ class ProjectWindow:
             raise DocumentStateError("window.document is available after document binding")
         return self._document
 
+    def after(self, seconds: float, callback: Callable[[], Any]):
+        return self.timers.schedule(seconds, callback, repeat=False)
+
+    def every(self, seconds: float, callback: Callable[[], Any], *, thread: bool = False):
+        return self.timers.schedule(seconds, callback, repeat=True, thread=thread)
+
+    def call_ui(self, callback: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        if self.phase != "ready":
+            raise DocumentStateError("window.call_ui is available only while ready")
+        return self.app.call_from_thread(callback, *args, **kwargs)
+
 
 class ControllerSet:
     def __init__(self, window: ProjectWindow) -> None:
         self.window = window
         self.actions: dict[str, Callable[[ActionContext], Any]] = {}
         self.hooks: dict[str, tuple[Callable[..., Any], SourceLocation]] = {}
+        self.periodic: list[tuple[float, Callable[[], Any], bool]] = []
 
     def load(self, path: Path) -> None:
         location = SourceLocation(str(path), 1, tag="script")
@@ -81,6 +95,10 @@ class ControllerSet:
                     raise DocumentValidationError(f"duplicate hook {name!r}", location=location)
                 _arity(value, {0}, location)
                 self.hooks[name] = (value, location)
+            if callable(value) and getattr(value, "__textui_every__", None) is not None and getattr(value, "__module__", None) == module.__name__:
+                _arity(value, {0}, location)
+                seconds, thread = value.__textui_every__
+                self.periodic.append((seconds, value, thread))
 
     async def hook(self, name: str) -> None:
         if name not in self.hooks:
