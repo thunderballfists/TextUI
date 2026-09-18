@@ -35,6 +35,7 @@ class TranscriptLog(RichLog):
         self._inline_text = ""
         self._inline_line_count = 0
         self._inline_open = False
+        self._inline_pending = False
 
     def watch_scroll_y(self, old_value: float, new_value: float) -> None:
         super().watch_scroll_y(old_value, new_value)
@@ -50,6 +51,13 @@ class TranscriptLog(RichLog):
         """Replace the active literal streamed entry with its extended text."""
         if not isinstance(text, str):
             raise TypeError("append_inline text must be a string")
+        if not self._size_known:
+            self._inline_text += text
+            self._inline_open = True
+            if not self._inline_pending:
+                self._inline_pending = True
+                self.call_after_refresh(self._write_pending_inline)
+            return self
         self._discard_inline()
         self._inline_text += text
         old_line_ids = {id(line) for line in self.lines}
@@ -62,11 +70,21 @@ class TranscriptLog(RichLog):
         self._inline_open = self._inline_line_count > 0
         return self
 
+    def _write_pending_inline(self) -> None:
+        if not self._size_known:
+            self.call_after_refresh(self._write_pending_inline)
+            return
+        self._inline_pending = False
+        if not self._inline_open:
+            return
+        self.append_inline("")
+
     def commit_line(self) -> TranscriptLog:
         """Finalize the active streamed entry without adding another line."""
         self._inline_text = ""
         self._inline_line_count = 0
         self._inline_open = False
+        self._inline_pending = False
         return self
 
     def clear(self) -> TranscriptLog:
@@ -74,6 +92,7 @@ class TranscriptLog(RichLog):
         self._inline_text = ""
         self._inline_line_count = 0
         self._inline_open = False
+        self._inline_pending = False
         self.is_following = self.auto_scroll
         return self
 
