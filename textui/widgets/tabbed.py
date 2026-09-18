@@ -4,7 +4,13 @@ from __future__ import annotations
 from textual.content import Content
 from textual.widgets import TabbedContent, TabPane
 
-from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec
+from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, enum
+
+
+def accelerator(value: str) -> str:
+    if len(value) != 1 or not value.isprintable() or value.isspace():
+        raise ValueError("accelerator must be one printable non-space character")
+    return value
 
 
 def build_tab_pane(context: BuildContext) -> TabPane:
@@ -21,7 +27,11 @@ def build_tabbed_content(context: BuildContext) -> TabbedContent:
 def register_tabs(registry: ComponentRegistry) -> None:
     registry.register(ComponentSpec(
         tag="tab-pane", factory=build_tab_pane, child_policy="widgets",
-        attributes={"title": AttributeSpec(required=True)},
+        attributes={
+            "title": AttributeSpec(required=True),
+            "accelerator": AttributeSpec(accelerator),
+            "accelerator-scope": AttributeSpec(enum("document")),
+        },
     ))
     registry.register(ComponentSpec(
         tag="tabbed-content", factory=build_tabbed_content, child_policy="widgets",

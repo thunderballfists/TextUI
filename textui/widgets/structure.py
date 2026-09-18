@@ -35,6 +35,10 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
                 raise DocumentValidationError("tab-pane must be a direct child of tabbed-content", location=node.location)
             if node.common["id"] is None:
                 raise DocumentValidationError("tab-pane requires an id", location=node.location, attribute="id")
+            if "accelerator" in node.attributes and "accelerator-scope" not in node.attributes:
+                raise DocumentValidationError("tab-pane accelerator requires accelerator-scope=document", location=node.location, attribute="accelerator-scope")
+            if "accelerator-scope" in node.attributes and "accelerator" not in node.attributes:
+                raise DocumentValidationError("accelerator-scope requires an accelerator", location=node.location, attribute="accelerator-scope")
         if is_builtin(node, build_tabbed_content):
             if not node.children or any(not is_builtin(child, build_tab_pane) for child in node.children):
                 raise DocumentValidationError("tabbed-content requires tab-pane children", location=node.location)
@@ -102,6 +106,15 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
 
     for root in nodes:
         visit(root, None)
+    accelerators = [node.attributes["accelerator"] for node in walk(nodes) if node.spec.tag == "tab-pane" and "accelerator" in node.attributes]
+    if len(accelerators) != len(set(accelerators)):
+        raise DocumentValidationError("document accelerators must be unique")
+
+
+def walk(nodes: Iterable[ElementNode]) -> Iterable[ElementNode]:
+    for node in nodes:
+        yield node
+        yield from walk(node.children)
 
 
 def _tree_nodes(node: ElementNode) -> Iterable[ElementNode]:
