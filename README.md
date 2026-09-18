@@ -1,6 +1,6 @@
 # TextUI
 
-TextUI 0.2.1 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle.
+TextUI 0.3 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files.
 
 This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
@@ -12,10 +12,11 @@ From a checkout:
 
 ```sh
 python -m pip install .
+textui run examples/project/app.ui
 python -m examples.editor
 ```
 
-The editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. See [examples/README.md](examples/README.md) for the static sample document. Examples are included in the source distribution, not the installed library wheel.
+The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. See [examples/README.md](examples/README.md) for the static sample document. Examples are included in the source distribution, not the installed library wheel.
 
 A self-contained application:
 
@@ -46,7 +47,7 @@ Use `DocumentLoader().from_file("form.xml")` for UTF-8 files. `from_string` alwa
 
 ## Markup
 
-Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is parsed strictly. Comments are allowed. Scripts, namespaces, DTDs, entities, unknown tags/attributes/events, and duplicate IDs are rejected. Text in leaf widgets is literal, with whitespace collapsed; nested markup in leaves and mixed text/widget content are unsupported.
+Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is parsed strictly. Comments are allowed. The project runtime accepts only linked scripts declared at the entry root; the standalone `DocumentLoader` does not load scripts. Namespaces, DTDs, entities, unknown tags/attributes/events, and duplicate IDs are rejected. Text in leaf widgets is literal, with whitespace collapsed; nested markup in leaves and mixed text/widget content are unsupported.
 
 | Tag | Content | Attributes beyond common attributes | Events |
 | --- | --- | --- | --- |
@@ -55,8 +56,15 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `button` | Text | `variant`: default, primary, success, warning, error | `pressed` |
 | `input` | None | `value`, `placeholder`, `password`, positive `max-length` | `changed`, `submitted` |
 | `checkbox` | Text | Boolean `value` | `changed` |
+| `split` | Exactly two `pane` children | `direction`: horizontal or vertical | `resized`, `toggled` |
+| `pane` | Widgets | Positive `min-size`, optional `size` | None |
+| `nav` | `nav-item` children | None | `selected` |
+| `nav-item` | Text | Required `target` ID | None |
+| `content-switcher` | Widgets with IDs | Optional `initial` child ID | None |
 
 All widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
+
+`split` uses a draggable divider that accepts arrow keys when focused. Set `pane.display = False` to hide a pane; showing it restores its stored size. A `nav-item` target must name a direct child of a `content-switcher`. The `selected` event carries `context.event.target`, which an action can assign to the switcher's `current` property. The [project example](examples/project/app.ui) shows these controls together.
 
 ## Integrate with a normal App
 
@@ -122,11 +130,11 @@ Declare custom events with `events={"updated": EventSpec(CustomMessage, lambda e
 
 ## Styles and trust
 
-Embedded `<style>` blocks use native TCSS and are App-wide. They follow host `CSS` / `CSS_PATH` author rules and retain document block order at equal specificity and importance. Native specificity, `!important`, widget defaults, and inline priority still apply. Inline declarations use native `set_styles`; they may contain literal values but not variable references. Put variables in a `<style>` block or host TCSS. Theme variables are available, while variables declared within one embedded block are local to that source. External stylesheets belong in the host's `CSS_PATH`.
+Embedded `<style>` blocks use native TCSS and are App-wide. The project runtime also accepts `<style src="file.tcss"/>` at the entry root. Styles follow host `CSS` / `CSS_PATH` author rules and retain document block order at equal specificity and importance. Native specificity, `!important`, widget defaults, and inline priority still apply. Inline declarations use native `set_styles`; they may contain literal values but not variable references. Put variables in a `<style>` block or host TCSS. Theme variables are available, while variables declared within one embedded block are local to that source. Standalone hosts may use `CSS_PATH` for external styles.
 
 Styles are validated before document widgets are yielded or document styles are installed. Native validation failures are reported; declarations are never silently removed. Stylesheet integration is isolated in `textui/styling.py` and must be checked when upgrading Textual.
 
-Documents, actions, converters, and factories must be developer-controlled. This is **not an untrusted-input sandbox**. No scripting, expressions, templates, automatic data binding, hot reload, or browser HTML compatibility is provided.
+Documents, linked Python, actions, converters, and factories must be developer-controlled. This is **not an untrusted-input sandbox**. No inline scripting, expressions, templates, automatic data binding, hot reload, or browser HTML compatibility is provided.
 
 ## Development
 

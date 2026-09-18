@@ -7,6 +7,8 @@ from typing import Any
 from textual import on
 from textual.app import App, ComposeResult
 from textual.widgets import Button, Checkbox, Input
+from .widgets.split import Split
+from .widgets.navigation import Nav
 
 from .actions import ActionCallback
 from .document import Document
@@ -24,5 +26,8 @@ class TextUI(App):
     @on(Input.Changed)
     @on(Input.Submitted)
     @on(Checkbox.Changed)
-    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed) -> None:
+    @on(Split.Resized)
+    @on(Split.Toggled)
+    @on(Nav.Selected)
+    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected) -> None:
         await self.document.dispatch(event)

@@ -116,7 +116,7 @@ class BuildContext:
 
 
 class ComponentRegistry:
-    _RESERVED_TAGS = frozenset({"ui", "style", "script"})
+    _RESERVED_TAGS = frozenset({"ui", "style", "script", "include"})
     _COMMON_ATTRIBUTES = frozenset({"id", "class", "style", "disabled"})
     def __init__(self) -> None:
         self._specifications: dict[str, ComponentSpec] = {}

@@ -34,3 +34,26 @@ async def test_sample_markup_mounts_all_builtin_widgets(tmp_path, monkeypatch):
         assert app.document.get_by_id("name").id == "name"
         assert app.document.get_by_id("notify").value is False
         assert app.document.get_by_id("sample-button").label.plain == "A native button"
+
+
+@pytest.mark.asyncio
+async def test_project_example_loads_includes_styles_actions_and_timer(tmp_path, monkeypatch):
+    from pathlib import Path
+    from textui import ProjectApp, ProjectSource
+
+    monkeypatch.chdir(tmp_path)
+    entry = Path(__file__).parents[1] / "examples" / "project" / "app.ui"
+    app = ProjectApp(ProjectSource.discover(entry))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.document.get_by_id("name").value = "Abe"
+        assert await pilot.click("#greet")
+        assert str(app.document.get_by_id("status").render()) == "Hello, Abe!"
+        await pilot.pause(1.05)
+        assert str(app.document.get_by_id("clock").render()) != "Waiting for timer"
+        await pilot.click(app.document.get_by_id("navigation").items[1])
+        await pilot.pause()
+        assert app.document.get_by_id("content").current == "settings"
+        await pilot.click("#toggle-sidebar")
+        await pilot.pause()
+        assert app.document.get_by_id("sidebar").display is False

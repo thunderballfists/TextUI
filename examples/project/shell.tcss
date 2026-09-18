@@ -1,0 +1,36 @@
+#workspace {
+    padding: 1 2;
+}
+
+#toolbar {
+    height: 3;
+}
+
+#layout {
+    height: 1fr;
+}
+
+#content {
+    height: 100%;
+    width: 100%;
+}
+
+#home {
+    width: 100%;
+}
+
+#heading {
+    text-style: bold;
+}
+
+#name {
+    width: 1fr;
+}
+
+#greet {
+    width: auto;
+}
+
+#status {
+    margin-top: 1;
+}

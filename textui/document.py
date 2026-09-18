@@ -44,7 +44,7 @@ class Document:
         """Validate callbacks and reserve one binding on an initialized App."""
         if not isinstance(app, App) or not hasattr(app, 'stylesheet'):
             raise DocumentStateError('Bind to an initialized Textual App')
-        if app.is_running:
+        if app.is_running and not getattr(app, "_textui_loading", False):
             raise DocumentStateError('Bind the document before running the App')
         if hasattr(app, '_textui_document_binding'):
             raise DocumentStateError('An App may have only one document binding')
