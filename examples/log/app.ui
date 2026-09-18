@@ -1,0 +1,13 @@
+<ui>
+  <style src="log.tcss" />
+  <script src="controller.py" />
+  <vertical id="demo">
+    <label>Streaming transcript</label>
+    <horizontal id="actions">
+      <button id="append-status" on-pressed="append_status">Append status</button>
+      <button id="stream-message" on-pressed="stream_message">Stream message</button>
+    </horizontal>
+    <log id="transcript" max-lines="500" wrap="true" />
+    <label id="feedback">Ready</label>
+  </vertical>
+</ui>
