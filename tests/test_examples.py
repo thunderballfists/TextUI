@@ -57,3 +57,27 @@ async def test_project_example_loads_includes_styles_actions_and_timer(tmp_path,
         await pilot.click("#toggle-sidebar")
         await pilot.pause()
         assert app.document.get_by_id("sidebar").display is False
+
+
+@pytest.mark.asyncio
+async def test_controls_example_mounts_and_handles_native_changes(tmp_path, monkeypatch):
+    from pathlib import Path
+    from textui import ProjectApp, ProjectSource
+
+    monkeypatch.chdir(tmp_path)
+    entry = Path(__file__).parents[1] / "examples" / "controls" / "app.ui"
+    app = ProjectApp(ProjectSource.discover(entry))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        app.document.get_by_id("status").value = "done"
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Status: done"
+        await pilot.click("#enabled")
+        await pilot.pause()
+        assert app.document.get_by_id("enabled").value is True
+        assert str(app.document.get_by_id("feedback").render()) == "Enabled: true"
+        tabs = app.document.get_by_id("tabs")
+        await pilot.click(list(tabs.query("ContentTab"))[1])
+        await pilot.pause()
+        assert tabs.active == "about"
+        assert str(app.document.get_by_id("feedback").render()) == "Tab: about"

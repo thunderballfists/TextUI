@@ -15,7 +15,7 @@ from textual.content import Content
 async def main() -> None:
     package_path = Path(textui.__file__).resolve()
     assert package_path.is_relative_to(Path(sys.prefix).resolve()), package_path
-    assert importlib.metadata.version("textui") == "0.3.0"
+    assert importlib.metadata.version("textui") == "0.4.0"
     installed = {dist.metadata["Name"].lower().replace("_", "-") for dist in importlib.metadata.distributions()}
     assert "pillow" not in installed
     assert "textual-imageview" not in installed
@@ -48,6 +48,18 @@ async def main() -> None:
         async with project_app.run_test() as pilot:
             assert await pilot.click("#go")
             assert project_app.clicked is True
+    controls = DocumentLoader().from_string('''<ui>
+      <select id="state" value="new" allow-blank="false"><option value="new">New</option></select>
+      <switch id="enabled" value="true" />
+      <text-area id="notes">line one\nline two</text-area>
+      <tabbed-content id="tabs" initial="home"><tab-pane id="home" title="Home"><label>Welcome</label></tab-pane></tabbed-content>
+    </ui>''')
+    controls_app = TextUI(controls)
+    async with controls_app.run_test():
+        assert controls_app.document.get_by_id("state").value == "new"
+        assert controls_app.document.get_by_id("enabled").value is True
+        assert controls_app.document.get_by_id("notes").text == "line one\nline two"
+        assert controls_app.document.get_by_id("tabs").active == "home"
     assert not any(name == "PIL" or name.startswith("PIL.") or name == "textual_imageview" or name.startswith("textual_imageview.") for name in sys.modules)
     print(f"Clean wheel headless smoke passed: {package_path}")
     print({name: importlib.metadata.version(name) for name in ("textui", "textual", "lxml")})
