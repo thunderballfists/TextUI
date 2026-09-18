@@ -28,3 +28,21 @@ Static tab views use native `TabbedContent`:
 ```
 
 Each pane needs an ID and title. `initial` must name one of those panes; without it, Textual selects the first. The `tab-activated` event provides `context.event.pane`. Tabs respond to native mouse and keyboard input. The [controls example](../examples/controls/app.ui) shows all four controls in a runnable project.
+
+## Choices, disclosure, and indicators
+
+```xml
+<radio-set id="priority" on-changed="priority_changed">
+  <radio-button id="low">Low</radio-button>
+  <radio-button id="high" value="true">High</radio-button>
+</radio-set>
+<collapsible title="Details" collapsed="true" on-expanded="show_details">
+  <label>Additional information</label>
+</collapsible>
+<progress-bar id="work" total="100" progress="25" show-eta="false" />
+<rule orientation="horizontal" line-style="dashed" />
+```
+
+A radio set needs direct radio-button children and allows at most one initially selected button. Its `changed` event provides `context.event.pressed` and `context.event.index`; a standalone radio button also supports `on-changed`. Collapsible content uses native pointer and Enter-key toggling. Use `on-collapsed` and `on-expanded` for its two exact native message types.
+
+Progress values are finite numbers. `total` must be positive when supplied, `progress` cannot be negative or exceed a declared total, and omitted `total` creates an indeterminate bar. Controller code can call `window.document.get_by_id("work").update(advance=5)`. A rule can be horizontal or vertical and accepts Textual line styles such as `solid`, `dashed`, `heavy`, and `double`. The [Indicators tab](../examples/controls/app.ui) demonstrates these widgets together.

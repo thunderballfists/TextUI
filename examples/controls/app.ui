@@ -15,6 +15,17 @@
       <tab-pane id="about" title="About">
         <label>Tabs and controls are native Textual widgets.</label>
       </tab-pane>
+      <tab-pane id="indicators" title="Indicators">
+        <radio-set id="choice" on-changed="priority_changed">
+          <radio-button id="low">Low</radio-button>
+          <radio-button id="high" value="true">High</radio-button>
+        </radio-set>
+        <rule line-style="dashed" />
+        <progress-bar id="work" total="100" progress="25" show-eta="false" />
+        <collapsible id="details" title="Details" collapsed="true" on-collapsed="details_collapsed" on-expanded="details_expanded">
+          <label>Textual handles pointer and keyboard input.</label>
+        </collapsible>
+      </tab-pane>
     </tabbed-content>
     <label id="feedback">Ready</label>
   </vertical>

@@ -1,6 +1,6 @@
 # TextUI
 
-TextUI 0.4 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files.
+TextUI 0.5 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files.
 
 This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
@@ -17,7 +17,7 @@ textui run examples/controls/app.ui
 python -m examples.editor
 ```
 
-The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [controls example](examples/controls/app.ui) demonstrates select, switch, text area, and tabs; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
+The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
 A self-contained application:
 
@@ -68,6 +68,11 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `text-area` | Verbatim text | `language`, `soft-wrap`, `read-only`, `show-line-numbers`, `tab-behavior`, `placeholder` | `changed` |
 | `tabbed-content` | `tab-pane` children | Optional `initial` pane ID | `tab-activated` |
 | `tab-pane` | Widgets | Required `id` and `title` | None |
+| `radio-set` | `radio-button` children | None | `changed` |
+| `radio-button` | Text | Boolean `value` | `changed` |
+| `collapsible` | Widgets | `title`, boolean `collapsed` | `collapsed`, `expanded` |
+| `progress-bar` | None | Positive `total`, nonnegative `progress`, boolean `show-bar`, `show-percentage`, `show-eta` | None |
+| `rule` | None | `orientation`, `line-style` | None |
 
 All widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
 

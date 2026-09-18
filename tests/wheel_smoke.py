@@ -15,7 +15,7 @@ from textual.content import Content
 async def main() -> None:
     package_path = Path(textui.__file__).resolve()
     assert package_path.is_relative_to(Path(sys.prefix).resolve()), package_path
-    assert importlib.metadata.version("textui") == "0.4.0"
+    assert importlib.metadata.version("textui") == "0.5.0"
     installed = {dist.metadata["Name"].lower().replace("_", "-") for dist in importlib.metadata.distributions()}
     assert "pillow" not in installed
     assert "textual-imageview" not in installed
@@ -53,6 +53,10 @@ async def main() -> None:
       <switch id="enabled" value="true" />
       <text-area id="notes">line one\nline two</text-area>
       <tabbed-content id="tabs" initial="home"><tab-pane id="home" title="Home"><label>Welcome</label></tab-pane></tabbed-content>
+      <radio-set id="choice"><radio-button id="low">Low</radio-button><radio-button id="high" value="true">High</radio-button></radio-set>
+      <collapsible id="details" title="Details" collapsed="false"><label>More</label></collapsible>
+      <progress-bar id="work" total="10" progress="2" />
+      <rule id="divider" line-style="dashed" />
     </ui>''')
     controls_app = TextUI(controls)
     async with controls_app.run_test():
@@ -60,6 +64,10 @@ async def main() -> None:
         assert controls_app.document.get_by_id("enabled").value is True
         assert controls_app.document.get_by_id("notes").text == "line one\nline two"
         assert controls_app.document.get_by_id("tabs").active == "home"
+        assert controls_app.document.get_by_id("choice").pressed_button.id == "high"
+        assert controls_app.document.get_by_id("details").collapsed is False
+        assert controls_app.document.get_by_id("work").progress == 2.0
+        assert controls_app.document.get_by_id("divider").line_style == "dashed"
     assert not any(name == "PIL" or name.startswith("PIL.") or name == "textual_imageview" or name.startswith("textual_imageview.") for name in sys.modules)
     print(f"Clean wheel headless smoke passed: {package_path}")
     print({name: importlib.metadata.version(name) for name in ("textui", "textual", "lxml")})
