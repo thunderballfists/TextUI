@@ -1,0 +1,21 @@
+#workspace {
+    height: 100%;
+}
+
+#rail {
+    width: 24;
+    padding: 1;
+}
+
+#agents {
+    height: 1fr;
+    margin-top: 1;
+}
+
+#detail {
+    padding: 1 2;
+}
+
+#agent-name {
+    text-style: bold;
+}
