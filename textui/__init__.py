@@ -1,6 +1,8 @@
 """The strict, typed TextUI document definition API."""
 
-from .document import Document
+from .actions import ActionCallback, ActionContext
+from .document import BoundDocument, Document
+from .textui import TextUI
 from .errors import (
     ActionExecutionError,
     ComponentBuildError,
@@ -29,7 +31,10 @@ from .registry import (
 )
 
 __all__ = [
+    "ActionCallback",
+    "ActionContext",
     "ActionExecutionError",
+    "BoundDocument",
     "AttributeSpec",
     "BuildContext",
     "ComponentBuildError",
@@ -48,6 +53,7 @@ __all__ = [
     "RegistryError",
     "SourceLocation",
     "StyleBlock",
+    "TextUI",
     "TextUIError",
     "UNSET",
     "boolean",
