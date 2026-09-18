@@ -76,3 +76,26 @@ def test_script_discovery_does_not_execute_python(tmp_path: Path):
     (tmp_path / "controller.py").write_text('raise RuntimeError("executed")', encoding="utf-8")
 
     assert ProjectSource.discover(tmp_path / "app.ui").scripts == (tmp_path / "controller.py",)
+
+
+def test_sourced_and_inline_styles_keep_entry_order(tmp_path: Path):
+    (tmp_path / "app.ui").write_text(
+        '<ui><style>Label { color: red; }</style><style src="later.tcss"/>'
+        '<style>Label { color: blue; }</style><label>Hi</label></ui>', encoding="utf-8"
+    )
+    (tmp_path / "later.tcss").write_text("Label { color: green; }", encoding="utf-8")
+
+    document = ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())
+    assert [style.index for style in document.styles] == [0, 1, 2]
+    assert ["red" in document.styles[0].content, "green" in document.styles[1].content, "blue" in document.styles[2].content] == [True] * 3
+    assert document.styles[1].location.source == str(tmp_path / "later.tcss")
+
+
+def test_same_script_declared_twice_is_loaded_once(tmp_path: Path):
+    script = tmp_path / "controller.py"
+    script.write_text("", encoding="utf-8")
+    (tmp_path / "app.ui").write_text(
+        '<ui><script src="controller.py"/><script src="controller.py"/></ui>', encoding="utf-8"
+    )
+
+    assert ProjectSource.discover(tmp_path / "app.ui").scripts == (script,)

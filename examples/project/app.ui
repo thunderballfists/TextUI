@@ -2,8 +2,26 @@
   <style src="shell.tcss" />
   <script src="controller.py" />
   <vertical id="workspace">
-    <label id="heading">TextUI project runtime</label>
-    <include src="views/form.ui" />
-    <label id="clock">Waiting for timer</label>
+    <horizontal id="toolbar">
+      <button id="toggle-sidebar" on-pressed="toggle_sidebar">☰</button>
+      <label id="heading">TextUI project runtime</label>
+    </horizontal>
+    <split id="layout" direction="horizontal">
+      <pane id="sidebar" size="24" min-size="12">
+        <nav id="navigation" on-selected="show_page">
+          <nav-item target="home">Home</nav-item>
+          <nav-item target="settings">Settings</nav-item>
+        </nav>
+      </pane>
+      <pane id="main" min-size="20">
+        <content-switcher id="content" initial="home">
+          <vertical id="home">
+            <include src="views/form.ui" />
+            <label id="clock">Waiting for timer</label>
+          </vertical>
+          <vertical id="settings"><label>Settings page</label></vertical>
+        </content-switcher>
+      </pane>
+    </split>
   </vertical>
 </ui>

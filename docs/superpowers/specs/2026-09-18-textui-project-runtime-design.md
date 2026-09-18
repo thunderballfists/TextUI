@@ -2,7 +2,7 @@
 
 Date: 2026-09-18
 
-Status: draft for owner review; no implementation authorized by this document alone.
+Status: approved and implemented in the 0.3.0 branch.
 
 ## Purpose and sequence
 

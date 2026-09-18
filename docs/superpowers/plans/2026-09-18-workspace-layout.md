@@ -1,6 +1,6 @@
 # Workspace Layout Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add mouse-selectable navigation and a two-pane workspace that can be resized and hidden without losing the HTML-like markup model.
 
@@ -24,11 +24,11 @@
 
 **Interfaces:** Register `<split direction="horizontal|vertical">` with exactly two `<pane>` children. Each pane accepts minimum size; `Split` publishes resize and toggle messages. Its divider is internal and has no document ID.
 
-- [ ] **Step 1: Write failing tests** for grammar, initial sizing, drag, keyboard resize, minimum clamping, hide/show restoration, and terminal resize under Pilot.
-- [ ] **Step 2: Run** `.venv/bin/python -m pytest tests/test_split.py -q`; expect failure.
-- [ ] **Step 3: Implement** typed factories and a native Textual split widget with mouse capture, keyboard bindings, and size state. Reject malformed children before mounting.
-- [ ] **Step 4: Run** `.venv/bin/python -m pytest tests/test_split.py -q`; expect pass.
-- [ ] **Step 5: Commit** split component and tests.
+- [x] **Step 1: Write failing tests** for grammar, initial sizing, drag, keyboard resize, minimum clamping, hide/show restoration, and terminal resize under Pilot.
+- [x] **Step 2: Run** `.venv/bin/python -m pytest tests/test_split.py -q`; expect failure.
+- [x] **Step 3: Implement** typed factories and a native Textual split widget with mouse capture, keyboard bindings, and size state. Reject malformed children before mounting.
+- [x] **Step 4: Run** `.venv/bin/python -m pytest tests/test_split.py -q`; expect pass.
+- [x] **Step 5: Commit** split component and tests.
 
 ### Task 2: Navigation and content switching
 
@@ -36,11 +36,11 @@
 
 **Interfaces:** Register `<nav>` and `<nav-item target="content-id">`; publish selection with the target; validate targets in the document before mount. An explicit action switches a native `ContentSwitcher`-style content area.
 
-- [ ] **Step 1: Write failing tests** for markup grammar, missing targets, mouse and keyboard selection, declared event dispatch, and content change.
-- [ ] **Step 2: Run** `.venv/bin/python -m pytest tests/test_navigation.py -q`; expect failure.
-- [ ] **Step 3: Implement** registry specs, event forwarding, target validation, and a sidebar example that calls the native content switcher through `window.document`.
-- [ ] **Step 4: Run** `.venv/bin/python -m pytest tests/test_navigation.py -q` and `.venv/bin/python -m pytest -q`; expect pass.
-- [ ] **Step 5: Commit** navigation and docs.
+- [x] **Step 1: Write failing tests** for markup grammar, missing targets, mouse and keyboard selection, declared event dispatch, and content change.
+- [x] **Step 2: Run** `.venv/bin/python -m pytest tests/test_navigation.py -q`; expect failure.
+- [x] **Step 3: Implement** registry specs, event forwarding, target validation, and a sidebar example that calls the native content switcher through `window.document`.
+- [x] **Step 4: Run** `.venv/bin/python -m pytest tests/test_navigation.py -q` and `.venv/bin/python -m pytest -q`; expect pass.
+- [x] **Step 5: Commit** navigation and docs.
 
 ## Self-Review
 

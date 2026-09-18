@@ -91,3 +91,23 @@ def tick():
     before = len(app.events)
     await asyncio.sleep(0.035)
     assert len(app.events) == before
+
+
+@pytest.mark.asyncio
+async def test_sync_callback_returning_awaitable_does_not_overlap(tmp_path: Path):
+    app = app_from(tmp_path, '''
+import asyncio
+from textui import every
+
+async def delayed():
+    window.app.events.append("start")
+    await asyncio.sleep(0.04)
+    window.app.events.append("end")
+
+@every(0.01)
+def tick():
+    return delayed()
+''')
+    async with app.run_test() as pilot:
+        await pilot.pause(0.06)
+        assert app.events[:3] == ["start", "end", "start"]

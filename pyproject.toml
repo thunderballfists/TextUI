@@ -1,6 +1,6 @@
 [project]
 name = "textui"
-version = "0.2.1"
+version = "0.3.0"
 description = "Strict XML documents, native TCSS, and explicit Python actions for Textual apps"
 authors = [{ name = "thunderballfists", email = "apb@beihl.com" }]
 readme = "README.md"

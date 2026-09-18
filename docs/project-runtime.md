@@ -29,3 +29,17 @@ Optional `on_setup`, `on_ready`, and `on_close` functions take no arguments and 
 `window.after(seconds, callback)` schedules a one-shot callback and `window.every(seconds, callback, thread=False)` repeats it. `@every(seconds, thread=False)` starts a decorated timer after ready. All accept positive finite seconds and zero-argument callbacks; handles support `pause()`, `resume()`, and `stop()`. Async callbacks run as App workers; overlapping repeat ticks are skipped. Blocking synchronous work must opt into `thread=True`; use `window.call_ui(callback, *args, **kwargs)` from that thread for UI updates. Runtime timers stop when the App closes.
 
 The low-level `DocumentLoader`, `Document.bind`, and `TextUI(Document, actions=...)` APIs remain available and do not execute linked files. The runnable [project example](../examples/project/app.ui) combines styles, a linked controller, an included view, an action, and a timer.
+
+## Navigation and panes
+
+Use `<split direction="horizontal">` with exactly two `<pane>` children. A pane can set `size` for its initial width (or height in a vertical split) and `min-size` for its lower bound. Drag the divider with the mouse or focus it and press arrow keys. Setting a pane's Textual `display` property to `False` hides it; setting it back to `True` restores the stored size. The split publishes `resized` and `toggled` events to `on-resized` and `on-toggled` actions.
+
+Use `<nav on-selected="show_page">` with `<nav-item target="home">Home</nav-item>` children. Each target must name a direct child of a `<content-switcher>`. The selected event carries `context.event.target`; an action can switch the native content area:
+
+```python
+@action
+def show_page(context):
+    window.document.get_by_id("content").current = context.event.target
+```
+
+The [project example](../examples/project/app.ui) combines a hideable sidebar, draggable split, navigation, and an included page. Included views remain static; the runtime does not add screen modes or hot reload.

@@ -58,13 +58,13 @@ class RuntimeTimers:
             busy = True
 
             def invoke() -> Any:
+                nonlocal busy
                 try:
                     return callback()
                 except Exception as error:
                     raise TextUIError(f"timer {name} failed: {error}", location=location) from error
                 finally:
                     if thread:
-                        nonlocal busy
                         busy = False
 
             if thread:
@@ -73,21 +73,22 @@ class RuntimeTimers:
                 return
             try:
                 result = invoke()
-                if isawaitable(result):
-                    async def await_result():
-                        nonlocal busy
-                        try:
-                            await result
-                        except Exception as error:
-                            raise TextUIError(f"timer {name} failed: {error}", location=location) from error
-                        finally:
-                            busy = False
-                    worker = self.app.run_worker(await_result(), name=f"textui:{name}")
-                    self.workers.add(worker)
-                    return
-            finally:
-                if not iscoroutinefunction(callback):
-                    busy = False
+            except BaseException:
+                busy = False
+                raise
+            if isawaitable(result):
+                async def await_result():
+                    nonlocal busy
+                    try:
+                        await result
+                    except Exception as error:
+                        raise TextUIError(f"timer {name} failed: {error}", location=location) from error
+                    finally:
+                        busy = False
+                worker = self.app.run_worker(await_result(), name=f"textui:{name}")
+                self.workers.add(worker)
+                return
+            busy = False
 
         handle = self.app.set_interval(interval, run, name=f"textui:{name}") if repeat else self.app.set_timer(interval, run, name=f"textui:{name}")
         self.handles.append(handle)

@@ -66,3 +66,17 @@ async def test_split_resized_event_dispatches_declared_action():
         app.document.get_by_id("split").resize_first(30)
         await pilot.pause()
     assert seen == [30]
+
+
+@pytest.mark.asyncio
+async def test_vertical_split_resizes_with_keyboard():
+    markup = '<ui><split id="split" direction="vertical"><pane id="top" size="8" min-size="3"/><pane min-size="3"/></split></ui>'
+    app = split_app(markup)
+    async with app.run_test(size=(80, 24)) as pilot:
+        await pilot.pause()
+        split = app.document.get_by_id("split")
+        assert app.document.get_by_id("top").region.height == 8
+        split.divider.focus()
+        await pilot.press("down")
+        await pilot.pause()
+        assert app.document.get_by_id("top").region.height == 9

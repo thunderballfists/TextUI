@@ -14,6 +14,7 @@ from .errors import DocumentLoadError, DocumentSyntaxError, DocumentValidationEr
 from .nodes import ElementNode, StyleBlock
 from .registry import AttributeSpec, ComponentRegistry, UNSET, boolean
 from .widgets.builtin_widgets import default_component_registry
+from .widgets.navigation import validate_navigation_targets
 
 _KEBAB = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*\Z")
 _ACTION = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
@@ -63,6 +64,7 @@ class DocumentLoader:
             else:
                 nodes.append(self._node(child, source_name, identifiers))
             self._reject_nonwhitespace(child.tail, root_location, "non-whitespace tail text is not allowed")
+        validate_navigation_targets(nodes)
         return Document(tuple(nodes), tuple(styles), source_name)
 
     def _parse(self, markup: str, source_name: str) -> etree._Element:

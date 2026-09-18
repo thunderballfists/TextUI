@@ -11,6 +11,7 @@ from .errors import DocumentLoadError, DocumentValidationError, SourceLocation
 from .loader import DocumentLoader
 from .nodes import StyleBlock
 from .registry import ComponentRegistry
+from .widgets.navigation import validate_navigation_targets
 
 
 @dataclass(slots=True)
@@ -94,7 +95,7 @@ class ProjectSource:
                         content = read(target, location)
                         if child.tag == "style":
                             styles.append(StyleBlock(content, SourceLocation(str(target), 1, tag="style"), len(styles)))
-                        else:
+                        elif target not in scripts:
                             scripts.append(target)
                 else:
                     expand(child, owner, stack)
@@ -112,4 +113,5 @@ class ProjectSource:
             for child in self.root
             if isinstance(child.tag, str) and child.tag not in {"style", "script"}
         )
+        validate_navigation_targets(nodes)
         return Document(nodes, self.styles, str(self.path))

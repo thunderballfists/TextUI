@@ -8,6 +8,7 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.widgets import Button, Checkbox, Input
 from .widgets.split import Split
+from .widgets.navigation import Nav
 
 from .actions import ActionCallback
 from .controllers import ControllerSet, ProjectWindow
@@ -82,6 +83,7 @@ class ProjectApp(App):
     @on(Checkbox.Changed)
     @on(Split.Resized)
     @on(Split.Toggled)
-    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled) -> None:
+    @on(Nav.Selected)
+    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected) -> None:
         if self.document is not None:
             await self.document.dispatch(event)

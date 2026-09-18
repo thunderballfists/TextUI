@@ -4,16 +4,19 @@ All notable changes to TextUI are documented here.
 
 ## [Unreleased]
 
+### Planned
+
+- Optional image components remain outside the core package.
+- Future releases may add capabilities without changing the strict document and lifecycle contracts established in 0.2.
+
+## [0.3.0] - 2026-09-18
+
 ### Added
 
 - A local `.ui` project runtime with `textui run`, nested markup includes, sourced TCSS, and linked Python controllers.
 - App-scoped `window`, explicit `@action` exports, setup/ready/close hooks, and Textual-backed one-shot and periodic timers.
 - A runnable project example and authoring guide.
-
-### Planned
-
-- Optional image components remain outside the core package.
-- Future releases may add capabilities without changing the strict document and lifecycle contracts established in 0.2.
+- Two-pane draggable and hideable layouts, navigation selection, and native content switching.
 
 ## [0.2.1] - 2026-09-18
 
@@ -47,6 +50,7 @@ TextUI 0.2 is a breaking pre-1.0 reboot of the experimental 0.1 API.
 - Embedded scripts, expression evaluation, browser-style DOM helpers, HTML aliases, custom CSS filtering, and core image widgets.
 - Mandatory Pillow and `textual-imageview` dependencies.
 
-[Unreleased]: https://github.com/thunderballfists/TextUI/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/thunderballfists/TextUI/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/thunderballfists/TextUI/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/thunderballfists/TextUI/releases/tag/v0.2.1
 [0.2.0]: https://github.com/thunderballfists/TextUI/releases/tag/v0.2.0

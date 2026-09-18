@@ -1,10 +1,11 @@
-"""The six deliberately small native Textual component adapters."""
+"""Built-in typed adapters for native Textual widgets."""
 from __future__ import annotations
 
 from textual.containers import Horizontal, Vertical
 from textual.content import Content
-from textual.widgets import Button, Checkbox, Input, Label
+from textual.widgets import Button, Checkbox, ContentSwitcher, Input, Label
 from .split import Pane, Split
+from .navigation import Nav, NavItem
 
 from ..registry import (
     AttributeSpec,
@@ -53,6 +54,20 @@ def build_split(context: BuildContext) -> Split:
     if len(context.children) != 2 or any(not isinstance(child, Pane) for child in context.children):
         raise ValueError("split requires exactly two pane children")
     return Split(*context.children, direction=context.attributes["direction"])
+
+
+def build_nav_item(context: BuildContext) -> NavItem:
+    return NavItem(context.text or "", target=context.attributes["target"])
+
+
+def build_nav(context: BuildContext) -> Nav:
+    if any(not isinstance(child, NavItem) for child in context.children):
+        raise ValueError("nav requires nav-item children")
+    return Nav(*context.children)
+
+
+def build_content_switcher(context: BuildContext) -> ContentSwitcher:
+    return ContentSwitcher(*context.children, initial=context.attributes.get("initial"))
 
 
 def _button_source(event: Button.Pressed) -> Button:
@@ -123,5 +138,17 @@ def default_component_registry() -> ComponentRegistry:
         tag="split", factory=build_split, child_policy="widgets",
         attributes={"direction": AttributeSpec(enum("horizontal", "vertical"), default="horizontal")},
         events={"resized": EventSpec(Split.Resized, lambda event: event.split), "toggled": EventSpec(Split.Toggled, lambda event: event.split)},
+    ))
+    registry.register(ComponentSpec(
+        tag="nav-item", factory=build_nav_item, text_policy="text",
+        attributes={"target": AttributeSpec(required=True)},
+    ))
+    registry.register(ComponentSpec(
+        tag="nav", factory=build_nav, child_policy="widgets",
+        events={"selected": EventSpec(Nav.Selected, lambda event: event.nav)},
+    ))
+    registry.register(ComponentSpec(
+        tag="content-switcher", factory=build_content_switcher, child_policy="widgets",
+        attributes={"initial": AttributeSpec()},
     ))
     return registry

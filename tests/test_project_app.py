@@ -103,3 +103,50 @@ def on_close():
         async with app.run_test():
             pass
     assert app.events == ["setup", "close"]
+
+
+@pytest.mark.asyncio
+async def test_ready_failure_calls_close_once(tmp_path: Path):
+    source = project(tmp_path, '<label id="ready">Ready</label>', '''
+def on_setup():
+    window.app.events.append("setup")
+
+def on_ready():
+    window.app.events.append(window.document.get_by_id("ready").id)
+    raise ValueError("ready broke")
+
+def on_close():
+    window.app.events.append("close")
+''')
+    app = ProjectApp(source)
+    app.events = []
+    with pytest.raises(Exception, match="on_ready.*ready broke"):
+        async with app.run_test():
+            pass
+    assert app.events == ["setup", "ready", "close"]
+
+
+@pytest.mark.asyncio
+async def test_scripts_execute_in_entry_order_once_per_app(tmp_path: Path):
+    (tmp_path / "app.ui").write_text(
+        '<ui><script src="first.py"/><script src="second.py"/><label>Hi</label></ui>', encoding="utf-8"
+    )
+    (tmp_path / "first.py").write_text('window.app.events.append("first")', encoding="utf-8")
+    (tmp_path / "second.py").write_text('window.app.events.append("second")', encoding="utf-8")
+    app = ProjectApp(ProjectSource.discover(tmp_path / "app.ui"))
+    app.events = []
+    async with app.run_test():
+        assert app.events == ["first", "second"]
+
+
+@pytest.mark.asyncio
+async def test_close_hook_error_propagates_with_script_source(tmp_path: Path):
+    source = project(tmp_path, '<label>Hi</label>', '''
+def on_close():
+    raise ValueError("close broke")
+''')
+    app = ProjectApp(source)
+    with pytest.raises(Exception, match="on_close.*close broke") as caught:
+        async with app.run_test():
+            pass
+    assert "controller.py" in str(caught.value)

@@ -45,8 +45,15 @@ async def test_project_example_loads_includes_styles_actions_and_timer(tmp_path,
     entry = Path(__file__).parents[1] / "examples" / "project" / "app.ui"
     app = ProjectApp(ProjectSource.discover(entry))
     async with app.run_test() as pilot:
+        await pilot.pause()
         app.document.get_by_id("name").value = "Abe"
         assert await pilot.click("#greet")
         assert str(app.document.get_by_id("status").render()) == "Hello, Abe!"
         await pilot.pause(1.05)
         assert str(app.document.get_by_id("clock").render()) != "Waiting for timer"
+        await pilot.click(app.document.get_by_id("navigation").items[1])
+        await pilot.pause()
+        assert app.document.get_by_id("content").current == "settings"
+        await pilot.click("#toggle-sidebar")
+        await pilot.pause()
+        assert app.document.get_by_id("sidebar").display is False
