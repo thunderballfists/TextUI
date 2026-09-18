@@ -95,3 +95,22 @@ def test_invalid_variable_value_points_to_use_in_original_document():
         list(doc.bind(App(), actions={}).compose())
     assert error.value.location.line == 4
     assert 'CSS line 3' in str(error.value)
+
+
+@pytest.mark.asyncio
+async def test_native_fractional_widths_and_inline_priority_over_important():
+    doc = textui.DocumentLoader().from_string('''<ui>
+    <style>#first { width: 1fr; color: red !important; }</style>
+    <horizontal style="width: 60; height: 1;">
+      <label id="first" style="color: blue;">First</label>
+      <label id="second" style="width: 2fr;">Second</label>
+    </horizontal>
+    </ui>''')
+    app = textui.TextUI(doc)
+    async with app.run_test():
+        first = app.document.get_by_id('first')
+        second = app.document.get_by_id('second')
+        # The legacy filter discarded fr units; native TCSS allocates 1:2 space.
+        assert first.size.width == 20
+        assert second.size.width == 40
+        assert first.styles.color == Color.parse('blue')
