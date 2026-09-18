@@ -50,6 +50,9 @@ def _slot(position: str):
     return build
 
 
+SLOT_FACTORIES = {position: _slot(position) for position in ("left", "center", "right")}
+
+
 def build_bar(context: BuildContext) -> SlotBar:
     if any(not isinstance(child, HeaderSlot) for child in context.children):
         raise ValueError("header accepts left, center, and right slots")
@@ -62,7 +65,7 @@ def register_bars(registry: ComponentRegistry) -> None:
     for position in ("left", "center", "right"):
         registry.register(ComponentSpec(
             tag=position,
-            factory=_slot(position),
+            factory=SLOT_FACTORIES[position],
             child_policy="widgets",
         ))
     for tag in ("header", "status-bar"):
