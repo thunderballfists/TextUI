@@ -4,6 +4,7 @@ from __future__ import annotations
 from textual.containers import Horizontal, Vertical
 from textual.content import Content
 from textual.widgets import Button, Checkbox, Input, Label
+from .split import Pane, Split
 
 from ..registry import (
     AttributeSpec,
@@ -42,6 +43,16 @@ def build_input(context: BuildContext) -> Input:
 
 def build_checkbox(context: BuildContext) -> Checkbox:
     return Checkbox(Content(context.text or ""), value=context.attributes["value"])
+
+
+def build_pane(context: BuildContext) -> Pane:
+    return Pane(*context.children, min_size=context.attributes["min-size"], size=context.attributes.get("size"))
+
+
+def build_split(context: BuildContext) -> Split:
+    if len(context.children) != 2 or any(not isinstance(child, Pane) for child in context.children):
+        raise ValueError("split requires exactly two pane children")
+    return Split(*context.children, direction=context.attributes["direction"])
 
 
 def _button_source(event: Button.Pressed) -> Button:
@@ -104,4 +115,13 @@ def default_component_registry() -> ComponentRegistry:
             events={"changed": EventSpec(Checkbox.Changed, _checkbox_source)},
         )
     )
+    registry.register(ComponentSpec(
+        tag="pane", factory=build_pane, child_policy="widgets",
+        attributes={"min-size": AttributeSpec(integer(minimum=1), default=1), "size": AttributeSpec(integer(minimum=1))},
+    ))
+    registry.register(ComponentSpec(
+        tag="split", factory=build_split, child_policy="widgets",
+        attributes={"direction": AttributeSpec(enum("horizontal", "vertical"), default="horizontal")},
+        events={"resized": EventSpec(Split.Resized, lambda event: event.split), "toggled": EventSpec(Split.Toggled, lambda event: event.split)},
+    ))
     return registry
