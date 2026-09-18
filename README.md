@@ -1,6 +1,6 @@
 # TextUI
 
-TextUI 0.5 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files.
+TextUI 0.6 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files.
 
 This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
@@ -14,10 +14,11 @@ From a checkout:
 python -m pip install .
 textui run examples/project/app.ui
 textui run examples/controls/app.ui
+textui run examples/data/app.ui
 python -m examples.editor
 ```
 
-The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
+The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates tables and trees with native runtime updates; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
 A self-contained application:
 
@@ -73,8 +74,12 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `collapsible` | Widgets | `title`, boolean `collapsed` | `collapsed`, `expanded` |
 | `progress-bar` | None | Positive `total`, nonnegative `progress`, boolean `show-bar`, `show-percentage`, `show-eta` | None |
 | `rule` | None | `orientation`, `line-style` | None |
+| `data-table` | `column` children, then `row` children | `cursor-type`: row, cell, column, none | `row-selected`, `cell-selected` |
+| `column`, `row`, `cell` | Column/cell text; rows contain cells | Required `key` on columns and rows | None |
+| `tree` | Nested `tree-node` children | Required `label`, boolean `show-root` | `node-selected` |
+| `tree-node` | Nested `tree-node` children | Required `key` and `label`, boolean `expanded` | None |
 
-All widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
+Mounted widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`; `option`, `column`, `row`, `cell`, and `tree-node` are data-only children and do not accept these attributes. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
 
 `split` uses a draggable divider that accepts arrow keys when focused. Set `pane.display = False` to hide a pane; showing it restores its stored size. A `nav-item` target must name a direct child of a `content-switcher`. The `selected` event carries `context.event.target`, which an action can assign to the switcher's `current` property. The [project example](examples/project/app.ui) shows these controls together.
 

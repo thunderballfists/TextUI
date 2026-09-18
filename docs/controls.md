@@ -46,3 +46,24 @@ Each pane needs an ID and title. `initial` must name one of those panes; without
 A radio set needs direct radio-button children and allows at most one initially selected button. Its `changed` event provides `context.event.pressed` and `context.event.index`; a standalone radio button also supports `on-changed`. Collapsible content uses native pointer and Enter-key toggling. Use `on-collapsed` and `on-expanded` for its two exact native message types.
 
 Progress values are finite numbers. `total` must be positive when supplied, `progress` cannot be negative or exceed a declared total, and omitted `total` creates an indeterminate bar. Controller code can call `window.document.get_by_id("work").update(advance=5)`. A rule can be horizontal or vertical and accepts Textual line styles such as `solid`, `dashed`, `heavy`, and `double`. The [Indicators tab](../examples/controls/app.ui) demonstrates these widgets together.
+
+## Tables and trees
+
+Seed native `DataTable` and `Tree` widgets with nested markup. Keys identify table rows and columns and become each tree node's `data` value:
+
+```xml
+<data-table id="jobs" cursor-type="row" on-row-selected="open_job">
+  <column key="name">Job</column>
+  <column key="state">State</column>
+  <row key="backup"><cell>Backup</cell><cell>Running</cell></row>
+</data-table>
+<tree id="files" label="Files" on-node-selected="open_file">
+  <tree-node key="src" label="src" expanded="true">
+    <tree-node key="app" label="app.py"/>
+  </tree-node>
+</tree>
+```
+
+Columns must precede rows. Each row needs one cell per column; column and row keys must be unique within their table, and tree-node keys must be unique within their tree. `<column>`, `<row>`, `<cell>`, and `<tree-node>` are seed data, not mounted widgets, so they cannot have document IDs or common widget attributes. Seed labels and cells are literal text, even when they contain Rich-style brackets; native table cell values are `Text` objects, so read their `.plain` property for a string. Empty tables and trees may be populated entirely in Python. Table `cursor-type` accepts `row` (default), `cell`, `column`, or `none`; use `on-cell-selected` for cell cursors. Row events expose `context.event.row_key.value`, cell events expose `context.event.value` and `cell_key`, and tree events expose `context.event.node.data`.
+
+After mounting, use native APIs: `window.document.get_by_id("jobs").add_row("Deploy", "Queued", key="deploy")` or `window.document.get_by_id("files").root.add_leaf("README.md", data="readme")`. The [data example](../examples/data/app.ui) shows selection actions and dynamic updates.

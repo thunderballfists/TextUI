@@ -1,0 +1,21 @@
+<ui>
+  <style src="data.tcss"/>
+  <script src="controller.py"/>
+  <vertical id="demo">
+    <label>Data table and tree</label>
+    <horizontal id="data-panels">
+      <data-table id="jobs" cursor-type="row" on-row-selected="job_selected">
+        <column key="name">Job</column>
+        <column key="state">State</column>
+        <row key="backup"><cell>Backup</cell><cell>Running</cell></row>
+      </data-table>
+      <tree id="files" label="Project files" on-node-selected="file_selected">
+        <tree-node key="src" label="src" expanded="true">
+          <tree-node key="app" label="app.py"/>
+        </tree-node>
+      </tree>
+    </horizontal>
+    <button id="add-job" on-pressed="add_job">Add job and file</button>
+    <label id="feedback">Select a row or node</label>
+  </vertical>
+</ui>

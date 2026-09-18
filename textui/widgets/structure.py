@@ -5,6 +5,7 @@ from collections.abc import Iterable
 
 from ..errors import DocumentValidationError
 from ..nodes import ElementNode
+from .data_widgets import build_cell, build_column, build_data_table, build_row, build_tree, build_tree_node
 
 
 def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
@@ -43,8 +44,50 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
             total = node.attributes.get("total")
             if total is not None and node.attributes["progress"] > total:
                 raise DocumentValidationError("progress cannot exceed total", location=node.location, attribute="progress")
+        data_factories = {"column": build_column, "row": build_row, "cell": build_cell, "tree-node": build_tree_node}
+        is_data_child = tag in data_factories and node.spec.factory is data_factories[tag]
+        is_data_table = tag == "data-table" and node.spec.factory is build_data_table
+        is_tree = tag == "tree" and node.spec.factory is build_tree
+        if is_data_child:
+            expected = {"column": "data-table", "row": "data-table", "cell": "row", "tree-node": None}[tag]
+            valid = parent in {"tree", "tree-node"} if tag == "tree-node" else parent == expected
+            if not valid:
+                raise DocumentValidationError(f"{tag} has an invalid parent", location=node.location)
+            if node.common["id"] is not None or node.common["classes"] or node.common["style"] is not None or node.common["disabled"] or node.events:
+                raise DocumentValidationError(f"{tag} accepts no common widget attributes or events", location=node.location)
+        if tag == "row" and node.spec.factory is build_row and any(child.spec.tag != "cell" or child.spec.factory is not build_cell for child in node.children):
+            raise DocumentValidationError("row accepts only cell children", location=node.location)
+        if is_data_table:
+            columns = [child for child in node.children if child.spec.tag == "column"]
+            rows = [child for child in node.children if child.spec.tag == "row"]
+            if len(columns) + len(rows) != len(node.children):
+                raise DocumentValidationError("data-table accepts only column and row children", location=node.location)
+            if rows and not columns:
+                raise DocumentValidationError("data-table rows require columns", location=node.location)
+            if any(child.spec.tag == "column" for child in node.children[len(columns):]):
+                raise DocumentValidationError("data-table columns must precede rows", location=node.location)
+            for kind, children in (("column", columns), ("row", rows)):
+                keys = [child.attributes["key"] for child in children]
+                if len(keys) != len(set(keys)):
+                    raise DocumentValidationError(f"data-table {kind} keys must be unique", location=node.location)
+            for row in rows:
+                if len(row.children) != len(columns):
+                    raise DocumentValidationError("row cell count must match column count", location=row.location)
+        if (is_tree or (tag == "tree-node" and node.spec.factory is build_tree_node)) and any(child.spec.tag != "tree-node" or child.spec.factory is not build_tree_node for child in node.children):
+            raise DocumentValidationError(f"{tag} accepts only tree-node children", location=node.location)
+        if is_tree:
+            keys = [descendant.attributes["key"] for descendant in _tree_nodes(node)]
+            if len(keys) != len(set(keys)):
+                raise DocumentValidationError("tree-node keys must be unique within a tree", location=node.location)
         for child in node.children:
             visit(child, tag)
 
     for root in nodes:
         visit(root, None)
+
+
+def _tree_nodes(node: ElementNode) -> Iterable[ElementNode]:
+    for child in node.children:
+        if child.spec.tag == "tree-node":
+            yield child
+            yield from _tree_nodes(child)

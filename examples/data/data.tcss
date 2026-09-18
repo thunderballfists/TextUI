@@ -1,0 +1,15 @@
+#demo {
+    padding: 1;
+}
+
+#data-panels {
+    height: 1fr;
+}
+
+#jobs, #files {
+    width: 1fr;
+}
+
+#feedback {
+    margin-top: 1;
+}
