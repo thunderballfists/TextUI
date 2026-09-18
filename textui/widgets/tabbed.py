@@ -8,8 +8,8 @@ from ..registry import AttributeSpec, BuildContext, ComponentRegistry, Component
 
 
 def accelerator(value: str) -> str:
-    if len(value) != 1 or not value.isprintable() or value.isspace():
-        raise ValueError("accelerator must be one printable non-space character")
+    if len(value) != 1 or not value.isalnum():
+        raise ValueError("accelerator must be one alphanumeric character")
     return value
 
 

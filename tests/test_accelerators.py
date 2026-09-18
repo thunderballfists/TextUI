@@ -19,8 +19,10 @@ def test_tab_accelerators_require_unique_single_keys_and_document_scope():
     for markup in [
         MARKUP.replace('accelerator="u"', 'accelerator="d"'),
         MARKUP.replace('accelerator="u"', 'accelerator="up"'),
+        MARKUP.replace('accelerator="u"', 'accelerator="?"'),
         MARKUP.replace('accelerator-scope="document"', 'accelerator-scope="pane"'),
         MARKUP.replace(' accelerator-scope="document"', ''),
+        MARKUP.replace('</ui>', '''<tabbed-content><tab-pane id="other" title="Other" accelerator="u" accelerator-scope="document"/></tabbed-content></ui>'''),
     ]:
         with pytest.raises(DocumentValidationError):
             DocumentLoader().from_string(markup)
