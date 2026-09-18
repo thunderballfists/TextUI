@@ -1,0 +1,14 @@
+<ui>
+  <style src="list.tcss" />
+  <script src="controller.py" />
+  <horizontal id="workspace">
+    <vertical id="rail">
+      <label>Agents</label>
+      <list id="agents" item-label="{name}" on-selected="select_agent" />
+    </vertical>
+    <vertical id="detail">
+      <label id="agent-name">Select an agent</label>
+      <label id="agent-status">No selection</label>
+    </vertical>
+  </horizontal>
+</ui>

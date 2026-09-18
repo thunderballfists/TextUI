@@ -9,6 +9,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Button, Checkbox, Collapsible, DataTable, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TextArea, Tree
 from .widgets.split import Split
 from .widgets.navigation import Nav
+from .widgets.runtime_list import RuntimeList
 
 from .actions import ActionCallback
 from .document import Document
@@ -40,5 +41,6 @@ class TextUI(App):
     @on(DataTable.RowSelected)
     @on(DataTable.CellSelected)
     @on(Tree.NodeSelected)
-    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded | DataTable.RowSelected | DataTable.CellSelected | Tree.NodeSelected) -> None:
+    @on(RuntimeList.ItemSelected)
+    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded | DataTable.RowSelected | DataTable.CellSelected | Tree.NodeSelected | RuntimeList.ItemSelected) -> None:
         await self.document.dispatch(event)

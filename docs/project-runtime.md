@@ -43,3 +43,25 @@ def show_page(context):
 ```
 
 The [project example](../examples/project/app.ui) combines a hideable sidebar, draggable split, navigation, and an included page. Included views remain static; the runtime does not add screen modes or hot reload.
+
+## Runtime lists
+
+Use `<list>` when a native selectable rail is populated after markup loads. `item-label` is a required Python-format pattern evaluated against each item mapping. The element has no child content; give it an ID and optionally bind `on-selected`.
+
+```xml
+<list id="agents" item-label="{name}" on-selected="select_agent" />
+```
+
+`set_items()` replaces the rows, so await it from an asynchronous action or lifecycle hook. Rows must be mappings that satisfy the label pattern. It resets `selected` to `None`, highlights the first row for keyboard navigation, and preserves native arrow-key, Enter, and pointer behavior. The selected event provides the original mapping as `context.event.item` and its zero-based position as `context.event.index`.
+
+```python
+async def on_ready():
+    await window.document.get_by_id("agents").set_items(agents)
+
+@action
+def select_agent(context):
+    agent = context.event.item
+    window.document.get_by_id("heading").update(agent["name"])
+```
+
+The [runtime list example](../examples/list/app.ui) uses this pattern for a master-detail rail.
