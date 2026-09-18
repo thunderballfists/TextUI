@@ -12,6 +12,7 @@ from .display_controls import register_display_controls
 from .data_widgets import register_data_widgets
 from .transcript import register_transcript
 from .runtime_list import register_runtime_list
+from .bars import register_bars
 
 from ..registry import (
     AttributeSpec,
@@ -163,4 +164,5 @@ def default_component_registry() -> ComponentRegistry:
     register_data_widgets(registry)
     register_transcript(registry)
     register_runtime_list(registry)
+    register_bars(registry)
     return registry
