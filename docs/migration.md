@@ -1,6 +1,6 @@
 # Migrating to TextUI 0.2
 
-Version 0.2 replaces the experimental 0.1 interface. Documents and APIs intentionally break compatibility. The [README](../README.md), [changelog](../CHANGELOG.md), and [editor example](../examples/editor.py) show the current usage and release scope.
+Version 0.2 replaces the experimental 0.1 interface. Documents and APIs intentionally break compatibility. The [README](../README.md), [changelog](../CHANGELOG.md), [examples guide](../examples/README.md), and [editor example](../examples/editor.py) show the current usage and release scope.
 
 | Earlier interface | 0.2 replacement |
 | --- | --- |

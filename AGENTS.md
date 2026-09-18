@@ -16,16 +16,16 @@ TextUI 0.2 turns strict XML into native Textual widgets. Read `README.md`, `docs
 
 ## Development Commands
 
-Run from the repository root with Python >=3.11 and Poetry 2.4.3. Keep Poetry isolated from the project, for example with `uvx --python 3.12 --from poetry==2.4.3 poetry` as the command prefix.
+Run from the repository root with Python >=3.11 and Poetry 2.4.3. Keep Poetry isolated from the project by using the full `uvx --python 3.12 --from poetry==2.4.3 poetry` prefix below.
 
-- `poetry install --with test`: install the locked project and test dependencies.
-- `poetry run python -m pytest -q`: run all tests headlessly.
-- `poetry run python -m pytest tests/test_styles.py -q`: run computed-style tests.
-- `poetry run python -m examples.editor`: launch the form; Ctrl+Q quits.
-- `poetry build`: create wheel and source distributions in `dist/`.
-- `poetry check --lock`: validate metadata and lock consistency.
+- `uvx --python 3.12 --from poetry==2.4.3 poetry install --with test`: install the locked project and test dependencies.
+- `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`: run all tests headlessly.
+- `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest tests/test_styles.py -q`: run computed-style tests.
+- `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor`: launch the form; Ctrl+Q quits.
+- `uvx --python 3.12 --from poetry==2.4.3 poetry build`: create wheel and source distributions in `dist/`.
+- `uvx --python 3.12 --from poetry==2.4.3 poetry check --lock`: validate metadata and lock consistency.
 
-Use `poetry lock --regenerate` for intentional full dependency updates. Do not edit lock resolutions by hand. Keep environments and tools outside tracked files.
+Use `uvx --python 3.12 --from poetry==2.4.3 poetry lock --regenerate` for intentional full dependency updates. Do not edit lock resolutions by hand. Keep environments and tools outside tracked files.
 
 ## Coding and Testing
 
