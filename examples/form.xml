@@ -1,0 +1,16 @@
+<ui>
+  <style>
+    #form { padding: 1 2; }
+    #buttons { height: auto; margin: 1 0; }
+    #status { color: $success; }
+  </style>
+  <vertical id="form">
+    <label>Document name</label>
+    <input id="name" placeholder="Enter a name" max-length="80" />
+    <checkbox id="notify" value="false">Notify when saved</checkbox>
+    <horizontal id="buttons">
+      <button id="save" variant="primary" on-pressed="save_document">Save</button>
+    </horizontal>
+    <label id="status">Ready</label>
+  </vertical>
+</ui>
