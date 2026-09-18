@@ -106,6 +106,14 @@ def test_comments_and_utf8_declaration_are_permitted_and_styles_are_verbatim():
     assert document.nodes[0].text == "Hello world"
 
 
+def test_style_preserves_text_on_both_sides_of_ignored_comments():
+    document = load(
+        "<ui><style>a { color: red; }<!-- note --> b { color: blue; }</style></ui>"
+    )
+
+    assert document.styles[0].content == "a { color: red; } b { color: blue; }"
+
+
 def test_style_must_be_direct_child_and_cannot_have_children_or_nonwhitespace_tail():
     for markup in (
         "<ui><vertical><style>x { color: red; }</style></vertical></ui>",

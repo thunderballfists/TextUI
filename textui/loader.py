@@ -101,7 +101,10 @@ class DocumentLoader:
             raise DocumentValidationError("style accepts no attributes", location=location, attribute=attribute)
         if any(not isinstance(child, etree._Comment) for child in element):
             raise DocumentValidationError("style cannot contain elements", location=location)
-        return StyleBlock(element.text or "", location, index)
+        content = "".join(
+            [element.text or "", *(comment.tail or "" for comment in element)]
+        )
+        return StyleBlock(content, location, index)
 
     def _node(self, element: etree._Element, source_name: str, identifiers: set[str]) -> ElementNode:
         location = self._location(element, source_name)
