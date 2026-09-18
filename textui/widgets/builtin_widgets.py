@@ -8,6 +8,7 @@ from .split import Pane, Split
 from .navigation import Nav, NavItem
 from .form_controls import register_form_controls
 from .tabbed import register_tabs
+from .display_controls import register_display_controls
 
 from ..registry import (
     AttributeSpec,
@@ -155,4 +156,5 @@ def default_component_registry() -> ComponentRegistry:
     ))
     register_form_controls(registry)
     register_tabs(registry)
+    register_display_controls(registry)
     return registry
