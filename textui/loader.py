@@ -11,7 +11,7 @@ from textual.dom import check_identifiers
 from .document import Document
 from .errors import DocumentLoadError, DocumentSyntaxError, DocumentValidationError, SourceLocation
 from .nodes import ElementNode, StyleBlock
-from .registry import ComponentRegistry, UNSET
+from .registry import AttributeSpec, ComponentRegistry, UNSET, boolean
 from .widgets.builtin_widgets import default_component_registry
 
 _KEBAB = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*\Z")
@@ -183,8 +183,9 @@ class DocumentLoader:
                 raise DocumentValidationError(str(error), location=location, attribute=name, value=raw) from error
             common["classes"] = classes
         elif name == "disabled":
-            from .registry import boolean
-            common["disabled"] = self._convert(type("Boolean", (), {"converter": boolean})(), raw, location, name)
+            common["disabled"] = self._convert(
+                AttributeSpec(boolean), raw, location, name
+            )
         else:
             common["style"] = raw
 

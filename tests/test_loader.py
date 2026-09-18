@@ -27,6 +27,13 @@ def test_false_and_classes_are_normalized_without_constructing_widgets():
     assert node.text == "Notify"
 
 
+@pytest.mark.parametrize(("value", "expected"), [("true", True), ("false", False)])
+def test_explicit_disabled_is_converted_to_a_boolean(value, expected):
+    document = load(f'<ui><label disabled="{value}">Status</label></ui>')
+
+    assert document.nodes[0].common["disabled"] is expected
+
+
 def test_loading_does_not_construct_registered_components():
     calls = 0
 
