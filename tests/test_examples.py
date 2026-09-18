@@ -89,3 +89,29 @@ async def test_controls_example_mounts_and_handles_native_changes(tmp_path, monk
         await pilot.click("#low")
         await pilot.pause()
         assert str(app.document.get_by_id("feedback").render()) == "Priority: low"
+
+
+@pytest.mark.asyncio
+async def test_data_example_selection_and_dynamic_updates(tmp_path, monkeypatch):
+    from pathlib import Path
+    from textui import ProjectApp, ProjectSource
+
+    monkeypatch.chdir(tmp_path)
+    entry = Path(__file__).parents[1] / "examples" / "data" / "app.ui"
+    app = ProjectApp(ProjectSource.discover(entry))
+    async with app.run_test() as pilot:
+        jobs = app.document.get_by_id("jobs")
+        files = app.document.get_by_id("files")
+        assert jobs.get_cell("backup", "state").plain == "Running"
+        jobs.focus()
+        await pilot.press("enter")
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Selected job: backup"
+        files.select_node(files.root.children[0])
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Selected file: src"
+        await pilot.click("#add-job")
+        assert jobs.get_cell("deploy", "state") == "Queued"
+        assert files.root.children[-1].data == "readme"
+        await pilot.click("#add-job")
+        assert [key.value for key in jobs.rows].count("deploy") == 1

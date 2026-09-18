@@ -119,6 +119,13 @@ class DocumentLoader:
         spec = self._registry.get(element.tag)
         if spec is None:
             raise DocumentValidationError(f"unknown component {element.tag!r}", location=location)
+        if spec.tag in {"option", "column", "row", "cell", "tree-node"}:
+            for name in element.attrib:
+                if name in _COMMON:
+                    raise DocumentValidationError(
+                        f"{spec.tag} accepts no common widget attributes",
+                        location=location, attribute=name,
+                    )
         attributes: dict[str, Any] = {}
         common: dict[str, Any] = {"id": None, "classes": (), "style": None, "disabled": False}
         events: dict[str, str] = {}

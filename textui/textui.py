@@ -6,7 +6,7 @@ from typing import Any
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.widgets import Button, Checkbox, Collapsible, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TextArea
+from textual.widgets import Button, Checkbox, Collapsible, DataTable, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TextArea, Tree
 from .widgets.split import Split
 from .widgets.navigation import Nav
 
@@ -37,5 +37,8 @@ class TextUI(App):
     @on(RadioSet.Changed)
     @on(Collapsible.Collapsed)
     @on(Collapsible.Expanded)
-    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded) -> None:
+    @on(DataTable.RowSelected)
+    @on(DataTable.CellSelected)
+    @on(Tree.NodeSelected)
+    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded | DataTable.RowSelected | DataTable.CellSelected | Tree.NodeSelected) -> None:
         await self.document.dispatch(event)

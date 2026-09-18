@@ -9,6 +9,7 @@ from .navigation import Nav, NavItem
 from .form_controls import register_form_controls
 from .tabbed import register_tabs
 from .display_controls import register_display_controls
+from .data_widgets import register_data_widgets
 
 from ..registry import (
     AttributeSpec,
@@ -157,4 +158,5 @@ def default_component_registry() -> ComponentRegistry:
     register_form_controls(registry)
     register_tabs(registry)
     register_display_controls(registry)
+    register_data_widgets(registry)
     return registry
