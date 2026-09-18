@@ -15,6 +15,7 @@ from .nodes import ElementNode, StyleBlock
 from .registry import AttributeSpec, ComponentRegistry, UNSET, boolean
 from .widgets.builtin_widgets import default_component_registry
 from .widgets.navigation import validate_navigation_targets
+from .widgets.structure import validate_control_structure
 
 _KEBAB = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*\Z")
 _ACTION = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
@@ -65,6 +66,7 @@ class DocumentLoader:
                 nodes.append(self._node(child, source_name, identifiers))
             self._reject_nonwhitespace(child.tail, root_location, "non-whitespace tail text is not allowed")
         validate_navigation_targets(nodes)
+        validate_control_structure(nodes)
         return Document(tuple(nodes), tuple(styles), source_name)
 
     def _parse(self, markup: str, source_name: str) -> etree._Element:
@@ -145,10 +147,10 @@ class DocumentLoader:
             if default is not UNSET:
                 attributes[name] = default
         children = tuple(self._children(element, source_name, identifiers, spec.child_policy, location, sources))
-        if spec.text_policy == "text":
+        if spec.text_policy in {"text", "verbatim"}:
             if any(not isinstance(child, etree._Comment) for child in element):
                 raise DocumentValidationError("text component cannot contain child elements", location=location)
-            text = self._normal_text(element)
+            text = self._normal_text(element) if spec.text_policy == "text" else "".join(element.itertext())
         else:
             self._reject_nonwhitespace(element.text, location, "text is not allowed")
             text = None

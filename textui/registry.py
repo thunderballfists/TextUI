@@ -91,8 +91,8 @@ class ComponentSpec:
     def __post_init__(self) -> None:
         if not callable(self.factory):
             raise RegistryError("component factory must be callable")
-        if self.text_policy not in {"none", "text"}:
-            raise RegistryError("text_policy must be 'none' or 'text'")
+        if self.text_policy not in {"none", "text", "verbatim"}:
+            raise RegistryError("text_policy must be 'none', 'text', or 'verbatim'")
         if self.child_policy not in {"none", "widgets"}:
             raise RegistryError("child_policy must be 'none' or 'widgets'")
         attributes, events = _frozen_mapping(self.attributes), _frozen_mapping(self.events)
