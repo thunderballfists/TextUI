@@ -1,0 +1,21 @@
+<ui>
+  <style src="controls.tcss" />
+  <script src="controller.py" />
+  <vertical id="demo">
+    <label>Native form controls</label>
+    <tabbed-content id="tabs" initial="form" on-tab-activated="tab_changed">
+      <tab-pane id="form" title="Form">
+        <select id="status" prompt="Status" value="new" allow-blank="false" on-changed="status_changed">
+          <option value="new">New</option>
+          <option value="done">Done</option>
+        </select>
+        <switch id="enabled" value="false" on-changed="enabled_changed" />
+        <text-area id="notes" soft-wrap="true" on-changed="notes_changed">Start typing here.</text-area>
+      </tab-pane>
+      <tab-pane id="about" title="About">
+        <label>Tabs and controls are native Textual widgets.</label>
+      </tab-pane>
+    </tabbed-content>
+    <label id="feedback">Ready</label>
+  </vertical>
+</ui>

@@ -9,6 +9,13 @@ All notable changes to TextUI are documented here.
 - Optional image components remain outside the core package.
 - Future releases may add capabilities without changing the strict document and lifecycle contracts established in 0.2.
 
+## [0.4.0] - 2026-09-18
+
+### Added
+
+- Native select/option, switch, text-area, and tabbed-content/tab-pane markup with explicit events.
+- Verbatim text-area content, compound-control validation, and a runnable controls example.
+
 ## [0.3.0] - 2026-09-18
 
 ### Added
@@ -50,7 +57,8 @@ TextUI 0.2 is a breaking pre-1.0 reboot of the experimental 0.1 API.
 - Embedded scripts, expression evaluation, browser-style DOM helpers, HTML aliases, custom CSS filtering, and core image widgets.
 - Mandatory Pillow and `textual-imageview` dependencies.
 
-[Unreleased]: https://github.com/thunderballfists/TextUI/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/thunderballfists/TextUI/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/thunderballfists/TextUI/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/thunderballfists/TextUI/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/thunderballfists/TextUI/releases/tag/v0.2.1
 [0.2.0]: https://github.com/thunderballfists/TextUI/releases/tag/v0.2.0

@@ -1,0 +1,11 @@
+#demo {
+    padding: 1 2;
+}
+
+#tabs {
+    height: 1fr;
+}
+
+#notes {
+    height: 8;
+}

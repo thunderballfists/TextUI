@@ -12,6 +12,7 @@ from .loader import DocumentLoader
 from .nodes import StyleBlock
 from .registry import ComponentRegistry
 from .widgets.navigation import validate_navigation_targets
+from .widgets.structure import validate_control_structure
 
 
 @dataclass(slots=True)
@@ -114,4 +115,5 @@ class ProjectSource:
             if isinstance(child.tag, str) and child.tag not in {"style", "script"}
         )
         validate_navigation_targets(nodes)
+        validate_control_structure(nodes)
         return Document(nodes, self.styles, str(self.path))

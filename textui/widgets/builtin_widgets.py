@@ -6,6 +6,8 @@ from textual.content import Content
 from textual.widgets import Button, Checkbox, ContentSwitcher, Input, Label
 from .split import Pane, Split
 from .navigation import Nav, NavItem
+from .form_controls import register_form_controls
+from .tabbed import register_tabs
 
 from ..registry import (
     AttributeSpec,
@@ -151,4 +153,6 @@ def default_component_registry() -> ComponentRegistry:
         tag="content-switcher", factory=build_content_switcher, child_policy="widgets",
         attributes={"initial": AttributeSpec()},
     ))
+    register_form_controls(registry)
+    register_tabs(registry)
     return registry
