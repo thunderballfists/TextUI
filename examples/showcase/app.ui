@@ -43,7 +43,7 @@
             <label>Runtime API records — click a heading to sort</label>
             <data-table id="usage" row-key="record_id" cursor-type="row" on-row-selected="usage_selected">
               <column key="date" label="Date" />
-              <column key="requests" label="Requests" align="right" width="8" />
+              <column key="requests" label="Requests" align="right" width="10" />
               <column key="cost_usd" label="Cost" align="right" width="8" />
             </data-table>
             <button id="refresh-usage" on-pressed="refresh_usage">Refresh usage</button>

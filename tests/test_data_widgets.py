@@ -188,10 +188,19 @@ async def test_runtime_table_header_sorts_source_values_and_toggles_direction():
         table.post_message(DataTable.HeaderSelected(table, column.key, 1, column.label))
         await pilot.pause()
         assert [key.value for key in table.rows] == ["low", "middle", "high"]
+        assert table.columns["requests"].label.plain == "Requests ↑"
 
         table.post_message(DataTable.HeaderSelected(table, column.key, 1, column.label))
         await pilot.pause()
         assert [key.value for key in table.rows] == ["high", "middle", "low"]
+        assert table.columns["requests"].label.plain == "Requests ↓"
+
+        name_column = table.columns["name"]
+        table.post_message(DataTable.HeaderSelected(table, name_column.key, 0, name_column.label))
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["high", "low", "middle"]
+        assert table.columns["name"].label.plain == "Name ↑"
+        assert table.columns["requests"].label.plain == "Requests"
 
 
 @pytest.mark.asyncio

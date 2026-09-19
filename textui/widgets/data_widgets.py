@@ -66,6 +66,7 @@ class SeededDataTable(DataTable):
         self._runtime_records: dict[str, Mapping[str, object]] = {}
         self._sort_column: str | None = None
         self._sort_reverse = False
+        self._header_labels: dict[str, Text] = {}
         self._seeded = False
 
     def on_mount(self) -> None:
@@ -145,6 +146,7 @@ class SeededDataTable(DataTable):
             )
         self._sort_column = column_key
         self._sort_reverse = reverse
+        self._set_sort_indicator(column_key, reverse)
         event.stop()
 
     @staticmethod
@@ -154,6 +156,19 @@ class SeededDataTable(DataTable):
         if isinstance(value, Real):
             return (1, float(value))
         return (2, str(value).casefold())
+
+    def _set_sort_indicator(self, column_key: str, reverse: bool) -> None:
+        for key, column in self.columns.items():
+            key_value = key.value
+            label = self._header_labels.setdefault(key_value, column.label.copy())
+            updated_label = label.copy()
+            if key_value == column_key:
+                updated_label.append(" ↓" if reverse else " ↑")
+            column.label = updated_label
+        self._require_update_dimensions = True
+        self._update_count += 1
+        self.check_idle()
+        self.refresh()
 
 
 def build_data_table(context: BuildContext) -> SeededDataTable:

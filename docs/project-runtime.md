@@ -81,7 +81,7 @@ Use a native table for structured records from a linked controller. Declare the 
 ```xml
 <data-table id="usage" row-key="record_id" on-row-selected="usage_selected">
   <column key="date" label="Date" />
-  <column key="requests" label="Requests" align="right" width="8" />
+  <column key="requests" label="Requests" align="right" width="10" />
 </data-table>
 ```
 
@@ -95,7 +95,7 @@ def usage_selected(context):
     record = window.document.get_by_id("usage").get_record(context.event.row_key.value)
 ```
 
-`set_rows()` accepts a complete iterable of mappings and changes no rows until all records validate. Each record needs every declared column and a unique, non-empty string record key. `None` cells display empty, while extra record fields remain accessible through read-only `get_record()` results. Click a column heading to sort ascending and click again to reverse it; runtime records use their original values so numbers retain numeric order. Refreshing keeps the selected row and column when its key remains; an absent key or an empty batch uses the native first-cell fallback. Static seed rows and direct native `add_row()` calls continue to work without `row-key`, with displayed literal values used for header sorting.
+`set_rows()` accepts a complete iterable of mappings and changes no rows until all records validate. Each record needs every declared column and a unique, non-empty string record key. `None` cells display empty, while extra record fields remain accessible through read-only `get_record()` results. Click a column heading to sort ascending and click again to reverse it; the active header shows an `↑` or `↓` indicator. Runtime records use their original values so numbers retain numeric order. Refreshing keeps the selected row and column when its key remains; an absent key or an empty batch uses the native first-cell fallback. Static seed rows and direct native `add_row()` calls continue to work without `row-key`, with displayed literal values used for header sorting.
 
 ## Runtime lists
 
