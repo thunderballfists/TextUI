@@ -71,6 +71,31 @@ def details_collapsed() -> None: _feedback("Details collapsed")
 
 
 @action
+def refresh_usage() -> None:
+    window.document.get_by_id("usage").set_rows([
+        {
+            "record_id": "2026-09-19-alpha",
+            "date": "2026-09-19",
+            "requests": 42,
+            "cost_usd": 1.25,
+        },
+        {
+            "record_id": "2026-09-19-bravo",
+            "date": "2026-09-19",
+            "requests": 17,
+            "cost_usd": 0.48,
+        },
+    ])
+    _feedback("Usage refreshed")
+
+
+@action
+def usage_selected(context) -> None:
+    record = window.document.get_by_id("usage").get_record(context.event.row_key.value)
+    _feedback(f"Usage: {record['requests']} requests")
+
+
+@action
 def job_selected(context) -> None: _feedback(f"Job: {context.event.row_key.value}")
 
 

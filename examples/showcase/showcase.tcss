@@ -3,6 +3,7 @@
 #layout { height: 1fr; }
 #content { height: 1fr; }
 #sidebar { width: 22; }
+#usage { height: 8; }
 #jobs, #files { width: 1fr; height: 12; }
 #transcript { height: 10; }
 .agent-card { padding: 1; border: round $primary; margin: 1 0; }

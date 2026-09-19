@@ -32,6 +32,15 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         assert app.document.get_by_id("tabs").active == "details"
         await pilot.click(app.document.get_by_id("navigation").items[2])
         await pilot.pause()
+        usage = app.document.get_by_id("usage")
+        assert len(usage.rows) == 0
+        app.document.get_by_id("refresh-usage").press()
+        await pilot.pause()
+        assert usage.get_cell("2026-09-19-alpha", "requests").plain == "42"
+        usage.focus()
+        await pilot.press("enter")
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Usage: 42 requests"
         app.document.get_by_id("add-data").press()
         await pilot.pause()
         assert app.document.get_by_id("jobs").get_cell("deploy", "state") == "Queued"
