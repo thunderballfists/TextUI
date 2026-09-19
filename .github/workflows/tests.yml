@@ -39,3 +39,30 @@ jobs:
           "$RUNNER_TEMP/textui-wheel/bin/python" -m pip check
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/textui-wheel/bin/python" -I "$GITHUB_WORKSPACE/tests/wheel_smoke.py"
+
+  visual:
+    runs-on: ubuntu-24.04
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+      TEXTUI_VISUAL_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install isolated Poetry
+        run: pipx install poetry==2.4.3
+      - name: Install locked project and tests
+        run: |
+          poetry env use "$(command -v python)"
+          poetry check --lock
+          poetry install --with test --no-interaction
+      - name: Compare reviewed visual baselines
+        run: poetry run python -m pytest tests/visual -q
+      - name: Upload reviewed SVG baselines after a visual failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: textui-visual-baselines
+          path: tests/visual/__snapshots__/*.svg
+          if-no-files-found: error

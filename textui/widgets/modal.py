@@ -24,6 +24,8 @@ class MarkupModal(ModalScreen[object]):
         min-width: 28;
         height: auto;
         max-width: 80%;
+        max-height: 80%;
+        overflow-y: auto;
         padding: 1 2;
         border: round $primary;
         background: $surface;

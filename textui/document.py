@@ -1,6 +1,7 @@
 """Immutable document definitions and single-use native runtime bindings."""
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from inspect import isawaitable
@@ -18,7 +19,7 @@ from .errors import (
 )
 from .nodes import ElementNode, StyleBlock
 from .registry import BuildContext, EventSpec
-from .widgets.modal import MarkupModal
+from .widgets.modal import MarkupModal, build_modal
 from .styling import apply_inline, commit_styles, prepare_styles
 
 # A factory may not recycle an instance across bindings, even before mounting.
@@ -73,11 +74,13 @@ class BoundDocument:
         self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None and not node.private_id}
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
+        self._modal_finalizers: set[asyncio.Task[None]] = set()
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
-            if node.spec.tag == "modal" and node.common["id"] is not None
+            if node.spec.factory is build_modal and node.common["id"] is not None
         }
+        self._active_modal_ids: set[str] = set()
 
     def _build_node(
         self,
@@ -120,7 +123,7 @@ class BoundDocument:
 
         try:
             staged = prepare_styles(self.app, self.definition.styles)
-            roots = tuple(self._build_node(node, widgets, bindings) for node in self.definition.nodes if node.spec.tag != "modal")
+            roots = tuple(self._build_node(node, widgets, bindings) for node in self.definition.nodes if node.spec.factory is not build_modal)
             commit_styles(self.app, staged)
         except BaseException:
             self._state = 'failed'
@@ -131,31 +134,54 @@ class BoundDocument:
 
     def push_modal(self, modal_id: str):
         """Push a declared modal and return a future resolved by dismissal."""
-        import asyncio
-
         node = self._modal_nodes.get(modal_id)
         if node is None:
             raise ElementNotFoundError(f'No declared modal has ID {modal_id!r}')
+        if modal_id in self._active_modal_ids:
+            raise DocumentStateError(f'Modal {modal_id!r} is already active')
         widgets: dict[str, Widget] = {}
         bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
         modal = self._build_node(node, widgets, bindings)
         if not isinstance(modal, MarkupModal):
             raise DocumentStateError(f'Element {modal_id!r} is not a modal')
-        self._widgets.update(widgets)
-        for message_type, entries in bindings.items():
-            self._bindings.setdefault(message_type, []).extend(entries)
         future: asyncio.Future[object | None] = asyncio.get_running_loop().create_future()
-        modal_widgets = set(widgets.values())
+        owned_entries = {id(entry) for entries in bindings.values() for entry in entries}
 
-        def dismissed(value: object | None) -> None:
+        def remove_registrations() -> None:
             for element_id, widget in widgets.items():
                 if self._widgets.get(element_id) is widget:
                     self._widgets.pop(element_id)
-            for message_type, entries in bindings.items():
-                self._bindings[message_type] = [entry for entry in self._bindings[message_type] if entry[0] not in modal_widgets]
-            future.set_result(value)
+            for message_type in bindings:
+                remaining = [entry for entry in self._bindings.get(message_type, ()) if id(entry) not in owned_entries]
+                if remaining:
+                    self._bindings[message_type] = remaining
+                else:
+                    self._bindings.pop(message_type, None)
 
-        self.app.push_screen(modal, callback=dismissed)
+        async def finalize_dismissal(value: object | None) -> None:
+            while self.app.is_mounted(modal):
+                await asyncio.sleep(0)
+            remove_registrations()
+            self._active_modal_ids.discard(modal_id)
+            if not future.done():
+                future.set_result(value)
+
+        def dismissed(value: object | None) -> None:
+            finalizer = asyncio.create_task(finalize_dismissal(value))
+            self._modal_finalizers.add(finalizer)
+            finalizer.add_done_callback(self._modal_finalizers.discard)
+
+        self._widgets.update(widgets)
+        for message_type, entries in bindings.items():
+            self._bindings.setdefault(message_type, []).extend(entries)
+        self._active_modal_ids.add(modal_id)
+        try:
+            self.app.push_screen(modal, callback=dismissed)
+        except BaseException:
+            remove_registrations()
+            self._active_modal_ids.discard(modal_id)
+            future.cancel()
+            raise
         return future
 
     def dismiss_modal(self, value: object | None = None) -> None:

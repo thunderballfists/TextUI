@@ -4,6 +4,12 @@ All notable changes to TextUI are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Modal dismissal now releases anonymous and component-private action bindings, and failed modal pushes roll back their registrations.
+- Duplicate opens of one declared modal now raise `DocumentStateError` instead of leaking state or surfacing a native duplicate-ID error.
+- Modal result futures now resolve after their screen unmounts, allowing immediate reopen of the same declaration.
+
 ### Changed
 
 - Compound-control validation now rejects unreachable nested radio-button events while preserving custom registry components that reuse built-in tag names.
