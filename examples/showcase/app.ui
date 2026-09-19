@@ -40,7 +40,7 @@
             </tabbed-content>
           </vertical>
           <vertical id="data">
-            <label>Runtime API records</label>
+            <label>Runtime API records — click a heading to sort</label>
             <data-table id="usage" row-key="record_id" cursor-type="row" on-row-selected="usage_selected">
               <column key="date" label="Date" />
               <column key="requests" label="Requests" align="right" width="8" />

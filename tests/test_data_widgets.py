@@ -172,6 +172,43 @@ async def test_set_rows_restores_cursor_by_stable_key_or_uses_first_row():
         assert table.cursor_coordinate == Coordinate(0, 0)
 
 
+@pytest.mark.asyncio
+async def test_runtime_table_header_sorts_source_values_and_toggles_direction():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name">Name</column><column key="requests">Requests</column>
+    </data-table></ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"id": "high", "name": "High", "requests": 42},
+            {"id": "low", "name": "Low", "requests": 7},
+            {"id": "middle", "name": "Middle", "requests": 12},
+        ])
+        column = table.columns["requests"]
+        table.post_message(DataTable.HeaderSelected(table, column.key, 1, column.label))
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["low", "middle", "high"]
+
+        table.post_message(DataTable.HeaderSelected(table, column.key, 1, column.label))
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["high", "middle", "low"]
+
+
+@pytest.mark.asyncio
+async def test_seeded_table_header_sorts_literal_cells():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="jobs">
+      <column key="name">Name</column>
+      <row key="zulu"><cell>Zulu</cell></row>
+      <row key="alpha"><cell>Alpha</cell></row>
+    </data-table></ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("jobs")
+        column = table.columns["name"]
+        table.post_message(DataTable.HeaderSelected(table, column.key, 0, column.label))
+        await pilot.pause()
+        assert [row.key.value for row in table.ordered_rows] == ["alpha", "zulu"]
+
+
 def test_data_widgets_can_be_composed_before_app_runs():
     bound = DocumentLoader().from_string(MARKUP).bind(App(), actions={
         "open_job": lambda context: None,

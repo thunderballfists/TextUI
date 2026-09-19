@@ -8,7 +8,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_showcase_mounts_components_runtime_data_and_modal():
     from textui import ProjectApp, ProjectSource
-    from textual.widgets import Button
+    from textual.widgets import Button, DataTable
 
     entry = Path(__file__).parents[1] / "examples" / "showcase" / "app.ui"
     app = ProjectApp(ProjectSource.discover(entry))
@@ -41,6 +41,13 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         await pilot.press("enter")
         await pilot.pause()
         assert str(app.document.get_by_id("feedback").render()) == "Usage: 42 requests"
+        requests = usage.columns["requests"]
+        usage.post_message(DataTable.HeaderSelected(usage, requests.key, 1, requests.label))
+        await pilot.pause()
+        assert [key.value for key in usage.rows] == [
+            "2026-09-19-bravo",
+            "2026-09-19-alpha",
+        ]
         app.document.get_by_id("add-data").press()
         await pilot.pause()
         assert app.document.get_by_id("jobs").get_cell("deploy", "state") == "Queued"

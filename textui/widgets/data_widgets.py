@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from numbers import Real
 from types import MappingProxyType
 
 from rich.text import Text
@@ -63,6 +64,8 @@ class SeededDataTable(DataTable):
         self._seed_rows = rows
         self.row_key_field = row_key
         self._runtime_records: dict[str, Mapping[str, object]] = {}
+        self._sort_column: str | None = None
+        self._sort_reverse = False
         self._seeded = False
 
     def on_mount(self) -> None:
@@ -116,9 +119,41 @@ class SeededDataTable(DataTable):
                 column=min(previous_column, len(self.columns) - 1),
                 animate=False,
             )
+        self._sort_column = None
+        self._sort_reverse = False
 
     def get_record(self, row_key: str) -> Mapping[str, object]:
         return self._runtime_records[row_key]
+
+    def on_data_table_header_selected(self, event: DataTable.HeaderSelected) -> None:
+        column_key = event.column_key.value
+        if column_key not in {column.key for column in self._seed_columns}:
+            return
+        reverse = column_key == self._sort_column and not self._sort_reverse
+        if self._runtime_records:
+            records = list(self._runtime_records.values())
+            records.sort(
+                key=lambda record: self._sort_value(record[column_key]),
+                reverse=reverse,
+            )
+            self.set_rows(records)
+        else:
+            self.sort(
+                event.column_key,
+                key=lambda value: self._sort_value(value.plain if isinstance(value, Text) else value),
+                reverse=reverse,
+            )
+        self._sort_column = column_key
+        self._sort_reverse = reverse
+        event.stop()
+
+    @staticmethod
+    def _sort_value(value: object) -> tuple[int, float | str]:
+        if isinstance(value, bool):
+            return (0, float(value))
+        if isinstance(value, Real):
+            return (1, float(value))
+        return (2, str(value).casefold())
 
 
 def build_data_table(context: BuildContext) -> SeededDataTable:
