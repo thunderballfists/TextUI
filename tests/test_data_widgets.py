@@ -208,6 +208,30 @@ async def test_runtime_table_header_sorts_source_values_and_toggles_direction():
 
 
 @pytest.mark.asyncio
+async def test_set_rows_keeps_active_runtime_sort_on_refresh():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name">Name</column><column key="requests">Requests</column>
+    </data-table></ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"id": "high", "name": "High", "requests": 42},
+            {"id": "low", "name": "Low", "requests": 7},
+        ])
+        column = table.columns["requests"]
+        table.post_message(DataTable.HeaderSelected(table, column.key, 1, column.label))
+        await pilot.pause()
+
+        table.set_rows([
+            {"id": "middle", "name": "Middle", "requests": 12},
+            {"id": "high", "name": "High", "requests": 42},
+            {"id": "low", "name": "Low", "requests": 7},
+        ])
+        assert [key.value for key in table.rows] == ["low", "middle", "high"]
+        assert table.columns["requests"].label.plain == "Requests ↑"
+
+
+@pytest.mark.asyncio
 async def test_seeded_table_header_sorts_literal_cells():
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="jobs">
       <column key="name">Name</column>

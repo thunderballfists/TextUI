@@ -20,6 +20,7 @@ All notable changes to TextUI are documented here.
 - A runnable feature showcase that combines every built-in widget family and project-runtime facility.
 - Runtime data-table rows through `row-key`, typed column `label`/`align`/`width` metadata, atomic `set_rows()`, and read-only `get_record()`.
 - Clickable data-table headings with independent hover states, a full-cell active `↑`/`↓` background, and sorting by original runtime record values or displayed seed values.
+- Runtime table refreshes retain an active column sort instead of reverting to source order.
 
 ### Planned
 

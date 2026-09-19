@@ -121,6 +121,11 @@ class SeededDataTable(DataTable):
             )
             validated.append((key, MappingProxyType(dict(record)), cells))
 
+        if self._sort_column is not None:
+            validated.sort(
+                key=lambda row: self._sort_value(row[1][self._sort_column]),
+                reverse=self._sort_reverse,
+            )
         previous_key: str | None = None
         previous_column: int | None = None
         if self.is_valid_coordinate(self.cursor_coordinate):
@@ -136,8 +141,6 @@ class SeededDataTable(DataTable):
                 column=min(previous_column, len(self.columns) - 1),
                 animate=False,
             )
-        self._sort_column = None
-        self._sort_reverse = False
 
     def get_record(self, row_key: str) -> Mapping[str, object]:
         return self._runtime_records[row_key]
@@ -148,20 +151,17 @@ class SeededDataTable(DataTable):
             return
         reverse = column_key == self._sort_column and not self._sort_reverse
         if self._runtime_records:
-            records = list(self._runtime_records.values())
-            records.sort(
-                key=lambda record: self._sort_value(record[column_key]),
-                reverse=reverse,
-            )
-            self.set_rows(records)
+            self._sort_column = column_key
+            self._sort_reverse = reverse
+            self.set_rows(self._runtime_records.values())
         else:
             self.sort(
                 event.column_key,
                 key=lambda value: self._sort_value(value.plain if isinstance(value, Text) else value),
                 reverse=reverse,
             )
-        self._sort_column = column_key
-        self._sort_reverse = reverse
+            self._sort_column = column_key
+            self._sort_reverse = reverse
         self._set_sort_indicator(column_key, reverse)
         event.stop()
 
