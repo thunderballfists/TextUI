@@ -1,6 +1,7 @@
 """Markup button adapter backed by a linked-script command."""
 from __future__ import annotations
 
+from textual.content import Content
 from textual.widgets import Button
 
 from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, enum
@@ -12,16 +13,11 @@ def _command_name(value: str) -> str:
     return value
 
 
-class CommandButton(Button):
-    """A button whose label and availability come from command metadata."""
-
-    def __init__(self, command_name: str, *, variant: str) -> None:
-        super().__init__("", variant=variant)
-        self.command_name = command_name
-
-
-def build_command_button(context: BuildContext) -> CommandButton:
-    return CommandButton(context.attributes["command"], variant=context.attributes["variant"])
+def build_command_button(context: BuildContext) -> Button:
+    """Build a native button so ordinary `Button` TCSS selectors still apply."""
+    button = Button(Content(""), variant=context.attributes["variant"])
+    button._textui_command_name = context.attributes["command"]
+    return button
 
 
 def register_command_button(registry: ComponentRegistry) -> None:

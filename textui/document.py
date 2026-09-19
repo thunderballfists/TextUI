@@ -22,7 +22,6 @@ from .errors import (
 from .nodes import ElementNode, StyleBlock
 from .registry import BuildContext, EventSpec
 from .widgets.modal import MarkupModal, build_modal
-from .widgets.command_button import CommandButton
 from .styling import apply_inline, commit_styles, prepare_styles
 
 # A factory may not recycle an instance across bindings, even before mounting.
@@ -133,8 +132,9 @@ class BoundDocument:
                 widget.id = node.common['id']
             widget.add_class(*node.common['classes'])
             widget.disabled = node.common['disabled']
-            if isinstance(widget, CommandButton):
-                command = self.commands[widget.command_name]
+            command_name = getattr(widget, "_textui_command_name", None)
+            if command_name is not None:
+                command = self.commands[command_name]
                 widget.label = Content(command.label)
                 widget.disabled = widget.disabled or not command.enabled
         except Exception as error:
@@ -146,11 +146,12 @@ class BoundDocument:
         for event_name, action in node.events.items():
             event = node.spec.events[event_name]
             bindings.setdefault(event.message_type, []).append((widget, event, action, node))
-        if isinstance(widget, CommandButton):
+        command_name = getattr(widget, "_textui_command_name", None)
+        if command_name is not None:
             bindings.setdefault(Button.Pressed, []).append((
                 widget,
                 EventSpec(Button.Pressed, lambda event: event.button),
-                widget.command_name,
+                command_name,
                 node,
             ))
         return widget

@@ -48,6 +48,26 @@ async def refresh():
 
 An `@action` function is exposed under its Python name and may take zero arguments or one `ActionContext`; undecorated functions are private to the script. `on-pressed="save"` refers to that exact name. Duplicate action names, including collisions with host-supplied actions, are errors.
 
+## Shared commands and shortcuts
+
+Use `@command` for a zero-argument controller operation shared by a command control and an optional shortcut. Command bodies use the existing `window` global, so the same function runs from a pointer click or keyboard binding without event-specific boilerplate.
+
+```python
+from textui import command
+
+@command(label="Quit", shortcut="ctrl+q", description="Exit the application")
+def quit_app():
+    window.app.exit()
+```
+
+Render it with a self-labeling control:
+
+```xml
+<command-button id="quit" command="quit_app" variant="error" />
+```
+
+`label` defaults to the function name in title case, so `open_help` becomes **Open Help**. The shortcut description defaults to the label and appears in Textual binding help. `enabled=False` renders each command button disabled and ignores its shortcut. Command names must be unique across linked scripts, command functions take no parameters, and every command button must reference a declared command. A command is also available to an ordinary `on-*` directive by its function name; use `@action` when the callback needs an `ActionContext` event.
+
 Optional `on_setup`, `on_ready`, and `on_close` functions take no arguments and may be synchronous or asynchronous. Setup runs before component validation and binding; ready runs after mount; close runs once on shutdown and after a failed setup. `window.document` is available after binding, while ID lookup requires mounted widgets.
 
 `window.after(seconds, callback)` schedules a one-shot callback and `window.every(seconds, callback, thread=False)` repeats it. `@every(seconds, thread=False)` starts a decorated timer after ready. All accept positive finite seconds and zero-argument callbacks; handles support `pause()`, `resume()`, and `stop()`. Async callbacks run as App workers; overlapping repeat ticks are skipped. Blocking synchronous work must opt into `thread=True`; use `window.call_ui(callback, *args, **kwargs)` from that thread for UI updates. Runtime timers stop when the App closes.
@@ -86,7 +106,7 @@ The [project example](../examples/project/app.ui) combines a hideable sidebar, d
 </header>
 ```
 
-The [showcase](../examples/showcase/app.ui) places its Help control in the top-right slot and its Quit action below the sidebar navigation.
+The [showcase](../examples/showcase/app.ui) places its Help control in the top-right slot and its Quit command below the sidebar navigation.
 
 ## Runtime tables
 

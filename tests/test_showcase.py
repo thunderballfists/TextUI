@@ -80,3 +80,17 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         await pilot.pause()
         assert app.screen is not first_modal
         assert app.screen.id != "help"
+
+
+@pytest.mark.asyncio
+async def test_showcase_quit_control_uses_a_shared_command():
+    from textui import ProjectApp, ProjectSource
+
+    entry = Path(__file__).parents[1] / "examples" / "showcase" / "app.ui"
+    app = ProjectApp(ProjectSource.discover(entry))
+
+    async with app.run_test():
+        quit_button = app.document.get_by_id("quit")
+        assert quit_button._textui_command_name == "quit_app"
+        assert quit_button.label.plain == "Quit"
+        assert app.controllers.commands["quit_app"].shortcut == "ctrl+q"

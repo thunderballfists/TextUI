@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from textui import action, every
+from textui import action, command, every
 
 
 AGENTS = [
@@ -28,7 +28,7 @@ def toggle_sidebar() -> None:
     sidebar.display = not sidebar.display
 
 
-@action
+@command(label="Quit", shortcut="ctrl+q", description="Exit the showcase")
 def quit_app() -> None:
     window.app.exit()
 

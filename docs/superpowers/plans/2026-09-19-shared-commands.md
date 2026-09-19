@@ -214,7 +214,7 @@ git commit -m "Add command buttons and shortcuts"
 - Consumes the Task 2 command decorator, markup tag, and shortcut contract.
 - Produces a showcase Quit command button and documented reusable command example.
 
-- [ ] **Step 1: Write a failing showcase interaction test**
+- [x] **Step 1: Write a failing showcase interaction test**
 
 ```python
 @pytest.mark.asyncio
@@ -230,13 +230,13 @@ async def test_showcase_quit_control_is_a_command_button():
 
 The test must load and run the real project source, then assert the visible command control rather than inspecting XML source.
 
-- [ ] **Step 2: Run the focused test and verify it fails because the showcase still uses an ordinary button**
+- [x] **Step 2: Run the focused test and verify it fails because the showcase still uses an ordinary button**
 
 Run: `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest tests/test_showcase.py -q`
 
 Expected: failure because the existing sidebar button is not a command button or has no command metadata.
 
-- [ ] **Step 3: Convert the showcase and document the feature**
+- [x] **Step 3: Convert the showcase and document the feature**
 
 ```python
 @command(label="Quit", shortcut="ctrl+q", description="Exit the showcase")
@@ -246,13 +246,13 @@ def quit_app():
 
 Replace the sidebar's ordinary Quit button with `<command-button>`. Add one compact project-runtime example covering declaration, inferred labels, explicit labels, shortcut help, static disabled commands, and the boundary with `@action`. Add a changelog entry and examples index note.
 
-- [ ] **Step 4: Run showcase tests, full tests, package checks, and build**
+- [x] **Step 4: Run showcase tests, full tests, package checks, and build**
 
 Run: `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest tests/test_showcase.py -q && uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q && uvx --python 3.12 --from poetry==2.4.3 poetry check --lock && uvx --python 3.12 --from poetry==2.4.3 poetry build`
 
 Expected: all commands exit zero.
 
-- [ ] **Step 5: Commit documentation and example coverage**
+- [x] **Step 5: Commit documentation and example coverage**
 
 ```bash
 git add examples/showcase/app.ui examples/showcase/controller.py tests/test_showcase.py docs/project-runtime.md examples/README.md CHANGELOG.md

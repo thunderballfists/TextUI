@@ -17,7 +17,7 @@
             <nav-item target="data">Data</nav-item>
             <nav-item target="activity">Activity</nav-item>
           </nav>
-          <button id="quit" variant="error" on-pressed="quit_app">Quit</button>
+          <command-button id="quit" command="quit_app" variant="error" />
         </vertical>
       </pane>
       <pane id="main" min-size="30">
