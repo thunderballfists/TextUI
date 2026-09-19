@@ -28,6 +28,41 @@ def test_data_markup_lowers_with_typed_attributes():
     assert tree.children[0].attributes["expanded"] is True
 
 
+def test_data_table_column_metadata_and_optional_runtime_key_lower():
+    document = DocumentLoader().from_string('''<ui>
+      <data-table id="usage" row-key="record_id">
+        <column key="date" label="Date" />
+        <column key="requests" label="Reqs" align="right" width="8" />
+      </data-table>
+    </ui>''')
+    table = document.nodes[0]
+    assert table.attributes["row-key"] == "record_id"
+    assert table.children[0].attributes["label"] == "Date"
+    assert table.children[1].attributes["align"] == "right"
+    assert table.children[1].attributes["width"] == 8
+
+
+@pytest.mark.asyncio
+async def test_column_metadata_uses_literal_label_and_width():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
+      <column key="requests" label="Reqs" align="right" width="8" />
+    </data-table></ui>'''))
+    async with app.run_test():
+        column = app.document.get_by_id("usage").columns["requests"]
+        assert column.label.plain == "Reqs"
+        assert column.width == 8
+
+
+@pytest.mark.parametrize("markup", [
+    '<ui><data-table row-key=""><column key="x">X</column></data-table></ui>',
+    '<ui><data-table><column key="x" align="decimal">X</column></data-table></ui>',
+    '<ui><data-table><column key="x" width="0">X</column></data-table></ui>',
+])
+def test_data_table_runtime_metadata_rejects_invalid_values(markup):
+    with pytest.raises(DocumentValidationError):
+        DocumentLoader().from_string(markup)
+
+
 def test_data_widgets_can_be_composed_before_app_runs():
     bound = DocumentLoader().from_string(MARKUP).bind(App(), actions={
         "open_job": lambda context: None,

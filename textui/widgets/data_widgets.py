@@ -5,7 +5,7 @@ from rich.text import Text
 from textual.widget import Widget
 from textual.widgets import DataTable, Tree
 
-from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, enum
+from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, enum, integer
 
 
 def nonempty_key(value: str) -> str:
@@ -15,10 +15,12 @@ def nonempty_key(value: str) -> str:
 
 
 class TableColumn(Widget):
-    def __init__(self, label: str, key: str) -> None:
+    def __init__(self, label: str, key: str, *, align: str, width: int | None) -> None:
         super().__init__()
         self.label = label
         self.key = key
+        self.align = align
+        self.width = width
 
 
 class TableCell(Widget):
@@ -44,30 +46,48 @@ class TreeSeedNode(Widget):
 
 
 class SeededDataTable(DataTable):
-    def __init__(self, columns: tuple[TableColumn, ...], rows: tuple[TableRow, ...], *, cursor_type: str) -> None:
+    def __init__(
+        self,
+        columns: tuple[TableColumn, ...],
+        rows: tuple[TableRow, ...],
+        *,
+        cursor_type: str,
+        row_key: str | None,
+    ) -> None:
         super().__init__(cursor_type=cursor_type)
         self._seed_columns = columns
         self._seed_rows = rows
+        self.row_key_field = row_key
         self._seeded = False
 
     def on_mount(self) -> None:
         if self._seeded:
             return
         for column in self._seed_columns:
-            self.add_column(Text(column.label), key=column.key)
+            self.add_column(Text(column.label), width=column.width, key=column.key)
         for row in self._seed_rows:
             self.add_row(*(Text(cell) for cell in row.cells), key=row.key)
         self._seeded = True
 
 
-def build_data_table(context: BuildContext) -> DataTable:
+def build_data_table(context: BuildContext) -> SeededDataTable:
     columns = tuple(child for child in context.children if isinstance(child, TableColumn))
     rows = tuple(child for child in context.children if isinstance(child, TableRow))
-    return SeededDataTable(columns, rows, cursor_type=context.attributes["cursor-type"])
+    return SeededDataTable(
+        columns,
+        rows,
+        cursor_type=context.attributes["cursor-type"],
+        row_key=context.attributes.get("row-key"),
+    )
 
 
 def build_column(context: BuildContext) -> TableColumn:
-    return TableColumn(context.text or "", context.attributes["key"])
+    return TableColumn(
+        context.attributes.get("label", context.text or ""),
+        context.attributes["key"],
+        align=context.attributes["align"],
+        width=context.attributes.get("width"),
+    )
 
 
 def build_cell(context: BuildContext) -> TableCell:
@@ -106,7 +126,13 @@ def build_tree(context: BuildContext) -> Tree[str]:
 def register_data_widgets(registry: ComponentRegistry) -> None:
     registry.register(ComponentSpec(
         tag="column", factory=build_column,
-        text_policy="text", attributes={"key": AttributeSpec(nonempty_key, required=True)},
+        text_policy="text",
+        attributes={
+            "key": AttributeSpec(nonempty_key, required=True),
+            "label": AttributeSpec(),
+            "align": AttributeSpec(enum("left", "center", "right"), default="left"),
+            "width": AttributeSpec(integer(minimum=1)),
+        },
     ))
     registry.register(ComponentSpec(
         tag="cell", factory=build_cell, text_policy="text",
@@ -117,7 +143,10 @@ def register_data_widgets(registry: ComponentRegistry) -> None:
     ))
     registry.register(ComponentSpec(
         tag="data-table", factory=build_data_table, child_policy="widgets",
-        attributes={"cursor-type": AttributeSpec(enum("cell", "row", "column", "none"), default="row")},
+        attributes={
+            "cursor-type": AttributeSpec(enum("cell", "row", "column", "none"), default="row"),
+            "row-key": AttributeSpec(nonempty_key),
+        },
         events={
             "row-selected": EventSpec(DataTable.RowSelected, lambda event: event.data_table),
             "cell-selected": EventSpec(DataTable.CellSelected, lambda event: event.data_table),
