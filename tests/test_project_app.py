@@ -123,6 +123,53 @@ async def test_project_rejects_duplicate_commands_from_linked_scripts(tmp_path: 
 
 
 @pytest.mark.asyncio
+async def test_command_button_and_shortcut_invoke_the_same_command(tmp_path: Path):
+    source = project(tmp_path, '<command-button id="quit" command="quit_app"/>', '''
+from textui import command
+
+@command(label="Leave", shortcut="ctrl+q")
+def quit_app():
+    window.app.events.append("quit")
+''')
+    app = ProjectApp(source)
+    app.events = []
+
+    async with app.run_test() as pilot:
+        assert app.document.get_by_id("quit").label.plain == "Leave"
+        await pilot.click("#quit")
+        await pilot.press("ctrl+q")
+
+    assert app.events == ["quit", "quit"]
+
+
+@pytest.mark.asyncio
+async def test_command_button_requires_a_declared_command(tmp_path: Path):
+    source = project(tmp_path, '<command-button command="missing"/>', '')
+
+    with pytest.raises(DocumentValidationError, match="missing"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
+async def test_disabled_command_ignores_button_and_shortcut(tmp_path: Path):
+    source = project(tmp_path, '<label id="status">Ready</label><command-button id="stop" command="stop"/>', '''
+from textui import command
+
+@command(enabled=False, shortcut="ctrl+s")
+def stop():
+    window.document.get_by_id("status").update("Stopped")
+''')
+    app = ProjectApp(source)
+
+    async with app.run_test() as pilot:
+        assert app.document.get_by_id("stop").disabled
+        await pilot.click("#stop")
+        await pilot.press("ctrl+s")
+        assert str(app.document.get_by_id("status").render()) == "Ready"
+
+
+@pytest.mark.asyncio
 async def test_host_and_linked_action_name_collision_fails_before_mount(tmp_path: Path):
     source = project(tmp_path, '<button on-pressed="save">Save</button>', '''
 from textui import action

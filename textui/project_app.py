@@ -44,11 +44,27 @@ class ProjectApp(App):
             definition = self.source.lower(self.window.registry)
             self._textui_loading = True
             try:
-                self.document = definition.bind(self, actions={**self._host_actions, **self.controllers.actions})
+                self.document = definition.bind(
+                    self,
+                    actions={**self._host_actions, **self.controllers.actions},
+                    commands=self.controllers.commands,
+                    command_callbacks=self.controllers.command_callbacks,
+                    command_locations=self.controllers.command_locations,
+                )
             finally:
                 self._textui_loading = False
             self.window._document = self.document
             install_tab_accelerators(self, definition.nodes)
+            for name, command in self.controllers.commands.items():
+                if command.shortcut is not None:
+                    self._bindings.bind(
+                        command.shortcut,
+                        f"textui_invoke_command('{name}')",
+                        command.description,
+                        priority=True,
+                    )
+                    bindings = self._bindings.get_bindings_for_key(command.shortcut)
+                    bindings.insert(0, bindings.pop())
             self.window.phase = "bound"
         except BaseException:
             if self._setup_completed:
@@ -64,6 +80,11 @@ class ProjectApp(App):
         if self.document is None:
             raise RuntimeError("project document has not been bound")
         activate_tab(self.document, pane_id)
+
+    async def action_textui_invoke_command(self, command_name: str) -> None:
+        if self.document is None:
+            raise RuntimeError("project document has not been bound")
+        await self.document.invoke_command(command_name)
 
     async def on_mount(self) -> None:
         self.window.phase = "ready"

@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from inspect import isawaitable
 from types import MappingProxyType
 from weakref import WeakSet
 
 from textual.app import App
+from textual.content import Content
 from textual.message import Message
 from textual.widget import Widget
+from textual.widgets import Button
 
 from .actions import ActionCallback, ActionContext
 from .errors import (
@@ -20,6 +22,7 @@ from .errors import (
 from .nodes import ElementNode, StyleBlock
 from .registry import BuildContext, EventSpec
 from .widgets.modal import MarkupModal, build_modal
+from .widgets.command_button import CommandButton
 from .styling import apply_inline, commit_styles, prepare_styles
 
 # A factory may not recycle an instance across bindings, even before mounting.
@@ -42,7 +45,15 @@ class Document:
         object.__setattr__(self, 'nodes', tuple(self.nodes))
         object.__setattr__(self, 'styles', tuple(self.styles))
 
-    def bind(self, app: App, *, actions: Mapping[str, ActionCallback]) -> BoundDocument:
+    def bind(
+        self,
+        app: App,
+        *,
+        actions: Mapping[str, ActionCallback],
+        commands: Mapping[str, object] | None = None,
+        command_callbacks: Mapping[str, Callable[[], object]] | None = None,
+        command_locations: Mapping[str, object] | None = None,
+    ) -> BoundDocument:
         """Validate callbacks and reserve one binding on an initialized App."""
         if not isinstance(app, App) or not hasattr(app, 'stylesheet'):
             raise DocumentStateError('Bind to an initialized Textual App')
@@ -51,14 +62,23 @@ class Document:
         if hasattr(app, '_textui_document_binding'):
             raise DocumentStateError('An App may have only one document binding')
         callbacks = dict(actions)
+        declared_commands = dict(commands or {})
+        callbacks_by_command = dict(command_callbacks or {})
+        locations_by_command = dict(command_locations or {})
         for node in _walk(self.nodes):
+            if node.spec.tag == "command-button":
+                command_name = node.attributes["command"]
+                if command_name not in declared_commands:
+                    raise DocumentValidationError(f"Command {command_name!r} must be declared", location=node.location, attribute="command", value=command_name)
+                if command_name not in callbacks_by_command or not callable(callbacks_by_command[command_name]):
+                    raise DocumentValidationError(f"Command {command_name!r} must expose a callable", location=node.location, attribute="command", value=command_name)
             for event_name, name in node.events.items():
                 if name not in callbacks or not callable(callbacks[name]):
                     raise DocumentValidationError(f'Action {name!r} must be exposed as a callable', location=node.location, attribute=f'on-{event_name}', value=name)
         for name, callback in callbacks.items():
             if not isinstance(name, str) or not name.isidentifier() or not callable(callback):
                 raise DocumentValidationError(f'Action {name!r} must have an identifier name and a callable value')
-        bound = BoundDocument(self, app, callbacks)
+        bound = BoundDocument(self, app, callbacks, declared_commands, callbacks_by_command, locations_by_command)
         app._textui_document_binding = bound
         return bound
 
@@ -66,10 +86,21 @@ class Document:
 class BoundDocument:
     """One App's callbacks, constructed tree, and native message bindings."""
 
-    def __init__(self, definition: Document, app: App, actions: Mapping[str, ActionCallback]) -> None:
+    def __init__(
+        self,
+        definition: Document,
+        app: App,
+        actions: Mapping[str, ActionCallback],
+        commands: Mapping[str, object],
+        command_callbacks: Mapping[str, Callable[[], object]],
+        command_locations: Mapping[str, object],
+    ) -> None:
         self.definition = definition
         self.app = app
         self.actions = MappingProxyType(dict(actions))
+        self.commands = MappingProxyType(dict(commands))
+        self._command_callbacks = MappingProxyType(dict(command_callbacks))
+        self._command_locations = MappingProxyType(dict(command_locations))
         self._state = 'bound'
         self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None and not node.private_id}
         self._widgets: dict[str, Widget] = {}
@@ -102,6 +133,10 @@ class BoundDocument:
                 widget.id = node.common['id']
             widget.add_class(*node.common['classes'])
             widget.disabled = node.common['disabled']
+            if isinstance(widget, CommandButton):
+                command = self.commands[widget.command_name]
+                widget.label = Content(command.label)
+                widget.disabled = widget.disabled or not command.enabled
         except Exception as error:
             raise ComponentBuildError(str(error), location=node.location) from error
         if node.common['style'] is not None:
@@ -111,6 +146,13 @@ class BoundDocument:
         for event_name, action in node.events.items():
             event = node.spec.events[event_name]
             bindings.setdefault(event.message_type, []).append((widget, event, action, node))
+        if isinstance(widget, CommandButton):
+            bindings.setdefault(Button.Pressed, []).append((
+                widget,
+                EventSpec(Button.Pressed, lambda event: event.button),
+                widget.command_name,
+                node,
+            ))
         return widget
 
     def compose(self) -> Iterable[Widget]:
@@ -198,6 +240,25 @@ class BoundDocument:
         if widget is None or not widget.is_mounted or not self.app.is_mounted(widget):
             raise DocumentStateError(f'Element {element_id!r} is not mounted', location=self._declared_ids[element_id])
         return widget
+
+    async def invoke_command(self, name: str) -> bool:
+        """Run an enabled declared command, returning whether it ran."""
+        command = self.commands.get(name)
+        if command is None:
+            raise DocumentStateError(f"No declared command {name!r}")
+        if not command.enabled:
+            return False
+        try:
+            result = self._command_callbacks[name]()
+            if isawaitable(result):
+                await result
+        except Exception as error:
+            raise ActionExecutionError(
+                f"Command {name!r} failed: {error}",
+                location=self._command_locations.get(name),
+                value=name,
+            ) from error
+        return True
 
     async def dispatch(self, message: Message) -> bool:
         """Await one exact-type/identity action without altering native bubbling."""

@@ -113,6 +113,8 @@ class ControllerSet:
         self.window = window
         self.actions: dict[str, Callable[[ActionContext], Any]] = {}
         self.commands: dict[str, Command] = {}
+        self.command_callbacks: dict[str, Callable[[], Any]] = {}
+        self.command_locations: dict[str, SourceLocation] = {}
         self.hooks: dict[str, tuple[Callable[..., Any], SourceLocation]] = {}
         self.periodic: list[tuple[float, Callable[[], Any], bool]] = []
 
@@ -140,6 +142,8 @@ class ControllerSet:
                     raise DocumentValidationError(f"invalid command {name!r}", location=location)
                 _arity(value, {0}, location)
                 self.commands[name] = _command_metadata(name, command_options, location)
+                self.command_callbacks[name] = value
+                self.command_locations[name] = location
                 self.actions[name] = lambda context, callback=value: callback()
             elif callable(value) and getattr(value, "__textui_action__", False) and getattr(value, "__module__", None) == module.__name__:
                 if name in self.actions:

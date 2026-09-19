@@ -131,7 +131,7 @@ git commit -m "Add project command declarations"
 - Produces `<command-button command="python_identifier" variant="..." />`.
 - Produces `BoundDocument.invoke_command(name: str) -> bool`; `True` means an enabled command ran and `False` means it was disabled.
 
-- [ ] **Step 1: Write failing integration tests**
+- [x] **Step 1: Write failing integration tests**
 
 ```python
 @pytest.mark.asyncio
@@ -170,13 +170,13 @@ def stop(): window.document.get_by_id("status").update("Stopped")
         assert str(app.document.get_by_id("status").render()) == "Ready"
 ```
 
-- [ ] **Step 2: Run the focused tests and verify they fail because the tag and binding path are absent**
+- [x] **Step 2: Run the focused tests and verify they fail because the tag and binding path are absent**
 
 Run: `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest tests/test_project_app.py -q`
 
 Expected: parse failure for `command-button` or missing command-binding behavior.
 
-- [ ] **Step 3: Implement button lowering and shortcut dispatch**
+- [x] **Step 3: Implement button lowering and shortcut dispatch**
 
 ```python
 class CommandButton(Button):
@@ -185,15 +185,15 @@ class CommandButton(Button):
         self.command = command
 ```
 
-Register the new typed component. Extend `Document.bind` with an optional command mapping, validate every command button, assign the metadata label and disabled state during `_build_node`, and add its `Button.Pressed` binding to the existing dispatcher. Add `BoundDocument.invoke_command`, then install each enabled-or-disabled shortcut on `ProjectApp` using `app.bind(key, "textui_invoke_command('name')", description)` and await it from `action_textui_invoke_command`.
+Register the new typed component. Extend `Document.bind` with an optional command mapping, validate every command button, assign the metadata label and disabled state during `_build_node`, and add its `Button.Pressed` binding to the existing dispatcher. Add `BoundDocument.invoke_command`, then install each enabled-or-disabled shortcut as a first-priority Textual binding for `textui_invoke_command('name')` and await it from `action_textui_invoke_command`.
 
-- [ ] **Step 4: Run focused tests and the complete suite**
+- [x] **Step 4: Run focused tests and the complete suite**
 
 Run: `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest tests/test_project_app.py -q && uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`
 
 Expected: all tests pass.
 
-- [ ] **Step 5: Commit the command surfaces**
+- [x] **Step 5: Commit the command surfaces**
 
 ```bash
 git add textui/widgets/command_button.py textui/widgets/builtin_widgets.py textui/document.py textui/project_app.py tests/test_project_app.py

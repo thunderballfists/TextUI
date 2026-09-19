@@ -13,6 +13,7 @@ from .data_widgets import register_data_widgets
 from .transcript import register_transcript
 from .runtime_list import register_runtime_list
 from .bars import register_bars
+from .command_button import register_command_button
 from .modal import register_modal
 
 from ..registry import (
@@ -166,5 +167,6 @@ def default_component_registry() -> ComponentRegistry:
     register_transcript(registry)
     register_runtime_list(registry)
     register_bars(registry)
+    register_command_button(registry)
     register_modal(registry)
     return registry
