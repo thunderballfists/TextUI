@@ -189,6 +189,8 @@ async def test_runtime_table_header_sorts_source_values_and_toggles_direction():
         await pilot.pause()
         assert [key.value for key in table.rows] == ["low", "middle", "high"]
         assert table.columns["requests"].label.plain == "Requests ↑"
+        assert any("reverse" in str(span.style) for span in table.columns["requests"].label.spans)
+        assert table.get_component_styles("datatable--header-hover").rich_style.underline
 
         table.post_message(DataTable.HeaderSelected(table, column.key, 1, column.label))
         await pilot.pause()

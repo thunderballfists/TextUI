@@ -51,6 +51,14 @@ class TreeSeedNode(Widget):
 
 
 class SeededDataTable(DataTable):
+    DEFAULT_CSS = """
+    SeededDataTable > .datatable--header-hover {
+        background: $accent;
+        color: $foreground;
+        text-style: bold underline;
+    }
+    """
+
     def __init__(
         self,
         columns: tuple[TableColumn, ...],
@@ -164,6 +172,7 @@ class SeededDataTable(DataTable):
             updated_label = label.copy()
             if key_value == column_key:
                 updated_label.append(" ↓" if reverse else " ↑")
+                updated_label.stylize("reverse")
             column.label = updated_label
         self._require_update_dimensions = True
         self._update_count += 1
