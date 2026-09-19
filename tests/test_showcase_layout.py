@@ -123,6 +123,8 @@ async def test_long_modal_content_keeps_action_reachable_on_short_terminal():
     async with app.run_test(size=(60, 20)) as pilot:
         assert await pilot.click("#open")
         await pilot.pause()
+        panel = app.screen.query_one(".markup-modal-content")
+        assert app.screen.region.contains_region(panel.region)
         close = app.document.get_by_id("close")
         close.scroll_visible(animate=False)
         await pilot.pause()
