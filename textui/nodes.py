@@ -18,6 +18,7 @@ class ElementNode:
     children: tuple["ElementNode", ...]
     events: Mapping[str, str]
     location: SourceLocation
+    private_id: bool = False
     def __post_init__(self) -> None:
         object.__setattr__(self, "attributes", _freeze(self.attributes))
         object.__setattr__(self, "common", _freeze(self.common))

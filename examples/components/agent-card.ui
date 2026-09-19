@@ -4,7 +4,7 @@
     <prop name="status" default="Waiting" />
   </props>
   <vertical class="agent-card">
-    <label>{name}</label>
+    <label id="name">{name}</label>
     <label>{status}</label>
     <slot name="actions"><button>Details</button></slot>
   </vertical>

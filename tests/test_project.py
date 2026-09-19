@@ -181,3 +181,27 @@ def test_component_definitions_reject_runtime_directives(tmp_path: Path):
 
     with pytest.raises(DocumentValidationError, match="script is not allowed"):
         ProjectSource.discover(tmp_path / "app.ui")
+
+
+def test_included_files_cannot_declare_component_imports(tmp_path: Path):
+    (tmp_path / "parts").mkdir()
+    (tmp_path / "app.ui").write_text('<ui><include src="parts/view.ui"/></ui>', encoding="utf-8")
+    (tmp_path / "parts" / "view.ui").write_text(
+        '<ui><component src="card.ui" as="agent-card"/></ui>', encoding="utf-8"
+    )
+
+    with pytest.raises(DocumentValidationError, match="entry root"):
+        ProjectSource.discover(tmp_path / "app.ui")
+
+
+def test_component_definitions_reject_duplicate_default_slots(tmp_path: Path):
+    (tmp_path / "card.ui").write_text(
+        '<component><vertical><slot><label>One</label></slot><slot><label>Two</label></slot></vertical></component>',
+        encoding="utf-8",
+    )
+    (tmp_path / "app.ui").write_text(
+        '<ui><component src="card.ui" as="agent-card"/><agent-card/></ui>', encoding="utf-8"
+    )
+
+    with pytest.raises(DocumentValidationError, match="unique optional names"):
+        ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())

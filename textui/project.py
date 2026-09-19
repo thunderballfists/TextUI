@@ -162,6 +162,11 @@ class ProjectSource:
                 if not isinstance(child.tag, str):
                     raise DocumentValidationError("processing instructions are not allowed", location=location)
                 parser._reject_nonwhitespace(child.tail, location, "non-whitespace tail text is not allowed")
+                if child.tag == "component":
+                    if not entry_root:
+                        raise DocumentValidationError("component imports are allowed only in the entry root", location=location)
+                    index += 1
+                    continue
                 if child.tag == "include":
                     target, _ = directive(child, owner)
                     if target in stack:
@@ -210,6 +215,7 @@ class ProjectSource:
     def lower(self, registry: ComponentRegistry) -> Document:
         loader = DocumentLoader(registry)
         identifiers: set[str] = set()
+        private_ids: set[str] = set()
         instance = 0
 
         def mark_source(element: etree._Element, source: str) -> None:
@@ -287,13 +293,15 @@ class ProjectSource:
                 for name, value in list(node.attrib.items()):
                     node.set(name, substitute(value, props, loader._location(node, str(template.path))) or "")
                 if node.get("id"):
-                    node.set("id", prefix + node.get("id"))
+                    private_id = prefix + node.get("id")
+                    node.set("id", private_id)
+                    private_ids.add(private_id)
             defined_slots: set[str | None] = set()
             for slot in list(result.iter("slot")):
                 slot_location = loader._location(slot, str(template.path))
-                if not set(slot.attrib).issubset({"name"}) or slot.get("name", "") in defined_slots:
-                    raise DocumentValidationError("component slot declarations must have unique optional names", location=slot_location)
                 name = slot.get("name")
+                if not set(slot.attrib).issubset({"name"}) or name in defined_slots:
+                    raise DocumentValidationError("component slot declarations must have unique optional names", location=slot_location)
                 defined_slots.add(name)
                 parent = slot.getparent()
                 index = parent.index(slot)
@@ -321,7 +329,7 @@ class ProjectSource:
             root = copy_with_sources(child, str(self.path))
             roots.append(expand_element(root, self.components, ()))
         nodes = tuple(
-            loader._node(child, sources.get(child, str(self.path)), identifiers, sources)
+            loader._node(child, sources.get(child, str(self.path)), identifiers, sources, private_ids)
             for child in roots
         )
         validate_navigation_targets(nodes)
