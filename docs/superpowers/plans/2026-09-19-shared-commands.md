@@ -261,6 +261,6 @@ git commit -m "Document shared commands"
 
 ## Final verification
 
-- [ ] Re-read the specification and verify every public contract, validation rule, compatibility statement, and deferred boundary maps to shipped behavior.
-- [ ] Run `git diff origin/main...HEAD --check` and inspect the final diff for unrelated edits.
-- [ ] Run `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`, `uvx --python 3.12 --from poetry==2.4.3 poetry check --lock`, and `uvx --python 3.12 --from poetry==2.4.3 poetry build`.
+- [x] Re-read the specification and verify every public contract, validation rule, compatibility statement, and deferred boundary maps to shipped behavior.
+- [x] Run `git diff origin/main...HEAD --check` and inspect the final diff for unrelated edits.
+- [x] Run `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`, `uvx --python 3.12 --from poetry==2.4.3 poetry check --lock`, and `uvx --python 3.12 --from poetry==2.4.3 poetry build`.
