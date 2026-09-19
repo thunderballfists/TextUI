@@ -121,6 +121,11 @@ def test_style_preserves_text_on_both_sides_of_ignored_comments():
     assert document.styles[0].content == "a { color: red; } b { color: blue; }"
 
 
+def test_style_preset_rejects_content_after_comment():
+    with pytest.raises(textui.DocumentValidationError, match="preset cannot contain content"):
+        load('<ui><style preset="compact"><!-- note -->Button { color: red; }</style></ui>')
+
+
 def test_style_must_be_direct_child_and_cannot_have_children_or_nonwhitespace_tail():
     for markup in (
         "<ui><vertical><style>x { color: red; }</style></vertical></ui>",

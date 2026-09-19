@@ -1,5 +1,6 @@
 <ui>
   <style preset="compact" />
+  <style preset="borders" />
   <style src="showcase.tcss" />
   <script src="controller.py" />
   <component src="components/agent-card.ui" as="agent-card" />
@@ -7,7 +8,7 @@
     <header id="top-bar">
       <left><button id="toggle-sidebar" on-pressed="toggle_sidebar">☰</button></left>
       <center><label>TextUI feature showcase</label></center>
-      <right><label id="clock">Starting…</label><button id="open-modal" on-pressed="open_modal">Help</button></right>
+      <right><label id="clock">Starting…</label><command-button id="toggle-compact" command="toggle_compact" /><button id="open-modal" on-pressed="open_modal">Help</button></right>
     </header>
     <split id="layout" direction="horizontal">
       <pane id="sidebar" size="22" min-size="12">
@@ -18,6 +19,7 @@
             <nav-item target="data">Data</nav-item>
             <nav-item target="activity">Activity</nav-item>
           </nav>
+          <command-button id="toggle-borders" command="toggle_borders" />
           <command-button id="quit" command="quit_app" variant="error" />
         </vertical>
       </pane>

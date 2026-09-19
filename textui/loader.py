@@ -106,13 +106,22 @@ class DocumentLoader:
             if set(element.attrib) != {"preset"}:
                 attribute = next(name for name in element.attrib if name != "preset")
                 raise DocumentValidationError("style preset accepts only the preset attribute", location=location, attribute=attribute)
-            if any(not isinstance(child, etree._Comment) for child in element) or (element.text and element.text.strip()):
+            has_comment_tail = any(
+                comment.tail and comment.tail.strip()
+                for comment in element
+                if isinstance(comment, etree._Comment)
+            )
+            if (
+                any(not isinstance(child, etree._Comment) for child in element)
+                or (element.text and element.text.strip())
+                or has_comment_tail
+            ):
                 raise DocumentValidationError("style preset cannot contain content", location=location)
             try:
                 content = style_preset(element.attrib["preset"])
             except ValueError as error:
                 raise DocumentValidationError(str(error), location=location, attribute="preset", value=element.attrib["preset"]) from error
-            return StyleBlock(content, location, index)
+            return StyleBlock(content, location, index, preset=element.attrib["preset"])
         if element.attrib:
             attribute = next(iter(element.attrib))
             raise DocumentValidationError("style accepts no attributes", location=location, attribute=attribute)

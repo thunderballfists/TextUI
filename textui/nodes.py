@@ -30,3 +30,4 @@ class StyleBlock:
     content: str
     location: SourceLocation
     index: int
+    preset: str | None = None

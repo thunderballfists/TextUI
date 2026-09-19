@@ -15,8 +15,19 @@ Checkbox, Switch, RadioButton {
 }
 """
 
+BUTTON_BORDERS_TCSS = """
+Button {
+    border: round $primary !important;
+}
+Button:hover {
+    border: round $accent !important;
+}
+Button:focus {
+    border: double $primary !important;
+}
+"""
 
-STYLE_PRESETS = {"compact": COMPACT_TCSS}
+STYLE_PRESETS = {"compact": COMPACT_TCSS, "borders": BUTTON_BORDERS_TCSS}
 
 
 def style_preset(name: str) -> str:

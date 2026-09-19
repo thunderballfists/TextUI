@@ -2,7 +2,7 @@
 
 Run a local project with `textui run path/to/app.ui` or `python -m textui run path/to/app.ui`. The entry file has one attribute-free `<ui>` root. Its direct children may contain inline `<style>`, `<style src="shell.tcss"/>`, and `<script src="controller.py"/>` alongside widgets. A `<script>` has only `src`, no embedded code. A sourced style also has no body.
 
-Use `<style preset="compact"/>` when an application needs denser native controls without maintaining a global stylesheet. It reduces padding for buttons, text inputs, selects, text areas, and choice controls. The preset participates in normal source order, so a later inline or sourced TCSS block can override any rule:
+Use `<style preset="compact"/>` when an application needs denser native controls without maintaining a global stylesheet. It reduces horizontal padding and uses Textual's native compact state for buttons, text inputs, selects, text areas, and choice controls. Native compact controls remove their borders, so single-line inputs and selects use one terminal row. The preset participates in normal source order, so a later inline or sourced TCSS block can override any rule:
 
 ```xml
 <ui>
@@ -12,7 +12,20 @@ Use `<style preset="compact"/>` when an application needs denser native controls
 </ui>
 ```
 
-`compact` is opt-in; documents without it retain Textual's normal control density. Presets have no body and only accept the `preset` attribute.
+`compact` is opt-in; documents without it retain Textual's normal control density. Presets have no body and only accept the `preset` attribute. A linked controller can switch any declared preset while the application runs. The method returns its new enabled state and reapplies the host stylesheet plus all active document blocks in their original order:
+
+```python
+@command(label="Compact", shortcut="ctrl+d")
+def toggle_compact():
+    enabled = window.document.toggle_style_preset("compact")
+    window.document.get_by_id("feedback").update(
+        "Compact controls on" if enabled else "Compact controls off"
+    )
+```
+
+The preset must be declared in the entry document before it can be toggled. Inline styles and later document TCSS continue to override it after each switch.
+
+Use `<style preset="borders"/>` for rounded Unicode button outlines. It is independent of `compact`; declare it after `compact` when both are active, so its explicit outline overrides the borderless native compact button state. `window.document.toggle_style_preset("borders")` switches the outlines at runtime. Idle buttons use `round` borders, hover keeps the rounded outline, and focused buttons use a `double` border.
 
 Use `<include src="views/workspace.ui"/>` wherever a widget child is allowed. Included files have their own `<ui>` root and may include other files, but may not declare scripts or styles. Relative paths are resolved from the file containing each directive, not from the shell's current directory. Cycles, missing resources, duplicate IDs, and invalid markup fail with source context. Includes are static; there is no network loading or reload.
 

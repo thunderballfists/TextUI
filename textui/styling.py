@@ -51,6 +51,38 @@ def prepare_styles(app: App, blocks: tuple[StyleBlock, ...]) -> Stylesheet:
     return staged
 
 
+def prepare_styles_from(
+    stylesheet: Stylesheet,
+    blocks: tuple[StyleBlock, ...],
+    *,
+    replace: tuple[StyleBlock, ...] = (),
+) -> Stylesheet:
+    """Replace selected document sources while retaining all other stylesheet sources."""
+    staged = stylesheet.copy()
+    active = {
+        (block.location.source, f'textui.style[{block.index}]'): block
+        for block in blocks
+    }
+    replaced = {
+        (block.location.source, f'textui.style[{block.index}]')
+        for block in replace
+    }
+    for block in replace:
+        key = (block.location.source, f'textui.style[{block.index}]')
+        replacement = active.get(key)
+        staged.add_source(replacement.content if replacement is not None else '', read_from=key)
+    for block in blocks:
+        key = (block.location.source, f'textui.style[{block.index}]')
+        if key not in replaced:
+            staged.add_source(block.content, read_from=key)
+    try:
+        staged.parse()
+    except Exception as error:
+        location = blocks[0].location if blocks else replace[0].location
+        raise _style_error(error, location) from error
+    return staged
+
+
 def apply_inline(widget: Widget, declarations: str, location: SourceLocation) -> None:
     """Use native tokenization and set_styles, with an explicit variable boundary."""
     try:
