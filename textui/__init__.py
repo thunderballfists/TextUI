@@ -3,7 +3,7 @@
 from .actions import ActionCallback, ActionContext
 from .document import BoundDocument, Document
 from .textui import TextUI
-from .controllers import action
+from .controllers import Command, action, command
 from .timers import every
 from .project import ProjectSource
 from .project_app import ProjectApp
@@ -44,6 +44,7 @@ __all__ = [
     "ComponentBuildError",
     "ComponentRegistry",
     "ComponentSpec",
+    "Command",
     "Document",
     "DocumentLoadError",
     "DocumentLoader",
@@ -64,6 +65,7 @@ __all__ = [
     "enum",
     "integer",
     "action",
+    "command",
     "every",
     "ProjectSource",
     "ProjectApp",

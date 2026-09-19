@@ -37,7 +37,7 @@
 - Produces immutable `Command` metadata with `name`, `label`, `shortcut`, `description`, and `enabled` fields.
 - Produces `ControllerSet.commands` and action wrappers for each command.
 
-- [ ] **Step 1: Write failing controller tests**
+- [x] **Step 1: Write failing controller tests**
 
 ```python
 @pytest.mark.asyncio
@@ -77,13 +77,13 @@ async def test_project_rejects_duplicate_commands_from_linked_scripts(tmp_path):
             pass
 ```
 
-- [ ] **Step 2: Run the focused tests and verify they fail because `command` is unavailable**
+- [x] **Step 2: Run the focused tests and verify they fail because `command` is unavailable**
 
 Run: `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest tests/test_project_app.py -q`
 
 Expected: failure importing `command` or missing `ControllerSet.commands`.
 
-- [ ] **Step 3: Implement the decorator and controller metadata**
+- [x] **Step 3: Implement the decorator and controller metadata**
 
 ```python
 @dataclass(frozen=True, slots=True)
@@ -104,13 +104,13 @@ def command(*, label=None, shortcut=None, description=None, enabled=True):
 
 Validate metadata and zero-argument signatures during `ControllerSet.load`, expose command callbacks through existing `actions`, and export both public symbols.
 
-- [ ] **Step 4: Run focused tests and the complete suite**
+- [x] **Step 4: Run focused tests and the complete suite**
 
 Run: `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest tests/test_project_app.py -q && uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`
 
 Expected: all tests pass.
 
-- [ ] **Step 5: Commit the controller contract**
+- [x] **Step 5: Commit the controller contract**
 
 ```bash
 git add textui/controllers.py textui/__init__.py tests/test_project_app.py

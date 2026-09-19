@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from inspect import Parameter, isawaitable, signature
 from pathlib import Path
 from types import ModuleType
@@ -22,6 +23,44 @@ def action(function: Callable[..., Any]) -> Callable[..., Any]:
     return function
 
 
+@dataclass(frozen=True, slots=True)
+class Command:
+    """Metadata for one linked-script operation exposed to project UI."""
+
+    name: str
+    label: str
+    shortcut: str | None
+    description: str
+    enabled: bool
+
+
+@dataclass(frozen=True, slots=True)
+class _CommandOptions:
+    label: str | None
+    shortcut: str | None
+    description: str | None
+    enabled: bool
+
+
+def command(
+    *,
+    label: str | None = None,
+    shortcut: str | None = None,
+    description: str | None = None,
+    enabled: bool = True,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Expose a zero-argument linked-script function as a shared command."""
+
+    options = _CommandOptions(label, shortcut, description, enabled)
+
+    def decorate(function: Callable[..., Any]) -> Callable[..., Any]:
+        function.__textui_command__ = options
+        function.__textui_action__ = True
+        return function
+
+    return decorate
+
+
 def _arity(function: Callable[..., Any], allowed: set[int], location: SourceLocation) -> int:
     parameters = tuple(signature(function).parameters.values())
     if any(p.kind not in {Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD} or p.default is not Parameter.empty for p in parameters):
@@ -29,6 +68,16 @@ def _arity(function: Callable[..., Any], allowed: set[int], location: SourceLoca
     if len(parameters) not in allowed:
         raise DocumentValidationError(f"unsupported signature for {function.__name__}", location=location)
     return len(parameters)
+
+
+def _command_metadata(name: str, options: _CommandOptions, location: SourceLocation) -> Command:
+    for field, value in (("label", options.label), ("shortcut", options.shortcut), ("description", options.description)):
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise DocumentValidationError(f"command {field} must be a non-empty string", location=location)
+    if not isinstance(options.enabled, bool):
+        raise DocumentValidationError("command enabled must be a boolean", location=location)
+    label = options.label or " ".join(part.capitalize() for part in name.strip("_").split("_"))
+    return Command(name, label, options.shortcut, options.description or label, options.enabled)
 
 
 class ProjectWindow:
@@ -63,6 +112,7 @@ class ControllerSet:
     def __init__(self, window: ProjectWindow) -> None:
         self.window = window
         self.actions: dict[str, Callable[[ActionContext], Any]] = {}
+        self.commands: dict[str, Command] = {}
         self.hooks: dict[str, tuple[Callable[..., Any], SourceLocation]] = {}
         self.periodic: list[tuple[float, Callable[[], Any], bool]] = []
 
@@ -82,7 +132,16 @@ class ControllerSet:
         except Exception as error:
             raise TextUIError(f"script failed: {error}", location=location) from error
         for name, value in module.__dict__.items():
-            if callable(value) and getattr(value, "__textui_action__", False) and getattr(value, "__module__", None) == module.__name__:
+            command_options = getattr(value, "__textui_command__", None) if callable(value) else None
+            if command_options is not None and getattr(value, "__module__", None) == module.__name__:
+                if name in self.actions:
+                    raise DocumentValidationError(f"duplicate action {name!r}", location=location)
+                if not isinstance(command_options, _CommandOptions):
+                    raise DocumentValidationError(f"invalid command {name!r}", location=location)
+                _arity(value, {0}, location)
+                self.commands[name] = _command_metadata(name, command_options, location)
+                self.actions[name] = lambda context, callback=value: callback()
+            elif callable(value) and getattr(value, "__textui_action__", False) and getattr(value, "__module__", None) == module.__name__:
                 if name in self.actions:
                     raise DocumentValidationError(f"duplicate action {name!r}", location=location)
                 arity = _arity(value, {0, 1}, location)

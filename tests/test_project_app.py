@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from textual.widgets import Button
 
-from textui import DocumentStateError
+from textui import DocumentStateError, DocumentValidationError
 from textui.project import ProjectSource
 from textui.project_app import ProjectApp
 
@@ -69,6 +69,57 @@ def hidden():
     assert first.events == [1, 2]
     assert second.events == [1]
     assert first.window is not second.window
+
+
+@pytest.mark.asyncio
+async def test_project_command_is_exposed_as_action_and_metadata(tmp_path: Path):
+    source = project(tmp_path, '<button id="plain" on-pressed="quit_app">Quit</button>', '''
+from textui import command
+
+@command(shortcut="ctrl+q")
+def quit_app():
+    window.app.events.append("quit")
+''')
+    app = ProjectApp(source)
+    app.events = []
+
+    async with app.run_test():
+        assert app.controllers.commands["quit_app"].label == "Quit App"
+        assert app.controllers.commands["quit_app"].description == "Quit App"
+        await app.document.dispatch(Button.Pressed(app.document.get_by_id("plain")))
+
+    assert app.events == ["quit"]
+
+
+@pytest.mark.asyncio
+async def test_command_rejects_context_parameter(tmp_path: Path):
+    source = project(tmp_path, '<label>Ready</label>', '''
+from textui import command
+
+@command()
+def invalid(context):
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="unsupported signature"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
+async def test_project_rejects_duplicate_commands_from_linked_scripts(tmp_path: Path):
+    (tmp_path / "app.ui").write_text(
+        '<ui><script src="first.py"/><script src="second.py"/><label>Ready</label></ui>',
+        encoding="utf-8",
+    )
+    command_source = 'from textui import command\n\n@command()\ndef close():\n    pass\n'
+    (tmp_path / "first.py").write_text(command_source, encoding="utf-8")
+    (tmp_path / "second.py").write_text(command_source, encoding="utf-8")
+    app = ProjectApp(ProjectSource.discover(tmp_path / "app.ui"))
+
+    with pytest.raises(DocumentValidationError, match="duplicate action 'close'"):
+        async with app.run_test():
+            pass
 
 
 @pytest.mark.asyncio
