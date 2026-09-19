@@ -14,6 +14,7 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
     assert "1 / 2 selects tabs" in entry.read_text(encoding="utf-8")
     stylesheet = entry.parent / "showcase.tcss"
     assert "#layout { height: 1fr; }" in stylesheet.read_text(encoding="utf-8")
+    assert "#showcase Button { min-width: 0; }" in stylesheet.read_text(encoding="utf-8")
     app = ProjectApp(ProjectSource.discover(entry))
     async with app.run_test(size=(120, 50)) as pilot:
         assert app.document.get_by_id("showcase").id == "showcase"
@@ -52,5 +53,10 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         app.document.get_by_id("open-modal").press()
         await pilot.pause()
         assert app.screen.id == "help"
+        assert app.document.get_by_id("close-modal").region.x > 0
         app.document.get_by_id("close-modal").press()
         await pilot.pause()
+        app.document.get_by_id("open-modal").press()
+        await pilot.pause()
+        assert app.screen.id == "help"
+        assert app.document.get_by_id("close-modal").region.x > 0

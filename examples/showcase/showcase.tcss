@@ -1,4 +1,5 @@
 #showcase { height: 100%; }
+#showcase Button { min-width: 0; }
 #layout { height: 1fr; }
 #content { height: 1fr; }
 #sidebar { width: 22; }

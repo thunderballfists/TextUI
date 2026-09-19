@@ -5,6 +5,7 @@ from collections.abc import Iterable
 
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widget import Widget
 
@@ -14,6 +15,20 @@ from ..registry import AttributeSpec, BuildContext, ComponentRegistry, Component
 class MarkupModal(ModalScreen[object]):
     """A modal screen whose contents come from a TextUI node tree."""
 
+    DEFAULT_CSS = """
+    MarkupModal {
+        align: center middle;
+    }
+    MarkupModal > .markup-modal-content {
+        width: auto;
+        height: auto;
+        max-width: 80%;
+        padding: 1 2;
+        border: round $primary;
+        background: $surface;
+    }
+    """
+
     BINDINGS = [Binding("escape", "cancel", "Cancel", show=False)]
 
     def __init__(self, children: Iterable[Widget], *, dismissable: bool) -> None:
@@ -22,7 +37,7 @@ class MarkupModal(ModalScreen[object]):
         self.dismissable = dismissable
 
     def compose(self) -> ComposeResult:
-        yield from self._children
+        yield Vertical(*self._children, classes="markup-modal-content")
 
     def action_cancel(self) -> None:
         if self.dismissable:
