@@ -55,7 +55,7 @@
         </content-switcher>
       </pane>
     </split>
-    <status-bar><left><label id="feedback">Ready</label></left><right><label>Ctrl+1 / Ctrl+2 selects tabs</label></right></status-bar>
+    <status-bar><left><label id="feedback">Ready</label></left><right><label>1 / 2 selects tabs</label></right></status-bar>
   </vertical>
   <modal id="help" dismissable="true"><label>TextUI uses native Textual screens for modals.</label><button id="close-modal" on-pressed="close_modal">Close</button></modal>
 </ui>
