@@ -52,10 +52,18 @@ class TreeSeedNode(Widget):
 
 class SeededDataTable(DataTable):
     DEFAULT_CSS = """
+    SeededDataTable:focus > .datatable--header {
+        background: $panel;
+    }
     SeededDataTable > .datatable--header-hover {
-        background: $accent;
+        background: $accent 50%;
         color: $foreground;
         text-style: bold underline;
+    }
+    SeededDataTable > .datatable--header-cursor {
+        background: $primary;
+        color: $foreground;
+        text-style: bold;
     }
     """
 
@@ -172,12 +180,26 @@ class SeededDataTable(DataTable):
             updated_label = label.copy()
             if key_value == column_key:
                 updated_label.append(" ↓" if reverse else " ↑")
-                updated_label.stylize("reverse")
             column.label = updated_label
         self._require_update_dimensions = True
         self._update_count += 1
         self.check_idle()
         self.refresh()
+
+    def _should_highlight(
+        self,
+        cursor: Coordinate,
+        target_cell: Coordinate,
+        type_of_cursor: str,
+    ) -> bool:
+        if (
+            type_of_cursor == "row"
+            and cursor == self.cursor_coordinate
+            and target_cell.row == -1
+            and self._sort_column is not None
+        ):
+            return target_cell.column == self.get_column_index(self._sort_column)
+        return super()._should_highlight(cursor, target_cell, type_of_cursor)
 
 
 def build_data_table(context: BuildContext) -> SeededDataTable:
