@@ -117,9 +117,16 @@ async def test_data_example_selection_and_dynamic_updates(tmp_path, monkeypatch)
     entry = Path(__file__).parents[1] / "examples" / "data" / "app.ui"
     app = ProjectApp(ProjectSource.discover(entry))
     async with app.run_test() as pilot:
+        usage = app.document.get_by_id("usage")
         jobs = app.document.get_by_id("jobs")
         files = app.document.get_by_id("files")
         assert jobs.get_cell("backup", "state").plain == "Running"
+        await pilot.click("#refresh-usage")
+        assert usage.get_cell("2026-09-19-alpha", "requests").plain == "42"
+        usage.focus()
+        await pilot.press("enter")
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "2026-09-19: 42 requests"
         jobs.focus()
         await pilot.press("enter")
         await pilot.pause()

@@ -19,7 +19,7 @@ textui run examples/showcase/app.ui
 python -m examples.editor
 ```
 
-The [showcase](examples/showcase/app.ui) combines every built-in widget family in one navigable project: components, layouts, controls, tables, trees, lists, logs, modals, actions, and timers. The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [component example](examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates tables and trees with native runtime updates; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
+The [showcase](examples/showcase/app.ui) combines every built-in widget family in one navigable project: components, layouts, controls, tables, trees, lists, logs, modals, actions, and timers. The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [component example](examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates an API-backed runtime table beside seeded native tables and trees; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
 A self-contained application:
 
@@ -75,8 +75,8 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `collapsible` | Widgets | `title`, boolean `collapsed` | `collapsed`, `expanded` |
 | `progress-bar` | None | Positive `total`, nonnegative `progress`, boolean `show-bar`, `show-percentage`, `show-eta` | None |
 | `rule` | None | `orientation`, `line-style` | None |
-| `data-table` | `column` children, then `row` children | `cursor-type`: row, cell, column, none | `row-selected`, `cell-selected` |
-| `column`, `row`, `cell` | Column/cell text; rows contain cells | Required `key` on columns and rows | None |
+| `data-table` | `column` children, then `row` children | `cursor-type`: row, cell, column, none; optional `row-key` | `row-selected`, `cell-selected` |
+| `column`, `row`, `cell` | Column/cell text; rows contain cells | Columns: required `key`, optional `label`, `align`, positive `width`; rows: required `key` | None |
 | `tree` | Nested `tree-node` children | Required `label`, boolean `show-root` | `node-selected` |
 | `tree-node` | Nested `tree-node` children | Required `key` and `label`, boolean `expanded` | None |
 

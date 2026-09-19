@@ -149,6 +149,29 @@ async def test_set_rows_requires_declared_row_key():
         assert table.get_cell("seed", "name").plain == "Seed"
 
 
+@pytest.mark.asyncio
+async def test_set_rows_restores_cursor_by_stable_key_or_uses_first_row():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name">Name</column><column key="count">Count</column>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"id": "a", "name": "Alpha", "count": 1},
+            {"id": "b", "name": "Bravo", "count": 2},
+        ])
+        table.move_cursor(row=1, column=1, animate=False)
+        table.set_rows([
+            {"id": "b", "name": "Bravo", "count": 3},
+            {"id": "a", "name": "Alpha", "count": 4},
+        ])
+        assert table.coordinate_to_cell_key(table.cursor_coordinate).row_key.value == "b"
+        assert table.cursor_column == 1
+
+        table.set_rows([{"id": "a", "name": "Alpha", "count": 5}])
+        assert table.cursor_coordinate == Coordinate(0, 0)
+
+
 def test_data_widgets_can_be_composed_before_app_runs():
     bound = DocumentLoader().from_string(MARKUP).bind(App(), actions={
         "open_job": lambda context: None,

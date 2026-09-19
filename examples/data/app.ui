@@ -2,8 +2,13 @@
   <style src="data.tcss"/>
   <script src="controller.py"/>
   <vertical id="demo">
-    <label>Data table and tree</label>
+    <label>Runtime table, seeded table, and tree</label>
     <horizontal id="data-panels">
+      <data-table id="usage" row-key="record_id" cursor-type="row" on-row-selected="usage_selected">
+        <column key="date" label="Date" />
+        <column key="requests" label="Requests" align="right" width="8" />
+        <column key="cost_usd" label="Cost" align="right" width="8" />
+      </data-table>
       <data-table id="jobs" cursor-type="row" on-row-selected="job_selected">
         <column key="name">Job</column>
         <column key="state">State</column>
@@ -15,6 +20,7 @@
         </tree-node>
       </tree>
     </horizontal>
+    <button id="refresh-usage" on-pressed="refresh_usage">Refresh usage</button>
     <button id="add-job" on-pressed="add_job">Add job and file</button>
     <label id="feedback">Select a row or node</label>
   </vertical>

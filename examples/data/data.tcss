@@ -6,7 +6,7 @@
     height: 1fr;
 }
 
-#jobs, #files {
+#usage, #jobs, #files {
     width: 1fr;
 }
 

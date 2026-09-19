@@ -101,10 +101,21 @@ class SeededDataTable(DataTable):
             )
             validated.append((key, MappingProxyType(dict(record)), cells))
 
+        previous_key: str | None = None
+        previous_column: int | None = None
+        if self.is_valid_coordinate(self.cursor_coordinate):
+            previous_key = self.coordinate_to_cell_key(self.cursor_coordinate).row_key.value
+            previous_column = self.cursor_column
         self.clear(columns=False)
         self._runtime_records = {key: record for key, record, _ in validated}
         for key, _, cells in validated:
             self.add_row(*cells, key=key)
+        if previous_key in self.rows and previous_column is not None and self.columns:
+            self.move_cursor(
+                row=self.get_row_index(previous_key),
+                column=min(previous_column, len(self.columns) - 1),
+                animate=False,
+            )
 
     def get_record(self, row_key: str) -> Mapping[str, object]:
         return self._runtime_records[row_key]

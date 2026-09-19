@@ -74,6 +74,29 @@ def show_page(context):
 
 The [project example](../examples/project/app.ui) combines a hideable sidebar, draggable split, navigation, and an included page. Included views remain static; the runtime does not add screen modes or hot reload.
 
+## Runtime tables
+
+Use a native table for structured records from a linked controller. Declare the record identity with `row-key`, then give each visible field a `column`. The optional `label`, `align="left|center|right"`, and positive `width` attributes control the native column heading and layout.
+
+```xml
+<data-table id="usage" row-key="record_id" on-row-selected="usage_selected">
+  <column key="date" label="Date" />
+  <column key="requests" label="Requests" align="right" width="8" />
+</data-table>
+```
+
+```python
+@action
+def refresh_usage():
+    window.document.get_by_id("usage").set_rows(records)
+
+@action
+def usage_selected(context):
+    record = window.document.get_by_id("usage").get_record(context.event.row_key.value)
+```
+
+`set_rows()` accepts a complete iterable of mappings and changes no rows until all records validate. Each record needs every declared column and a unique, non-empty string record key. `None` cells display empty, while extra record fields remain accessible through read-only `get_record()` results. Refreshing keeps the selected row and column when its key remains; an absent key or an empty batch uses the native first-cell fallback. Static seed rows and direct native `add_row()` calls continue to work without `row-key`.
+
 ## Runtime lists
 
 Use `<list>` when a native selectable rail is populated after markup loads. `item-label` is a required Python-format pattern evaluated against each item mapping. The element has no child content; give it an ID and optionally bind `on-selected`.

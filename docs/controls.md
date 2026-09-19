@@ -66,4 +66,15 @@ Seed native `DataTable` and `Tree` widgets with nested markup. Keys identify tab
 
 Columns must precede rows. Each row needs one cell per column; column and row keys must be unique within their table, and tree-node keys must be unique within their tree. `<column>`, `<row>`, `<cell>`, and `<tree-node>` are seed data, not mounted widgets, so they cannot have document IDs or common widget attributes. Seed labels and cells are literal text, even when they contain Rich-style brackets; native table cell values are `Text` objects, so read their `.plain` property for a string. Empty tables and trees may be populated entirely in Python. Table `cursor-type` accepts `row` (default), `cell`, `column`, or `none`; use `on-cell-selected` for cell cursors. Row events expose `context.event.row_key.value`, cell events expose `context.event.value` and `cell_key`, and tree events expose `context.event.node.data`.
 
-After mounting, use native APIs: `window.document.get_by_id("jobs").add_row("Deploy", "Queued", key="deploy")` or `window.document.get_by_id("files").root.add_leaf("README.md", data="readme")`. The [data example](../examples/data/app.ui) shows selection actions and dynamic updates.
+After mounting, use native APIs: `window.document.get_by_id("jobs").add_row("Deploy", "Queued", key="deploy")` or `window.document.get_by_id("files").root.add_leaf("README.md", data="readme")`.
+
+For API records that replace a complete table, declare a `row-key` field and column metadata:
+
+```xml
+<data-table id="usage" row-key="record_id" on-row-selected="usage_selected">
+  <column key="date" label="Date" />
+  <column key="requests" label="Requests" align="right" width="8" />
+</data-table>
+```
+
+`label` overrides a column's literal body text; `align` accepts `left`, `center`, or `right`; and `width` is a positive native column width. Call `set_rows(records)` only after mounting. Every record must be a mapping with a non-empty string in the declared `row-key` field and every declared column key. TextUI validates the full batch before changing rows, renders `None` as an empty literal cell, and retains extra fields without adding columns. `get_record(row_key)` returns the read-only source record for the current batch and raises `KeyError` when absent. A refresh retains the cursor when its row key remains; otherwise the native cursor returns to the first cell. The [data example](../examples/data/app.ui) shows this runtime pattern beside seeded table and tree updates.
