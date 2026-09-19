@@ -1,4 +1,5 @@
 <ui>
+  <style preset="compact" />
   <style src="showcase.tcss" />
   <script src="controller.py" />
   <component src="components/agent-card.ui" as="agent-card" />
