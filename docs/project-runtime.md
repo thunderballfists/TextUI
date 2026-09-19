@@ -74,6 +74,20 @@ def show_page(context):
 
 The [project example](../examples/project/app.ui) combines a hideable sidebar, draggable split, navigation, and an included page. Included views remain static; the runtime does not add screen modes or hot reload.
 
+## Header and status-bar controls
+
+`header` and `status-bar` accept optional `left`, `center`, and `right` slots. Each slot accepts ordinary widgets, including buttons and labels. The edge slots share the available width, the center stays centered, and the right slot right-justifies its contents.
+
+```xml
+<header>
+  <left><button on-pressed="toggle_sidebar">☰</button></left>
+  <center><label>Workspace</label></center>
+  <right><label id="clock">Starting…</label><button on-pressed="open_help">Help</button></right>
+</header>
+```
+
+The [showcase](../examples/showcase/app.ui) places its Help control in the top-right slot and its Quit action below the sidebar navigation.
+
 ## Runtime tables
 
 Use a native table for structured records from a linked controller. Declare the record identity with `row-key`, then give each visible field a `column`. The optional `label`, `align="left|center|right"`, and positive `width` attributes control the native column heading and layout.

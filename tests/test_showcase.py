@@ -14,6 +14,10 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
     app = ProjectApp(ProjectSource.discover(entry))
     async with app.run_test(size=(120, 50)) as pilot:
         assert app.document.get_by_id("showcase").id == "showcase"
+        header = app.document.get_by_id("top-bar")
+        help_button = app.document.get_by_id("open-modal")
+        assert help_button.region.x + help_button.region.width == header.region.x + header.region.width
+        assert app.document.get_by_id("quit").variant == "error"
         assert app.document.get_by_id("agents").id == "agents"
         assert app.document.get_by_id("jobs").get_cell("backup", "state").plain == "Running"
         await pilot.pause(1.05)

@@ -3,6 +3,9 @@
 #layout { height: 1fr; }
 #content { height: 1fr; }
 #sidebar { width: 22; }
+#sidebar-menu { height: 100%; }
+#navigation { height: 1fr; }
+#quit { width: 100%; }
 #usage { height: 8; }
 #jobs, #files { width: 1fr; height: 12; }
 #transcript { height: 10; }

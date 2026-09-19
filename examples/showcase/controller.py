@@ -29,6 +29,11 @@ def toggle_sidebar() -> None:
 
 
 @action
+def quit_app() -> None:
+    window.app.exit()
+
+
+@action
 def show_page(context) -> None:
     window.document.get_by_id("content").current = context.event.target
 

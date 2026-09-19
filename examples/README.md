@@ -40,4 +40,4 @@ Run `textui run examples/components/app.ui` to see a project-local `agent-card` 
 
 ## Feature showcase
 
-Run `textui run examples/showcase/app.ui` for a single application that exercises the full built-in surface. The sidebar is hideable and resizable; its pages cover imported components and includes, inputs and choices, tabs and indicators, API-backed runtime table records, seeded tables and trees, runtime lists, logs, modal screens, linked actions, and a repeating timer. It is the quickest manual smoke test after changing framework behavior.
+Run `textui run examples/showcase/app.ui` for a single application that exercises the full built-in surface. The sidebar is hideable and resizable, includes a Quit action, and the right-justified top bar contains a Help control. Its pages cover imported components and includes, inputs and choices, tabs and indicators, API-backed runtime table records, seeded tables and trees, runtime lists, logs, modal screens, linked actions, and a repeating timer. It is the quickest manual smoke test after changing framework behavior.

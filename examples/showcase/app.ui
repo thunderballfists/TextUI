@@ -3,19 +3,22 @@
   <script src="controller.py" />
   <component src="components/agent-card.ui" as="agent-card" />
   <vertical id="showcase">
-    <header>
+    <header id="top-bar">
       <left><button id="toggle-sidebar" on-pressed="toggle_sidebar">☰</button></left>
       <center><label>TextUI feature showcase</label></center>
-      <right><label id="clock">Starting…</label></right>
+      <right><label id="clock">Starting…</label><button id="open-modal" on-pressed="open_modal">Help</button></right>
     </header>
     <split id="layout" direction="horizontal">
       <pane id="sidebar" size="22" min-size="12">
-        <nav id="navigation" on-selected="show_page">
-          <nav-item target="overview">Overview</nav-item>
-          <nav-item target="controls">Controls</nav-item>
-          <nav-item target="data">Data</nav-item>
-          <nav-item target="activity">Activity</nav-item>
-        </nav>
+        <vertical id="sidebar-menu">
+          <nav id="navigation" on-selected="show_page">
+            <nav-item target="overview">Overview</nav-item>
+            <nav-item target="controls">Controls</nav-item>
+            <nav-item target="data">Data</nav-item>
+            <nav-item target="activity">Activity</nav-item>
+          </nav>
+          <button id="quit" variant="error" on-pressed="quit_app">Quit</button>
+        </vertical>
       </pane>
       <pane id="main" min-size="30">
         <content-switcher id="content" initial="overview">
@@ -56,7 +59,7 @@
           <vertical id="activity">
             <list id="agents" item-label="{name}" on-selected="select_agent" />
             <label id="agent-detail">Select an agent</label>
-            <horizontal><button id="append-log" on-pressed="append_log">Append log</button><button id="open-modal" on-pressed="open_modal">Open modal</button></horizontal>
+            <horizontal><button id="append-log" on-pressed="append_log">Append log</button></horizontal>
             <log id="transcript" max-lines="100" wrap="true" />
           </vertical>
         </content-switcher>
