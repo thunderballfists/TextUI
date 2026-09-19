@@ -205,3 +205,52 @@ def test_component_definitions_reject_duplicate_default_slots(tmp_path: Path):
 
     with pytest.raises(DocumentValidationError, match="unique optional names"):
         ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())
+
+
+def test_component_rewrites_internal_id_references(tmp_path: Path):
+    (tmp_path / "tabs.ui").write_text(
+        '<component><tabbed-content initial="home"><tab-pane id="home" title="Home"><label>Ready</label></tab-pane></tabbed-content></component>',
+        encoding="utf-8",
+    )
+    (tmp_path / "app.ui").write_text(
+        '<ui><component src="tabs.ui" as="app-tabs"/><app-tabs/></ui>', encoding="utf-8"
+    )
+
+    document = ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())
+    assert document.nodes[0].attributes["initial"] == "__component_1_home"
+    assert document.nodes[0].children[0].common["id"] == "__component_1_home"
+
+
+def test_slot_children_expand_in_the_callers_component_scope(tmp_path: Path):
+    (tmp_path / "leaf.ui").write_text('<component><label>Leaf</label></component>', encoding="utf-8")
+    (tmp_path / "wrapper.ui").write_text(
+        '<component><vertical><slot name="body"/></vertical></component>', encoding="utf-8"
+    )
+    (tmp_path / "app.ui").write_text(
+        '<ui><component src="leaf.ui" as="x-leaf"/><component src="wrapper.ui" as="x-wrapper"/>'
+        '<x-wrapper><slot name="body"><x-leaf/></slot></x-wrapper></ui>',
+        encoding="utf-8",
+    )
+
+    document = ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())
+    assert document.nodes[0].children[0].spec.tag == "label"
+
+
+@pytest.mark.parametrize(
+    ("template_slot", "call_slot"),
+    [
+        ("<slot name=\"body\">Text<label>Fallback</label></slot>", ""),
+        ("<slot name=\"body\"/>", "<slot name=\"body\">Text<label>Caller</label></slot>"),
+    ],
+)
+def test_component_slots_reject_nonwhitespace_text(tmp_path: Path, template_slot: str, call_slot: str):
+    (tmp_path / "card.ui").write_text(
+        f"<component><vertical>{template_slot}</vertical></component>", encoding="utf-8"
+    )
+    (tmp_path / "app.ui").write_text(
+        f'<ui><component src="card.ui" as="agent-card"/><agent-card>{call_slot}</agent-card></ui>',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(DocumentValidationError, match="slot text is not allowed"):
+        ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())

@@ -278,6 +278,7 @@ class ProjectSource:
                 if child.tag == "slot":
                     if set(child.attrib) != {"name"} or not child.get("name"):
                         raise DocumentValidationError("component slot requires one nonempty name", location=location)
+                    loader._reject_nonwhitespace(child.text, location, "slot text is not allowed")
                     name = child.get("name")
                     if name in supplied:
                         raise DocumentValidationError("duplicate component slot", location=location, attribute="name", value=name)
@@ -288,27 +289,41 @@ class ProjectSource:
             prefix = f"__component_{instance}_"
             result = deepcopy(template.root)
             mark_source(result, str(template.path))
+            private_id_map: dict[str, str] = {}
             for node in result.iter():
                 node.text = substitute(node.text, props, loader._location(node, str(template.path)))
                 for name, value in list(node.attrib.items()):
                     node.set(name, substitute(value, props, loader._location(node, str(template.path))) or "")
                 if node.get("id"):
-                    private_id = prefix + node.get("id")
+                    original_id = node.get("id")
+                    private_id = prefix + original_id
                     node.set("id", private_id)
                     private_ids.add(private_id)
+                    private_id_map[original_id] = private_id
+            for node in result.iter():
+                for attribute in {"initial", "target"}:
+                    if node.get(attribute) in private_id_map:
+                        node.set(attribute, private_id_map[node.get(attribute)])
             defined_slots: set[str | None] = set()
             for slot in list(result.iter("slot")):
                 slot_location = loader._location(slot, str(template.path))
+                loader._reject_nonwhitespace(slot.text, slot_location, "slot text is not allowed")
                 name = slot.get("name")
                 if not set(slot.attrib).issubset({"name"}) or name in defined_slots:
                     raise DocumentValidationError("component slot declarations must have unique optional names", location=slot_location)
                 defined_slots.add(name)
                 parent = slot.getparent()
                 index = parent.index(slot)
-                replacement = supplied.pop(name, list(slot))
+                if name in supplied:
+                    replacement = supplied.pop(name)
+                    replacement_scope = scope
+                else:
+                    replacement = list(slot)
+                    replacement_scope = template.imports
                 parent.remove(slot)
                 for offset, child in enumerate(replacement):
                     copy = copy_with_sources(child, str(self.path))
+                    copy = expand_element(copy, replacement_scope, chain)
                     parent.insert(index + offset, copy)
             if supplied:
                 name = next(iter(supplied))
