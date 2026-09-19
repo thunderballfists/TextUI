@@ -1,0 +1,4 @@
+<component>
+  <props><prop name="name" required="true" /><prop name="status" default="Idle" /></props>
+  <vertical class="agent-card"><label id="agent-name">{name}</label><label>{status}</label><slot name="actions"><button>Details</button></slot></vertical>
+</component>

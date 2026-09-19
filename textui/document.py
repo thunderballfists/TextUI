@@ -73,6 +73,42 @@ class BoundDocument:
         self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None and not node.private_id}
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
+        self._modal_nodes = {
+            node.common["id"]: node
+            for node in definition.nodes
+            if node.spec.tag == "modal" and node.common["id"] is not None
+        }
+
+    def _build_node(
+        self,
+        node: ElementNode,
+        widgets: dict[str, Widget],
+        bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]],
+    ) -> Widget:
+        children = tuple(self._build_node(child, widgets, bindings) for child in node.children)
+        try:
+            widget = node.spec.factory(BuildContext(node.attributes, node.text, children, node.location))
+            if not isinstance(widget, Widget):
+                raise TypeError('Component factory must return a fresh Widget')
+            if widget in _built_widgets:
+                raise ValueError('Component factory reused a Widget; return a fresh instance')
+            if widget.parent is not None or widget.is_mounted:
+                raise ValueError('Component factory must return a fresh, unmounted Widget without a parent')
+            _built_widgets.add(widget)
+            if node.common['id'] is not None:
+                widget.id = node.common['id']
+            widget.add_class(*node.common['classes'])
+            widget.disabled = node.common['disabled']
+        except Exception as error:
+            raise ComponentBuildError(str(error), location=node.location) from error
+        if node.common['style'] is not None:
+            apply_inline(widget, node.common['style'], node.location)
+        if node.common['id'] is not None and not node.private_id:
+            widgets[node.common['id']] = widget
+        for event_name, action in node.events.items():
+            event = node.spec.events[event_name]
+            bindings.setdefault(event.message_type, []).append((widget, event, action, node))
+        return widget
 
     def compose(self) -> Iterable[Widget]:
         """Prepare atomically before returning roots; a binding is single-use."""
@@ -82,52 +118,44 @@ class BoundDocument:
         widgets: dict[str, Widget] = {}
         bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
 
-        def build(node: ElementNode) -> Widget:
-            children = tuple(build(child) for child in node.children)
-            try:
-                widget = node.spec.factory(BuildContext(node.attributes, node.text, children, node.location))
-                if not isinstance(widget, Widget):
-                    raise TypeError('Component factory must return a fresh Widget')
-                if widget in _built_widgets:
-                    raise ValueError('Component factory reused a Widget; return a fresh instance')
-                if widget.parent is not None or widget.is_mounted:
-                    raise ValueError('Component factory must return a fresh, unmounted Widget without a parent')
-                _built_widgets.add(widget)
-                if node.common['id'] is not None:
-                    widget.id = node.common['id']
-                widget.add_class(*node.common['classes'])
-                widget.disabled = node.common['disabled']
-            except Exception as error:
-                raise ComponentBuildError(str(error), location=node.location) from error
-            if node.common['style'] is not None:
-                apply_inline(widget, node.common['style'], node.location)
-            if node.common['id'] is not None and not node.private_id:
-                widgets[node.common['id']] = widget
-            for event_name, action in node.events.items():
-                event = node.spec.events[event_name]
-                bindings.setdefault(event.message_type, []).append((widget, event, action, node))
-            return widget
-
         try:
             staged = prepare_styles(self.app, self.definition.styles)
-            roots = tuple(build(node) for node in self.definition.nodes)
+            roots = tuple(self._build_node(node, widgets, bindings) for node in self.definition.nodes if node.spec.tag != "modal")
             commit_styles(self.app, staged)
         except BaseException:
             self._state = 'failed'
             raise
         self._widgets, self._bindings = widgets, bindings
         self._state = 'prepared'
-        return iter(widget for widget in roots if not isinstance(widget, MarkupModal))
+        return iter(roots)
 
     def push_modal(self, modal_id: str):
         """Push a declared modal and return a future resolved by dismissal."""
         import asyncio
 
-        modal = self._widgets.get(modal_id)
-        if not isinstance(modal, MarkupModal):
+        node = self._modal_nodes.get(modal_id)
+        if node is None:
             raise ElementNotFoundError(f'No declared modal has ID {modal_id!r}')
+        widgets: dict[str, Widget] = {}
+        bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
+        modal = self._build_node(node, widgets, bindings)
+        if not isinstance(modal, MarkupModal):
+            raise DocumentStateError(f'Element {modal_id!r} is not a modal')
+        self._widgets.update(widgets)
+        for message_type, entries in bindings.items():
+            self._bindings.setdefault(message_type, []).extend(entries)
         future: asyncio.Future[object | None] = asyncio.get_running_loop().create_future()
-        self.app.push_screen(modal, callback=future.set_result)
+        modal_widgets = set(widgets.values())
+
+        def dismissed(value: object | None) -> None:
+            for element_id, widget in widgets.items():
+                if self._widgets.get(element_id) is widget:
+                    self._widgets.pop(element_id)
+            for message_type, entries in bindings.items():
+                self._bindings[message_type] = [entry for entry in self._bindings[message_type] if entry[0] not in modal_widgets]
+            future.set_result(value)
+
+        self.app.push_screen(modal, callback=dismissed)
         return future
 
     def dismiss_modal(self, value: object | None = None) -> None:
