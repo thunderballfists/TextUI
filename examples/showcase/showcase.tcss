@@ -1,4 +1,5 @@
 #showcase { height: 100%; }
+#layout { height: 1fr; }
 #content { height: 1fr; }
 #sidebar { width: 22; }
 #jobs, #files { width: 1fr; height: 12; }
