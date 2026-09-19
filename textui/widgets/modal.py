@@ -21,11 +21,16 @@ class MarkupModal(ModalScreen[object]):
     }
     MarkupModal > .markup-modal-content {
         width: auto;
+        min-width: 28;
         height: auto;
         max-width: 80%;
         padding: 1 2;
         border: round $primary;
         background: $surface;
+        align: center middle;
+    }
+    MarkupModal > .markup-modal-content > Button {
+        width: 100%;
     }
     """
 

@@ -50,13 +50,13 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         app.document.get_by_id("append-log").press()
         await pilot.pause()
         assert str(app.document.get_by_id("feedback").render()) == "Log appended"
-        app.document.get_by_id("open-modal").press()
+        assert await pilot.click("#open-modal")
         await pilot.pause()
         assert app.screen.id == "help"
-        assert app.document.get_by_id("close-modal").region.x > 0
-        app.document.get_by_id("close-modal").press()
+        first_modal = app.screen
+        assert await pilot.click("#close-modal")
         await pilot.pause()
-        app.document.get_by_id("open-modal").press()
+        assert await pilot.click("#open-modal")
         await pilot.pause()
         assert app.screen.id == "help"
-        assert app.document.get_by_id("close-modal").region.x > 0
+        assert app.screen is not first_modal
