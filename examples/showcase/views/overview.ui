@@ -1,0 +1,5 @@
+<ui>
+  <label>Project runtime, includes, and reusable components</label>
+  <agent-card id="alpha" name="Alpha" status="Ready"><slot name="actions"><button on-pressed="select_alpha">Select Alpha</button></slot></agent-card>
+  <label>Use the navigation rail to explore every widget family.</label>
+</ui>

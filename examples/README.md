@@ -37,3 +37,7 @@ Run `textui run examples/data/app.ui` to try a native table and tree. Select a r
 ## Reusable components
 
 Run `textui run examples/components/app.ui` to see a project-local `agent-card` component. The entry file imports the component, passes literal properties, and supplies a named action slot. See the [project runtime guide](../docs/project-runtime.md#reusable-components) for the authoring contract.
+
+## Feature showcase
+
+Run `textui run examples/showcase/app.ui` for a single application that exercises the full built-in surface. The sidebar is hideable and resizable; its pages cover imported components and includes, inputs and choices, tabs and indicators, tables and trees, runtime lists, logs, modal screens, linked actions, and a repeating timer. It is the quickest manual smoke test after changing framework behavior.

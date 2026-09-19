@@ -1,0 +1,61 @@
+<ui>
+  <style src="showcase.tcss" />
+  <script src="controller.py" />
+  <component src="components/agent-card.ui" as="agent-card" />
+  <vertical id="showcase">
+    <header>
+      <left><button id="toggle-sidebar" on-pressed="toggle_sidebar">☰</button></left>
+      <center><label>TextUI feature showcase</label></center>
+      <right><label id="clock">Starting…</label></right>
+    </header>
+    <split id="layout" direction="horizontal">
+      <pane id="sidebar" size="22" min-size="12">
+        <nav id="navigation" on-selected="show_page">
+          <nav-item target="overview">Overview</nav-item>
+          <nav-item target="controls">Controls</nav-item>
+          <nav-item target="data">Data</nav-item>
+          <nav-item target="activity">Activity</nav-item>
+        </nav>
+      </pane>
+      <pane id="main" min-size="30">
+        <content-switcher id="content" initial="overview">
+          <vertical id="overview"><include src="views/overview.ui" /></vertical>
+          <vertical id="controls">
+            <input id="name" placeholder="Your name" on-submitted="greet" />
+            <checkbox id="notify" value="false" on-changed="notify_changed">Notifications</checkbox>
+            <select id="status" value="new" allow-blank="false" on-changed="status_changed">
+              <option value="new">New</option><option value="done">Done</option>
+            </select>
+            <switch id="enabled" value="false" on-changed="enabled_changed" />
+            <text-area id="notes" soft-wrap="true" on-changed="notes_changed">Notes are verbatim text.</text-area>
+            <tabbed-content id="tabs" initial="choices" on-tab-activated="tab_changed">
+              <tab-pane id="choices" title="Choices" accelerator="1" accelerator-scope="document">
+                <radio-set id="priority" on-changed="priority_changed"><radio-button id="low">Low</radio-button><radio-button id="high" value="true">High</radio-button></radio-set>
+                <rule line-style="dashed" />
+                <progress-bar id="progress" total="100" progress="40" show-eta="false" />
+              </tab-pane>
+              <tab-pane id="details" title="Details" accelerator="2" accelerator-scope="document">
+                <collapsible id="details-panel" title="Native disclosure" collapsed="true" on-expanded="details_expanded" on-collapsed="details_collapsed"><label>Use the mouse or keyboard to expand this section.</label></collapsible>
+              </tab-pane>
+            </tabbed-content>
+          </vertical>
+          <vertical id="data">
+            <horizontal>
+              <data-table id="jobs" cursor-type="row" on-row-selected="job_selected"><column key="name">Job</column><column key="state">State</column><row key="backup"><cell>Backup</cell><cell>Running</cell></row></data-table>
+              <tree id="files" label="Project files" on-node-selected="file_selected"><tree-node key="src" label="src" expanded="true"><tree-node key="app" label="app.py" /></tree-node></tree>
+            </horizontal>
+            <button id="add-data" on-pressed="add_data">Add data</button>
+          </vertical>
+          <vertical id="activity">
+            <list id="agents" item-label="{name}" on-selected="select_agent" />
+            <label id="agent-detail">Select an agent</label>
+            <horizontal><button id="append-log" on-pressed="append_log">Append log</button><button id="open-modal" on-pressed="open_modal">Open modal</button></horizontal>
+            <log id="transcript" max-lines="100" wrap="true" />
+          </vertical>
+        </content-switcher>
+      </pane>
+    </split>
+    <status-bar><left><label id="feedback">Ready</label></left><right><label>Ctrl+1 / Ctrl+2 selects tabs</label></right></status-bar>
+  </vertical>
+  <modal id="help" dismissable="true"><label>TextUI uses native Textual screens for modals.</label><button id="close-modal" on-pressed="close_modal">Close</button></modal>
+</ui>
