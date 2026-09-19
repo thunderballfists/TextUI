@@ -111,7 +111,7 @@ class DocumentLoader:
         )
         return StyleBlock(content, location, index)
 
-    def _node(self, element: etree._Element, source_name: str, identifiers: set[str], sources: Mapping[etree._Element, str] | None = None) -> ElementNode:
+    def _node(self, element: etree._Element, source_name: str, identifiers: set[str], sources: Mapping[etree._Element, str] | None = None, private_ids: set[str] | None = None) -> ElementNode:
         source_name = sources.get(element, source_name) if sources is not None else source_name
         location = self._location(element, source_name)
         if not _KEBAB.fullmatch(element.tag):
@@ -153,7 +153,7 @@ class DocumentLoader:
             default = attribute_spec.value_or_default()
             if default is not UNSET:
                 attributes[name] = default
-        children = tuple(self._children(element, source_name, identifiers, spec.child_policy, location, sources))
+        children = tuple(self._children(element, source_name, identifiers, spec.child_policy, location, sources, private_ids))
         if spec.text_policy in {"text", "verbatim"}:
             if any(not isinstance(child, etree._Comment) for child in element):
                 raise DocumentValidationError("text component cannot contain child elements", location=location)
@@ -161,9 +161,9 @@ class DocumentLoader:
         else:
             self._reject_nonwhitespace(element.text, location, "text is not allowed")
             text = None
-        return ElementNode(spec, attributes, common, text, children, events, location)
+        return ElementNode(spec, attributes, common, text, children, events, location, common["id"] in (private_ids or set()))
 
-    def _children(self, element: etree._Element, source_name: str, identifiers: set[str], policy: str, location: SourceLocation, sources: Mapping[etree._Element, str] | None = None):
+    def _children(self, element: etree._Element, source_name: str, identifiers: set[str], policy: str, location: SourceLocation, sources: Mapping[etree._Element, str] | None = None, private_ids: set[str] | None = None):
         elements = [child for child in element if not isinstance(child, etree._Comment)]
         if policy == "none":
             if elements:
@@ -173,7 +173,7 @@ class DocumentLoader:
             if isinstance(child, etree._Comment):
                 self._reject_nonwhitespace(child.tail, location, "non-whitespace tail text is not allowed")
                 continue
-            yield self._node(child, source_name, identifiers, sources)
+            yield self._node(child, source_name, identifiers, sources, private_ids)
             self._reject_nonwhitespace(child.tail, location, "non-whitespace tail text is not allowed")
 
     def _common(self, common: dict[str, Any], identifiers: set[str], name: str, raw: str, location: SourceLocation) -> None:

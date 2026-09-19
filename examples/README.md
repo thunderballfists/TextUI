@@ -33,3 +33,7 @@ Run `textui run examples/project/app.ui` from the repository root. The entry fil
 Run `textui run examples/controls/app.ui` to try native select, switch, text area, tabs, radio choices, collapsible content, progress bars, and rules. Their `on-*` actions update the feedback label. See the [controls guide](../docs/controls.md).
 
 Run `textui run examples/data/app.ui` to try a native table and tree. Select a row or node to update the feedback label, then press **Add job and file** to change both widgets from linked Python. See [tables and trees](../docs/controls.md#tables-and-trees).
+
+## Reusable components
+
+Run `textui run examples/components/app.ui` to see a project-local `agent-card` component. The entry file imports the component, passes literal properties, and supplies a named action slot. See the [project runtime guide](../docs/project-runtime.md#reusable-components) for the authoring contract.

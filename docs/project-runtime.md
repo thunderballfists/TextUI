@@ -4,6 +4,30 @@ Run a local project with `textui run path/to/app.ui` or `python -m textui run pa
 
 Use `<include src="views/workspace.ui"/>` wherever a widget child is allowed. Included files have their own `<ui>` root and may include other files, but may not declare scripts or styles. Relative paths are resolved from the file containing each directive, not from the shell's current directory. Cycles, missing resources, duplicate IDs, and invalid markup fail with source context. Includes are static; there is no network loading or reload.
 
+## Reusable components
+
+Import reusable markup directly below the entry `<ui>` root. The alias is a project-local lowercase kebab-case widget name:
+
+```xml
+<ui>
+  <component src="components/agent-card.ui" as="agent-card" />
+  <agent-card id="alpha" name="Alpha">
+    <slot name="actions"><button on-pressed="open_alpha">Open</button></slot>
+  </agent-card>
+</ui>
+```
+
+The imported file has a `<component>` root, optional properties, and one widget root:
+
+```xml
+<component>
+  <props><prop name="name" required="true" /></props>
+  <vertical class="agent-card"><label>{name}</label><slot name="actions"><button>Details</button></slot></vertical>
+</component>
+```
+
+Properties are literal strings: required values must be supplied, defaults fill omissions, and unknown properties fail. `{name}` substitutes only the declared property; it never evaluates Python. A caller's named slot replaces the matching template slot, while omitted slots keep fallback content. The instance `id`, classes, style, disabled state, and `on-*` event bindings apply to the rendered root. Template IDs receive unique private prefixes, so controller code addresses the public instance ID. Components may import other explicitly declared components. Component files cannot declare scripts or styles; entry-document TCSS styles their widgets. The runnable [component example](../examples/components/app.ui) shows the complete layout.
+
 Linked Python is trusted application code. Each App executes each linked file once in its own namespace, with a module-global `window` available before the script executes. Use `window.app` for the host Textual App, `window.registry` to register components during `on_setup`, and `window.document.get_by_id("status")` after widgets mount. Ordinary imports work as normal Python imports. No Python is embedded in markup.
 
 ```python

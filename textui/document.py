@@ -70,7 +70,7 @@ class BoundDocument:
         self.app = app
         self.actions = MappingProxyType(dict(actions))
         self._state = 'bound'
-        self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None}
+        self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None and not node.private_id}
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
 
@@ -101,7 +101,7 @@ class BoundDocument:
                 raise ComponentBuildError(str(error), location=node.location) from error
             if node.common['style'] is not None:
                 apply_inline(widget, node.common['style'], node.location)
-            if node.common['id'] is not None:
+            if node.common['id'] is not None and not node.private_id:
                 widgets[node.common['id']] = widget
             for event_name, action in node.events.items():
                 event = node.spec.events[event_name]

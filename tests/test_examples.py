@@ -60,6 +60,23 @@ async def test_project_example_loads_includes_styles_actions_and_timer(tmp_path,
 
 
 @pytest.mark.asyncio
+async def test_component_example_expands_public_roots_and_slot_action(tmp_path, monkeypatch):
+    from pathlib import Path
+    from textui import ElementNotFoundError, ProjectApp, ProjectSource
+
+    monkeypatch.chdir(tmp_path)
+    entry = Path(__file__).parents[1] / "examples" / "components" / "app.ui"
+    app = ProjectApp(ProjectSource.discover(entry))
+    async with app.run_test() as pilot:
+        assert app.document.get_by_id("alpha").id == "alpha"
+        assert app.document.get_by_id("beta").id == "beta"
+        with pytest.raises(ElementNotFoundError):
+            app.document.get_by_id("__component_1_name")
+        assert await pilot.click("#alpha Button")
+        assert app.document.get_by_id("alpha").has_class("opened")
+
+
+@pytest.mark.asyncio
 async def test_controls_example_mounts_and_handles_native_changes(tmp_path, monkeypatch):
     from pathlib import Path
     from textui import ProjectApp, ProjectSource
