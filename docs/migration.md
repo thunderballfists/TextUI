@@ -26,6 +26,10 @@ app.run()
 
 Files are UTF-8 and retain a resolved source path. `from_string` never treats its input as a filename. Loader failures now raise contextual public errors instead of repairing input or silently ignoring invalid content.
 
+## Reuse project markup
+
+The project runtime can import a local `.ui` component directly below its entry root: `<component src="components/card.ui" as="agent-card"/>`. The component definition has a `<component>` root, optional literal string `<prop>` declarations, and one widget root. Use `{property}` in template text or attribute values, and use named `<slot>` placeholders for caller-provided widgets with fallback content. Public instance attributes apply to that root, while template IDs are isolated per instance. Scripts and styles remain entry-only. See the [project runtime guide](project-runtime.md#reusable-components).
+
 Use lowercase kebab-case names (`max-length`, not `max_length`). Booleans are exactly `true` and `false`; numbers and enums are validated. `class="primary compact"` means two independently validated class tokens, and duplicates are removed. IDs must be unique and valid; anonymous widgets do not receive generated IDs. Whitespace in leaf text collapses and brackets remain literal rather than becoming Rich markup.
 
 ## Move behavior into Python

@@ -99,3 +99,85 @@ def test_same_script_declared_twice_is_loaded_once(tmp_path: Path):
     )
 
     assert ProjectSource.discover(tmp_path / "app.ui").scripts == (script,)
+
+
+def test_project_expands_component_properties_slots_and_private_ids(tmp_path: Path):
+    (tmp_path / "components").mkdir()
+    (tmp_path / "components" / "card.ui").write_text(
+        "<component><props><prop name=\"name\" required=\"true\"/>"
+        "<prop name=\"status\" default=\"Unknown\"/></props>"
+        "<vertical id=\"card\" class=\"card\"><label id=\"title\">{name}</label>"
+        "<label>{status}</label><slot name=\"actions\"><button>Details</button></slot>"
+        "</vertical></component>",
+        encoding="utf-8",
+    )
+    (tmp_path / "app.ui").write_text(
+        "<ui><component src=\"components/card.ui\" as=\"agent-card\"/>"
+        "<agent-card id=\"alpha\" name=\"Alpha\" class=\"selected\">"
+        "<slot name=\"actions\"><button on-pressed=\"open_alpha\">Open</button></slot>"
+        "</agent-card><agent-card id=\"beta\" name=\"Beta\"/></ui>",
+        encoding="utf-8",
+    )
+
+    document = ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())
+    alpha, beta = document.nodes
+    assert alpha.common["id"] == "alpha"
+    assert alpha.common["classes"] == ("card", "selected")
+    assert alpha.children[0].common["id"].startswith("__component_1_")
+    assert alpha.children[0].text == "Alpha"
+    assert alpha.children[1].text == "Unknown"
+    assert alpha.children[2].text == "Open"
+    assert alpha.children[2].events == {"pressed": "open_alpha"}
+    assert beta.common["id"] == "beta"
+    assert beta.children[0].common["id"] != alpha.children[0].common["id"]
+
+
+@pytest.mark.parametrize(
+    ("markup", "message"),
+    [
+        ("<agent-card extra=\"value\"/>", "unknown component property"),
+        ("<agent-card/>", "required component property is missing"),
+        ("<agent-card name=\"A\"><slot name=\"missing\"/></agent-card>", "unknown component slot"),
+    ],
+)
+def test_component_calls_validate_properties_and_slots(tmp_path: Path, markup: str, message: str):
+    (tmp_path / "card.ui").write_text(
+        "<component><props><prop name=\"name\" required=\"true\"/></props>"
+        "<vertical><label>{name}</label><slot name=\"actions\"/></vertical></component>",
+        encoding="utf-8",
+    )
+    (tmp_path / "app.ui").write_text(
+        f'<ui><component src="card.ui" as="agent-card"/>{markup}</ui>', encoding="utf-8"
+    )
+
+    with pytest.raises(DocumentValidationError, match=message):
+        ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())
+
+
+def test_component_import_cycles_are_reported(tmp_path: Path):
+    (tmp_path / "a.ui").write_text(
+        '<component><component src="b.ui" as="b-card"/><b-card/></component>', encoding="utf-8"
+    )
+    (tmp_path / "b.ui").write_text(
+        '<component><component src="a.ui" as="a-card"/><a-card/></component>', encoding="utf-8"
+    )
+    (tmp_path / "app.ui").write_text(
+        '<ui><component src="a.ui" as="a-card"/><a-card/></ui>', encoding="utf-8"
+    )
+
+    with pytest.raises(DocumentValidationError, match="component import cycle") as caught:
+        ProjectSource.discover(tmp_path / "app.ui")
+    assert "a.ui" in str(caught.value)
+    assert "b.ui" in str(caught.value)
+
+
+def test_component_definitions_reject_runtime_directives(tmp_path: Path):
+    (tmp_path / "card.ui").write_text(
+        '<component><script src="controller.py"/><vertical/></component>', encoding="utf-8"
+    )
+    (tmp_path / "app.ui").write_text(
+        '<ui><component src="card.ui" as="agent-card"/></ui>', encoding="utf-8"
+    )
+
+    with pytest.raises(DocumentValidationError, match="script is not allowed"):
+        ProjectSource.discover(tmp_path / "app.ui")

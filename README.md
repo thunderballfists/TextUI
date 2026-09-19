@@ -18,7 +18,7 @@ textui run examples/data/app.ui
 python -m examples.editor
 ```
 
-The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates tables and trees with native runtime updates; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
+The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [component example](examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates tables and trees with native runtime updates; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
 A self-contained application:
 
@@ -82,6 +82,19 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 Mounted widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`; `option`, `column`, `row`, `cell`, and `tree-node` are data-only children and do not accept these attributes. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
 
 `split` uses a draggable divider that accepts arrow keys when focused. Set `pane.display = False` to hide a pane; showing it restores its stored size. A `nav-item` target must name a direct child of a `content-switcher`. The `selected` event carries `context.event.target`, which an action can assign to the switcher's `current` property. The [project example](examples/project/app.ui) shows these controls together.
+
+## Reusable project components
+
+Project entry files may import a local component directly below `<ui>`, then use its lowercase kebab-case alias as a widget:
+
+```xml
+<component src="components/agent-card.ui" as="agent-card" />
+<agent-card id="alpha" name="Alpha">
+  <slot name="actions"><button on-pressed="open_alpha">Open</button></slot>
+</agent-card>
+```
+
+A component file has a `<component>` root, optional string `<props>`, and exactly one widget root. Literal `{property}` placeholders work in text and attribute values. Named `<slot>` declarations accept caller content and otherwise retain their fallback widgets. The instance `id`, class, style, disabled state, and events apply to the rendered root; template IDs are private and receive unique instance prefixes. Components may import other components, but cannot contain scripts or styles. See the [project runtime guide](docs/project-runtime.md) and runnable [component example](examples/components/app.ui).
 
 ## Integrate with a normal App
 

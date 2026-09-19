@@ -8,6 +8,10 @@ All notable changes to TextUI are documented here.
 
 - Compound-control validation now rejects unreachable nested radio-button events while preserving custom registry components that reuse built-in tag names.
 
+### Added
+
+- Project-local reusable `.ui` components with explicit imports, literal string properties, named slots, fallback content, and per-instance private template IDs.
+
 ### Planned
 
 - Optional image components remain outside the core package.
