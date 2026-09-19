@@ -144,6 +144,21 @@ async def test_modal_cannot_open_same_definition_twice_before_dismissal():
 
 
 @pytest.mark.asyncio
+async def test_modal_can_reopen_immediately_after_its_result_resolves():
+    """A completed modal future must not expose an old screen with the same ID."""
+    app = TextUI(DocumentLoader().from_string(MODAL_MARKUP), actions={"open_modal": lambda context: None, "choose": lambda context: None})
+    async with app.run_test() as pilot:
+        first = app.document.push_modal("pick")
+        await pilot.pause()
+        app.document.dismiss_modal("first")
+        assert await first == "first"
+        second = app.document.push_modal("pick")
+        await pilot.pause()
+        app.document.dismiss_modal("second")
+        assert await second == "second"
+
+
+@pytest.mark.asyncio
 async def test_failed_modal_push_leaves_no_registered_modal_state(monkeypatch):
     """A synchronous screen-push failure must not poison the next real open."""
     app = TextUI(DocumentLoader().from_string(MODAL_MARKUP), actions={"open_modal": lambda context: None, "choose": lambda context: None})

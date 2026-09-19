@@ -1,6 +1,7 @@
 """Immutable document definitions and single-use native runtime bindings."""
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from inspect import isawaitable
@@ -73,6 +74,7 @@ class BoundDocument:
         self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None and not node.private_id}
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
+        self._modal_finalizers: set[asyncio.Task[None]] = set()
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
@@ -132,8 +134,6 @@ class BoundDocument:
 
     def push_modal(self, modal_id: str):
         """Push a declared modal and return a future resolved by dismissal."""
-        import asyncio
-
         node = self._modal_nodes.get(modal_id)
         if node is None:
             raise ElementNotFoundError(f'No declared modal has ID {modal_id!r}')
@@ -158,11 +158,18 @@ class BoundDocument:
                 else:
                     self._bindings.pop(message_type, None)
 
-        def dismissed(value: object | None) -> None:
+        async def finalize_dismissal(value: object | None) -> None:
+            while self.app.is_mounted(modal):
+                await asyncio.sleep(0)
             remove_registrations()
             self._active_modal_ids.discard(modal_id)
             if not future.done():
                 future.set_result(value)
+
+        def dismissed(value: object | None) -> None:
+            finalizer = asyncio.create_task(finalize_dismissal(value))
+            self._modal_finalizers.add(finalizer)
+            finalizer.add_done_callback(self._modal_finalizers.discard)
 
         self._widgets.update(widgets)
         for message_type, entries in bindings.items():
