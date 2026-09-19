@@ -1,10 +1,14 @@
 """Declarative seed data for native Textual tables and trees."""
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
+from types import MappingProxyType
+
 from rich.text import Text
 from textual.widget import Widget
 from textual.widgets import DataTable, Tree
 
+from ..errors import DocumentStateError
 from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, enum, integer
 
 
@@ -58,6 +62,7 @@ class SeededDataTable(DataTable):
         self._seed_columns = columns
         self._seed_rows = rows
         self.row_key_field = row_key
+        self._runtime_records: dict[str, Mapping[str, object]] = {}
         self._seeded = False
 
     def on_mount(self) -> None:
@@ -68,6 +73,41 @@ class SeededDataTable(DataTable):
         for row in self._seed_rows:
             self.add_row(*(Text(cell) for cell in row.cells), key=row.key)
         self._seeded = True
+
+    def set_rows(self, rows: Iterable[Mapping[str, object]]) -> None:
+        if self.row_key_field is None:
+            raise DocumentStateError("set_rows requires a data-table row-key")
+
+        validated: list[tuple[str, Mapping[str, object], tuple[Text, ...]]] = []
+        keys: set[str] = set()
+        for index, record in enumerate(rows):
+            if not isinstance(record, Mapping):
+                raise ValueError(f"row {index} must be a mapping")
+            missing = [column.key for column in self._seed_columns if column.key not in record]
+            if missing:
+                raise ValueError(f"row {index} is missing column {missing[0]!r}")
+            key = record.get(self.row_key_field)
+            if not isinstance(key, str) or not key:
+                raise ValueError(f"row {index} has an invalid {self.row_key_field!r}")
+            if key in keys:
+                raise ValueError(f"duplicate row key {key!r}")
+            keys.add(key)
+            cells = tuple(
+                Text(
+                    "" if record[column.key] is None else str(record[column.key]),
+                    justify=column.align,
+                )
+                for column in self._seed_columns
+            )
+            validated.append((key, MappingProxyType(dict(record)), cells))
+
+        self.clear(columns=False)
+        self._runtime_records = {key: record for key, record, _ in validated}
+        for key, _, cells in validated:
+            self.add_row(*cells, key=key)
+
+    def get_record(self, row_key: str) -> Mapping[str, object]:
+        return self._runtime_records[row_key]
 
 
 def build_data_table(context: BuildContext) -> SeededDataTable:

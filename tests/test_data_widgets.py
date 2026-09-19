@@ -3,7 +3,7 @@ from textual.app import App
 from textual.widgets import DataTable, Tree
 from textual.coordinate import Coordinate
 
-from textui import DocumentLoader, DocumentValidationError, TextUI
+from textui import DocumentLoader, DocumentStateError, DocumentValidationError, TextUI
 
 
 MARKUP = '''<ui>
@@ -61,6 +61,92 @@ async def test_column_metadata_uses_literal_label_and_width():
 def test_data_table_runtime_metadata_rejects_invalid_values(markup):
     with pytest.raises(DocumentValidationError):
         DocumentLoader().from_string(markup)
+
+
+@pytest.mark.asyncio
+async def test_set_rows_replaces_seed_data_and_exposes_source_record():
+    markup = '''<ui><data-table id="usage" row-key="record_id">
+      <column key="date" label="Date" />
+      <column key="requests" label="Reqs" align="right" width="8" />
+      <row key="seed"><cell>old</cell><cell>0</cell></row>
+    </data-table></ui>'''
+    app = TextUI(DocumentLoader().from_string(markup))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"record_id": "2026-09-19-a", "date": "2026-09-19", "requests": 12, "source": "api"},
+            {"record_id": "2026-09-19-b", "date": "2026-09-20", "requests": None},
+        ])
+        assert [key.value for key in table.rows] == ["2026-09-19-a", "2026-09-19-b"]
+        assert table.get_cell("2026-09-19-a", "requests").plain == "12"
+        assert table.get_cell("2026-09-19-b", "requests").plain == ""
+        assert dict(table.get_record("2026-09-19-a")) == {
+            "record_id": "2026-09-19-a",
+            "date": "2026-09-19",
+            "requests": 12,
+            "source": "api",
+        }
+        with pytest.raises(TypeError):
+            table.get_record("2026-09-19-a")["source"] = "changed"
+
+
+@pytest.mark.asyncio
+async def test_set_rows_rejects_invalid_batch_without_changing_current_rows():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name">Name</column><row key="seed"><cell>Seed</cell></row>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.set_rows([{"id": "current", "name": "Current", "source": "api"}])
+        with pytest.raises(ValueError, match="missing column 'name'"):
+            table.set_rows([{"id": "ready", "name": "Ready"}, {"id": "bad"}])
+        assert [key.value for key in table.rows] == ["current"]
+        assert table.get_cell("current", "name").plain == "Current"
+        assert dict(table.get_record("current")) == {
+            "id": "current",
+            "name": "Current",
+            "source": "api",
+        }
+
+        table.set_rows([])
+        assert len(table.rows) == 0
+        assert len(table.columns) == 1
+        with pytest.raises(KeyError):
+            table.get_record("current")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("rows", "match"), [
+    ([{"name": "Missing"}], "invalid 'id'"),
+    ([{"id": None, "name": "None"}], "invalid 'id'"),
+    ([{"id": "", "name": "Empty"}], "invalid 'id'"),
+    ([{"id": 1, "name": "Numeric"}], "invalid 'id'"),
+    ([{"id": "duplicate", "name": "One"}, {"id": "duplicate", "name": "Two"}], "duplicate row key"),
+    (["not a mapping"], "must be a mapping"),
+])
+async def test_set_rows_rejects_invalid_runtime_keys_without_replacing_rows(rows, match):
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name">Name</column>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.set_rows([{"id": "current", "name": "Current"}])
+        with pytest.raises(ValueError, match=match):
+            table.set_rows(rows)
+        assert [key.value for key in table.rows] == ["current"]
+        assert table.get_cell("current", "name").plain == "Current"
+
+
+@pytest.mark.asyncio
+async def test_set_rows_requires_declared_row_key():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
+      <column key="name">Name</column><row key="seed"><cell>Seed</cell></row>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        with pytest.raises(DocumentStateError, match="row-key"):
+            table.set_rows([{"id": "new", "name": "New"}])
+        assert table.get_cell("seed", "name").plain == "Seed"
 
 
 def test_data_widgets_can_be_composed_before_app_runs():
