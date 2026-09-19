@@ -16,6 +16,7 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- Opt-in `<style preset="compact"/>` TCSS for dense native controls, with normal project stylesheet override order.
 - Shared project commands through `@command`, self-labeling `<command-button>` markup, static enabled state, and shortcut help.
 - Project-local reusable `.ui` components with explicit imports, literal string properties, named slots, fallback content, and per-instance private template IDs.
 - A runnable feature showcase that combines every built-in widget family and project-runtime facility.

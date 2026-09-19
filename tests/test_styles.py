@@ -47,6 +47,29 @@ async def test_theme_variables_and_block_local_variables_use_native_context():
         assert app.document.get_by_id('label').styles.color == Color.parse(app.get_css_variables()['primary'])
 
 
+@pytest.mark.asyncio
+async def test_compact_style_preset_reduces_control_padding_and_keeps_later_overrides():
+    doc = textui.DocumentLoader().from_string('''<ui>
+    <style preset="compact"/>
+    <button id="compact">Save</button>
+    <input id="input" value="Ready"/>
+    <style>#compact { padding: 0 2; }</style>
+    </ui>''')
+    app = textui.TextUI(doc)
+    async with app.run_test():
+        button = app.document.get_by_id("compact")
+        input_control = app.document.get_by_id("input")
+        assert button.styles.padding.top == 0
+        assert button.styles.padding.left == 2
+        assert input_control.styles.padding.top == 0
+        assert input_control.styles.padding.left == 1
+
+
+def test_compact_style_preset_rejects_unknown_names():
+    with pytest.raises(textui.DocumentValidationError, match="unknown style preset"):
+        textui.DocumentLoader().from_string('<ui><style preset="roomy"/></ui>')
+
+
 @pytest.mark.parametrize('markup, phrase', [
     ('<ui><style>Label { color: red; }</style><style>Label { imaginary: 5; }</style><label/></ui>', 'imaginary'),
     ('<ui><style>Label { color: ; }</style><label/></ui>', 'color'),
