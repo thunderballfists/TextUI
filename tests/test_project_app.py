@@ -92,6 +92,39 @@ def quit_app():
 
 
 @pytest.mark.asyncio
+async def test_project_action_lifecycle_metadata_targets_a_declared_id(tmp_path: Path):
+    source = project(tmp_path, '<label id="status">Ready</label>', '''
+from textui import action
+
+@action(target="status", supersede=True)
+async def refresh(context):
+    window.app.target = context.target
+    window.app.cancelled = context.cancelled
+''')
+    app = ProjectApp(source)
+
+    async with app.run_test():
+        metadata = app.document.action_metadata["refresh"]
+        assert metadata.target == "status"
+        assert metadata.supersede is True
+
+
+@pytest.mark.asyncio
+async def test_project_rejects_action_lifecycle_unknown_target(tmp_path: Path):
+    source = project(tmp_path, '<label id="status">Ready</label>', '''
+from textui import action
+
+@action(target="missing")
+def refresh():
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="target"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
 async def test_command_rejects_context_parameter(tmp_path: Path):
     source = project(tmp_path, '<label>Ready</label>', '''
 from textui import command

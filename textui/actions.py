@@ -14,11 +14,27 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True, slots=True)
+class ActionOptions:
+    target: str | None = None
+    supersede: bool = False
+
+
+@dataclass(frozen=True, slots=True)
 class ActionContext:
     event: Message
     widget: Widget
     app: App
     document: BoundDocument
+    _target: Widget | None = None
+    _cancelled: bool = False
+
+    @property
+    def target(self) -> Widget | None:
+        return self._target
+
+    @property
+    def cancelled(self) -> bool:
+        return self._cancelled
 
     def push_modal(self, modal_id: str):
         """Push a declared modal and return its awaitable dismissal value."""

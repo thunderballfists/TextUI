@@ -50,6 +50,7 @@ class Document:
         app: App,
         *,
         actions: Mapping[str, ActionCallback],
+        action_metadata: Mapping[str, object] | None = None,
         commands: Mapping[str, object] | None = None,
         command_callbacks: Mapping[str, Callable[[], object]] | None = None,
         command_locations: Mapping[str, object] | None = None,
@@ -62,6 +63,12 @@ class Document:
         if hasattr(app, '_textui_document_binding'):
             raise DocumentStateError('An App may have only one document binding')
         callbacks = dict(actions)
+        metadata = dict(action_metadata or {})
+        declared_ids = {node.common['id'] for node in _walk(self.nodes) if node.common['id'] is not None and not node.private_id}
+        for name, options in metadata.items():
+            target = getattr(options, "target", None)
+            if target is not None and target not in declared_ids:
+                raise DocumentValidationError(f"Action {name!r} target {target!r} must name a declared ID")
         declared_commands = dict(commands or {})
         callbacks_by_command = dict(command_callbacks or {})
         locations_by_command = dict(command_locations or {})
@@ -78,7 +85,7 @@ class Document:
         for name, callback in callbacks.items():
             if not isinstance(name, str) or not name.isidentifier() or not callable(callback):
                 raise DocumentValidationError(f'Action {name!r} must have an identifier name and a callable value')
-        bound = BoundDocument(self, app, callbacks, declared_commands, callbacks_by_command, locations_by_command)
+        bound = BoundDocument(self, app, callbacks, metadata, declared_commands, callbacks_by_command, locations_by_command)
         app._textui_document_binding = bound
         return bound
 
@@ -91,6 +98,7 @@ class BoundDocument:
         definition: Document,
         app: App,
         actions: Mapping[str, ActionCallback],
+        action_metadata: Mapping[str, object],
         commands: Mapping[str, object],
         command_callbacks: Mapping[str, Callable[[], object]],
         command_locations: Mapping[str, object],
@@ -98,6 +106,7 @@ class BoundDocument:
         self.definition = definition
         self.app = app
         self.actions = MappingProxyType(dict(actions))
+        self.action_metadata = MappingProxyType(dict(action_metadata))
         self.commands = MappingProxyType(dict(commands))
         self._command_callbacks = MappingProxyType(dict(command_callbacks))
         self._command_locations = MappingProxyType(dict(command_locations))

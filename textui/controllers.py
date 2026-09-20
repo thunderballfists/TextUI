@@ -14,17 +14,20 @@ import sys
 from textual.binding import Binding
 from textual.keys import Keys
 
-from .actions import ActionContext
+from .actions import ActionContext, ActionOptions
 from .document import BoundDocument
 from .errors import DocumentStateError, DocumentValidationError, SourceLocation, TextUIError
 from .registry import ComponentRegistry
 from .timers import RuntimeTimers
 
 
-def action(function: Callable[..., Any]) -> Callable[..., Any]:
+def action(function: Callable[..., Any] | None = None, *, target: str | None = None, supersede: bool = False):
     """Expose a linked controller function to document event directives."""
-    function.__textui_action__ = True
-    return function
+    options = ActionOptions(target, supersede)
+    def decorate(callback: Callable[..., Any]) -> Callable[..., Any]:
+        callback.__textui_action__ = options
+        return callback
+    return decorate(function) if function is not None else decorate
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +39,8 @@ class Command:
     shortcut: str | None
     description: str
     enabled: bool
+    target: str | None
+    supersede: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +49,8 @@ class _CommandOptions:
     shortcut: str | None
     description: str | None
     enabled: bool
+    target: str | None
+    supersede: bool
 
 
 def command(
@@ -52,10 +59,12 @@ def command(
     shortcut: str | None = None,
     description: str | None = None,
     enabled: bool = True,
+    target: str | None = None,
+    supersede: bool = False,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Expose a zero-argument linked-script function as a shared command."""
 
-    options = _CommandOptions(label, shortcut, description, enabled)
+    options = _CommandOptions(label, shortcut, description, enabled, target, supersede)
 
     def decorate(function: Callable[..., Any]) -> Callable[..., Any]:
         function.__textui_command__ = options
@@ -107,7 +116,11 @@ def _command_metadata(name: str, options: _CommandOptions, location: SourceLocat
         raise DocumentValidationError("command enabled must be a boolean", location=location)
     label = options.label or " ".join(part.capitalize() for part in name.strip("_").split("_"))
     shortcut = _shortcut(options.shortcut, location) if options.shortcut is not None else None
-    return Command(name, label, shortcut, options.description or label, options.enabled)
+    if options.target is not None and (not isinstance(options.target, str) or not options.target.isidentifier()):
+        raise DocumentValidationError("command target must be an identifier", location=location)
+    if not isinstance(options.supersede, bool):
+        raise DocumentValidationError("command supersede must be a boolean", location=location)
+    return Command(name, label, shortcut, options.description or label, options.enabled, options.target, options.supersede)
 
 
 class ProjectWindow:
@@ -142,6 +155,7 @@ class ControllerSet:
     def __init__(self, window: ProjectWindow) -> None:
         self.window = window
         self.actions: dict[str, Callable[[ActionContext], Any]] = {}
+        self.action_metadata: dict[str, ActionOptions] = {}
         self.commands: dict[str, Command] = {}
         self.command_callbacks: dict[str, Callable[[], Any]] = {}
         self.command_locations: dict[str, SourceLocation] = {}
@@ -178,6 +192,7 @@ class ControllerSet:
                 self.command_callbacks[name] = value
                 self.command_locations[name] = location
                 self.actions[name] = lambda context, callback=value: callback()
+                self.action_metadata[name] = ActionOptions(command.target, command.supersede)
             elif callable(value) and getattr(value, "__textui_action__", False) and getattr(value, "__module__", None) == module.__name__:
                 if name in self.actions:
                     raise DocumentValidationError(f"duplicate action {name!r}", location=location)
@@ -186,6 +201,14 @@ class ControllerSet:
                     self.actions[name] = lambda context, callback=value: callback()
                 else:
                     self.actions[name] = value
+                options = getattr(value, "__textui_action__")
+                if not isinstance(options, ActionOptions):
+                    options = ActionOptions()
+                if options.target is not None and (not isinstance(options.target, str) or not options.target.isidentifier()):
+                    raise DocumentValidationError("action target must be an identifier", location=location)
+                if not isinstance(options.supersede, bool):
+                    raise DocumentValidationError("action supersede must be a boolean", location=location)
+                self.action_metadata[name] = options
             if name in {"on_setup", "on_ready", "on_close"} and callable(value) and getattr(value, "__module__", None) == module.__name__:
                 if name in self.hooks:
                     raise DocumentValidationError(f"duplicate hook {name!r}", location=location)
