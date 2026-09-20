@@ -103,6 +103,12 @@ async def test_controls_example_mounts_and_handles_native_changes(tmp_path, monk
         assert tabs.active == "indicators"
         assert app.document.get_by_id("choice").pressed_button.id == "high"
         assert app.document.get_by_id("work").progress == 25.0
+        volume = app.document.get_by_id("volume")
+        assert volume.value == 40
+        volume.focus()
+        await pilot.press("right")
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Volume: 45"
         await pilot.click("#low")
         await pilot.pause()
         assert str(app.document.get_by_id("feedback").render()) == "Priority: low"

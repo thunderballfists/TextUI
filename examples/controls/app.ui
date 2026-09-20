@@ -22,6 +22,7 @@
         </radio-set>
         <rule line-style="dashed" />
         <progress-bar id="work" total="100" progress="25" show-eta="false" />
+        <range id="volume" min="0" max="100" step="5" value="40" show-value="true" on-changed="volume_changed" />
         <collapsible id="details" title="Details" collapsed="true" on-collapsed="details_collapsed" on-expanded="details_expanded">
           <label>Textual handles pointer and keyboard input.</label>
         </collapsible>

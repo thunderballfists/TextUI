@@ -34,6 +34,7 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- Native integer `<range>` controls with keyboard and pointer interaction, controller-settable values, changed events, and TCSS component classes.
 - Optional `target` and `supersede` lifecycle metadata for async actions and commands, including target loading/error state and shutdown cancellation.
 - Opt-in `<style preset="compact"/>` TCSS for dense native controls, including native borderless vertical compaction, normal project stylesheet override order, and runtime switching through `window.document.toggle_style_preset()`.
 - Opt-in `<style preset="borders"/>` TCSS for rounded and double Unicode button outlines, independently switchable at runtime.
