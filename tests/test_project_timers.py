@@ -94,6 +94,42 @@ def tick():
 
 
 @pytest.mark.asyncio
+async def test_exit_stops_owned_timers_before_unmount(tmp_path: Path):
+    app = app_from(tmp_path, '''
+from textui import every
+
+@every(0.01)
+def tick():
+    window.app.events.append("tick")
+''')
+    async with app.run_test() as pilot:
+        await pilot.pause(0.025)
+        app.exit()
+        before = len(app.events)
+        await pilot.pause(0.035)
+        assert len(app.events) == before
+
+
+@pytest.mark.asyncio
+async def test_ready_exit_skips_periodic_timer_startup(tmp_path: Path):
+    app = app_from(tmp_path, '''
+from textui import every
+
+def on_ready():
+    window.app.exit()
+
+@every(0.01)
+def tick():
+    window.app.events.append("tick")
+''')
+
+    async with app.run_test():
+        pass
+
+    assert app.events == []
+
+
+@pytest.mark.asyncio
 async def test_sync_callback_returning_awaitable_does_not_overlap(tmp_path: Path):
     app = app_from(tmp_path, '''
 import asyncio
@@ -110,4 +146,4 @@ def tick():
 ''')
     async with app.run_test() as pilot:
         await pilot.pause(0.06)
-        assert app.events[:3] == ["start", "end", "start"]
+        assert app.events[:2] == ["start", "end"]

@@ -143,6 +143,81 @@ def quit_app():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("declared_shortcut", "canonical_shortcut"),
+    [("+", "plus"), ("plus", "plus"), ("!", "exclamation_mark"), ("exclamation_mark", "exclamation_mark")],
+)
+async def test_command_printable_shortcuts_normalize_and_invoke(tmp_path: Path, declared_shortcut: str, canonical_shortcut: str):
+    source = project(tmp_path, '<label>Ready</label>', f'''
+from textui import command
+
+@command(shortcut={declared_shortcut!r})
+def run():
+    window.app.events.append("run")
+''')
+    app = ProjectApp(source)
+    app.events = []
+
+    async with app.run_test() as pilot:
+        assert app.controllers.commands["run"].shortcut == canonical_shortcut
+        await pilot.press(canonical_shortcut)
+
+    assert app.events == ["run"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("shortcut", ["not a real key!!", "ctrl+unknown", "ctrl+q,ctrl+w"])
+async def test_command_rejects_invalid_shortcuts(tmp_path: Path, shortcut: str):
+    source = project(tmp_path, '<label>Ready</label>', f'''
+from textui import command
+
+@command(shortcut={shortcut!r})
+def invalid():
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="command shortcut"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
+async def test_project_rejects_duplicate_command_shortcuts(tmp_path: Path):
+    source = project(tmp_path, '<label>Ready</label>', '''
+from textui import command
+
+@command(shortcut="ctrl+k")
+def first():
+    pass
+
+@command(shortcut="ctrl+k")
+def second():
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="duplicate command shortcut 'ctrl\\+k'"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
+async def test_project_rejects_command_shortcut_that_shadows_tab_accelerator(tmp_path: Path):
+    source = project(tmp_path, '''
+<tabbed-content><tab-pane id="one" title="One" accelerator="1" accelerator-scope="document"><label>One</label></tab-pane></tabbed-content>
+''', '''
+from textui import command
+
+@command(shortcut="1")
+def first():
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="conflicts with tab accelerator '1'"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
 async def test_command_button_requires_a_declared_command(tmp_path: Path):
     source = project(tmp_path, '<command-button command="missing"/>', '')
 
