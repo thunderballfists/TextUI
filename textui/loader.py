@@ -12,6 +12,7 @@ from textual.dom import check_identifiers
 from .document import Document
 from .errors import DocumentLoadError, DocumentSyntaxError, DocumentValidationError, SourceLocation
 from .nodes import ElementNode, StyleBlock
+from .presets import style_preset
 from .registry import AttributeSpec, ComponentRegistry, UNSET, boolean
 from .widgets.builtin_widgets import default_component_registry
 from .widgets.navigation import validate_navigation_targets
@@ -101,6 +102,26 @@ class DocumentLoader:
                 raise DocumentValidationError("namespaces are not allowed", location=self._location(node, source_name))
 
     def _style(self, element: etree._Element, location: SourceLocation, index: int) -> StyleBlock:
+        if "preset" in element.attrib:
+            if set(element.attrib) != {"preset"}:
+                attribute = next(name for name in element.attrib if name != "preset")
+                raise DocumentValidationError("style preset accepts only the preset attribute", location=location, attribute=attribute)
+            has_comment_tail = any(
+                comment.tail and comment.tail.strip()
+                for comment in element
+                if isinstance(comment, etree._Comment)
+            )
+            if (
+                any(not isinstance(child, etree._Comment) for child in element)
+                or (element.text and element.text.strip())
+                or has_comment_tail
+            ):
+                raise DocumentValidationError("style preset cannot contain content", location=location)
+            try:
+                content = style_preset(element.attrib["preset"])
+            except ValueError as error:
+                raise DocumentValidationError(str(error), location=location, attribute="preset", value=element.attrib["preset"]) from error
+            return StyleBlock(content, location, index, preset=element.attrib["preset"])
         if element.attrib:
             attribute = next(iter(element.attrib))
             raise DocumentValidationError("style accepts no attributes", location=location, attribute=attribute)

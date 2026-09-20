@@ -33,6 +33,18 @@ def quit_app() -> None:
     window.app.exit()
 
 
+@command(label="Compact", shortcut="ctrl+d", description="Toggle compact controls")
+def toggle_compact() -> None:
+    enabled = window.document.toggle_style_preset("compact")
+    _feedback("Compact controls on" if enabled else "Compact controls off")
+
+
+@command(label="Borders", shortcut="ctrl+b", description="Toggle rounded button borders")
+def toggle_borders() -> None:
+    enabled = window.document.toggle_style_preset("borders")
+    _feedback("Button borders on" if enabled else "Button borders off")
+
+
 @action
 def show_page(context) -> None:
     window.document.get_by_id("content").current = context.event.target

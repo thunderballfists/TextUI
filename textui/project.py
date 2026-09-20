@@ -183,7 +183,7 @@ class ProjectSource:
                 if child.tag in {"style", "script"}:
                     if not entry_root:
                         raise DocumentValidationError(f"{child.tag} is allowed only in the entry root", location=location)
-                    if child.tag == "style" and not child.attrib:
+                    if child.tag == "style" and (not child.attrib or "preset" in child.attrib):
                         styles.append(parser._style(child, location, len(styles)))
                     else:
                         target, _ = directive(child, owner)

@@ -12,7 +12,7 @@ from textual.app import App
 from textual.content import Content
 from textual.message import Message
 from textual.widget import Widget
-from textual.widgets import Button
+from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TextArea
 
 from .actions import ActionCallback, ActionContext
 from .errors import (
@@ -22,10 +22,11 @@ from .errors import (
 from .nodes import ElementNode, StyleBlock
 from .registry import BuildContext, EventSpec
 from .widgets.modal import MarkupModal, build_modal
-from .styling import apply_inline, commit_styles, prepare_styles
+from .styling import apply_inline, commit_styles, prepare_styles, prepare_styles_from
 
 # A factory may not recycle an instance across bindings, even before mounting.
 _built_widgets: WeakSet[Widget] = WeakSet()
+COMPACT_WIDGET_TYPES = (Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TextArea)
 
 
 def _walk(nodes: tuple[ElementNode, ...]) -> Iterable[ElementNode]:
@@ -111,6 +112,18 @@ class BoundDocument:
             if node.spec.factory is build_modal and node.common["id"] is not None
         }
         self._active_modal_ids: set[str] = set()
+        self._preset_enabled = {block.preset: True for block in definition.styles if block.preset is not None}
+        self._compact_widgets: list[Widget] = []
+
+    def _apply_compact_preset(self, widget: Widget) -> None:
+        """Use Textual's native compact state for controls that support it."""
+        if "compact" in self._preset_enabled and isinstance(widget, COMPACT_WIDGET_TYPES):
+            self._compact_widgets.append(widget)
+            widget.compact = self._preset_enabled["compact"]
+
+    def _set_compact_preset(self, enabled: bool) -> None:
+        for widget in self._compact_widgets:
+            widget.compact = enabled
 
     def _build_node(
         self,
@@ -132,6 +145,7 @@ class BoundDocument:
                 widget.id = node.common['id']
             widget.add_class(*node.common['classes'])
             widget.disabled = node.common['disabled']
+            self._apply_compact_preset(widget)
             command_name = getattr(widget, "_textui_command_name", None)
             if command_name is not None:
                 command = self.commands[command_name]
@@ -175,6 +189,27 @@ class BoundDocument:
         self._state = 'prepared'
         return iter(roots)
 
+    def toggle_style_preset(self, name: str) -> bool:
+        """Toggle a declared style preset and return whether it is now enabled."""
+        if name not in self._preset_enabled or self._state != 'prepared':
+            raise DocumentStateError(f"No declared style preset {name!r}")
+
+        enabled = not self._preset_enabled[name]
+        blocks = tuple(
+            block
+            for block in self.definition.styles
+            if block.preset is None
+            or (block.preset == name and enabled)
+            or (block.preset != name and self._preset_enabled[block.preset])
+        )
+        staged = prepare_styles_from(self.app.stylesheet, blocks, replace=self.definition.styles)
+        commit_styles(self.app, staged)
+        self._preset_enabled[name] = enabled
+        if name == "compact":
+            self._set_compact_preset(enabled)
+        self.app.refresh_css(animate=False)
+        return enabled
+
     def push_modal(self, modal_id: str):
         """Push a declared modal and return a future resolved by dismissal."""
         node = self._modal_nodes.get(modal_id)
@@ -184,8 +219,15 @@ class BoundDocument:
             raise DocumentStateError(f'Modal {modal_id!r} is already active')
         widgets: dict[str, Widget] = {}
         bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
-        modal = self._build_node(node, widgets, bindings)
+        compact_start = len(self._compact_widgets)
+        try:
+            modal = self._build_node(node, widgets, bindings)
+        except BaseException:
+            del self._compact_widgets[compact_start:]
+            raise
+        compact_widgets = tuple(self._compact_widgets[compact_start:])
         if not isinstance(modal, MarkupModal):
+            del self._compact_widgets[compact_start:]
             raise DocumentStateError(f'Element {modal_id!r} is not a modal')
         future: asyncio.Future[object | None] = asyncio.get_running_loop().create_future()
         owned_entries = {id(entry) for entries in bindings.values() for entry in entries}
@@ -200,6 +242,9 @@ class BoundDocument:
                     self._bindings[message_type] = remaining
                 else:
                     self._bindings.pop(message_type, None)
+            for widget in compact_widgets:
+                if widget in self._compact_widgets:
+                    self._compact_widgets.remove(widget)
 
         async def finalize_dismissal(value: object | None) -> None:
             while self.app.is_mounted(modal):

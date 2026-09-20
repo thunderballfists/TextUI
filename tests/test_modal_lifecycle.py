@@ -231,6 +231,20 @@ async def test_cancelled_modal_future_still_releases_modal_bindings():
 
 
 @pytest.mark.asyncio
+async def test_dismissal_releases_modal_compact_controls():
+    markup = MODAL_MARKUP.replace("<ui>", '<ui><style preset="compact"/>')
+    app = TextUI(DocumentLoader().from_string(markup), actions={"open_modal": lambda context: None, "choose": lambda context: None})
+    async with app.run_test() as pilot:
+        baseline = len(app.document._compact_widgets)
+        result = app.document.push_modal("pick")
+        await pilot.pause()
+        assert len(app.document._compact_widgets) == baseline + 1
+        app.document.dismiss_modal("done")
+        assert await result == "done"
+        assert len(app.document._compact_widgets) == baseline
+
+
+@pytest.mark.asyncio
 async def test_private_component_modal_button_binding_is_released(tmp_path):
     """Component-private IDs are not public, but their modal actions still expire."""
     (tmp_path / "components").mkdir()

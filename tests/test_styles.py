@@ -47,6 +47,106 @@ async def test_theme_variables_and_block_local_variables_use_native_context():
         assert app.document.get_by_id('label').styles.color == Color.parse(app.get_css_variables()['primary'])
 
 
+@pytest.mark.asyncio
+async def test_compact_style_preset_reduces_control_padding_and_keeps_later_overrides():
+    doc = textui.DocumentLoader().from_string('''<ui>
+    <style preset="compact"/>
+    <button id="compact">Save</button>
+    <input id="input" value="Ready"/>
+    <style>#compact { padding: 0 2; }</style>
+    </ui>''')
+    app = textui.TextUI(doc)
+    async with app.run_test():
+        button = app.document.get_by_id("compact")
+        input_control = app.document.get_by_id("input")
+        assert button.styles.padding.top == 0
+        assert button.styles.padding.left == 2
+        assert input_control.styles.padding.top == 0
+        assert input_control.styles.padding.left == 1
+
+
+@pytest.mark.asyncio
+async def test_declared_style_preset_can_be_toggled_without_losing_other_document_styles():
+    doc = textui.DocumentLoader().from_string('''<ui>
+    <style preset="compact"/>
+    <button id="button">Save</button>
+    <input id="input" value="Ready"/>
+    <style>#button { padding: 0 2; }</style>
+    </ui>''')
+    app = textui.TextUI(doc)
+    async with app.run_test() as pilot:
+        button = app.document.get_by_id("button")
+        input_control = app.document.get_by_id("input")
+        assert input_control.styles.padding.top == 0
+        assert button.styles.padding.left == 2
+        assert input_control.region.height == 1
+
+        assert app.document.toggle_style_preset("compact") is False
+        await pilot.pause()
+        assert input_control.styles.padding.left == 2
+        assert input_control.region.height == 3
+        assert button.styles.padding.top == 0
+        assert button.styles.padding.left == 2
+
+        assert app.document.toggle_style_preset("compact") is True
+        await pilot.pause()
+        assert input_control.styles.padding.top == 0
+        assert input_control.styles.padding.left == 1
+        assert input_control.region.height == 1
+
+
+@pytest.mark.asyncio
+async def test_button_border_preset_can_be_toggled_independently_of_compact_controls():
+    doc = textui.DocumentLoader().from_string('''<ui>
+    <style preset="compact"/>
+    <style preset="borders"/>
+    <button id="button">Save</button>
+    <input id="input" value="Ready"/>
+    </ui>''')
+    app = textui.TextUI(doc)
+    async with app.run_test() as pilot:
+        button = app.document.get_by_id("button")
+        input_control = app.document.get_by_id("input")
+        input_control.focus()
+        await pilot.pause()
+        assert button.styles.border.top[0] == "round"
+        assert input_control.region.height == 1
+
+        assert app.document.toggle_style_preset("borders") is False
+        await pilot.pause()
+        assert button.styles.border.top[0] == ""
+        assert input_control.region.height == 1
+
+        assert app.document.toggle_style_preset("borders") is True
+        await pilot.pause()
+        assert button.styles.border.top[0] == "round"
+
+
+@pytest.mark.asyncio
+async def test_toggling_a_preset_preserves_later_author_stylesheet_precedence():
+    doc = textui.DocumentLoader().from_string('''<ui>
+    <style preset="compact"/>
+    <style>Button { color: blue; }</style>
+    <button id="button">Save</button>
+    </ui>''')
+    app = textui.TextUI(doc)
+    async with app.run_test() as pilot:
+        button = app.document.get_by_id("button")
+        app.stylesheet.add_source("Button { color: yellow; }", read_from=("host", "late"))
+        app.refresh_css(animate=False)
+        await pilot.pause()
+        assert button.styles.color == Color.parse("yellow")
+
+        app.document.toggle_style_preset("compact")
+        await pilot.pause()
+        assert button.styles.color == Color.parse("yellow")
+
+
+def test_compact_style_preset_rejects_unknown_names():
+    with pytest.raises(textui.DocumentValidationError, match="unknown style preset"):
+        textui.DocumentLoader().from_string('<ui><style preset="roomy"/></ui>')
+
+
 @pytest.mark.parametrize('markup, phrase', [
     ('<ui><style>Label { color: red; }</style><style>Label { imaginary: 5; }</style><label/></ui>', 'imaginary'),
     ('<ui><style>Label { color: ; }</style><label/></ui>', 'color'),

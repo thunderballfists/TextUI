@@ -91,6 +91,19 @@ def test_sourced_and_inline_styles_keep_entry_order(tmp_path: Path):
     assert document.styles[1].location.source == str(tmp_path / "later.tcss")
 
 
+def test_project_style_preset_keeps_entry_order_with_project_tcss(tmp_path: Path):
+    (tmp_path / "app.ui").write_text(
+        '<ui><style preset="compact"/><style>Button { padding: 0 2; }</style><button>Save</button></ui>',
+        encoding="utf-8",
+    )
+
+    document = ProjectSource.discover(tmp_path / "app.ui").lower(default_component_registry())
+
+    assert [style.index for style in document.styles] == [0, 1]
+    assert "padding: 0 1" in document.styles[0].content
+    assert "padding: 0 2" in document.styles[1].content
+
+
 def test_same_script_declared_twice_is_loaded_once(tmp_path: Path):
     script = tmp_path / "controller.py"
     script.write_text("", encoding="utf-8")

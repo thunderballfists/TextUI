@@ -18,6 +18,7 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         help_button = app.document.get_by_id("open-modal")
         assert help_button.region.x + help_button.region.width == header.region.x + header.region.width
         assert app.document.get_by_id("quit").variant == "error"
+        assert app.document.get_by_id("quit").styles.padding.top == 0
         assert app.document.get_by_id("agents").id == "agents"
         assert app.document.get_by_id("jobs").get_cell("backup", "state").plain == "Running"
         await pilot.pause(1.05)
@@ -94,3 +95,38 @@ async def test_showcase_quit_control_uses_a_shared_command():
         assert quit_button._textui_command_name == "quit_app"
         assert quit_button.label.plain == "Quit"
         assert app.controllers.commands["quit_app"].shortcut == "ctrl+q"
+
+
+@pytest.mark.asyncio
+async def test_showcase_toggles_its_declared_compact_preset():
+    from textui import ProjectApp, ProjectSource
+
+    entry = Path(__file__).parents[1] / "examples" / "showcase" / "app.ui"
+    app = ProjectApp(ProjectSource.discover(entry))
+
+    async with app.run_test() as pilot:
+        quit_button = app.document.get_by_id("quit")
+        toggle = app.document.get_by_id("toggle-compact")
+        layout = app.document.get_by_id("layout")
+        assert quit_button.styles.padding.left == 1
+        assert layout.region.y < app.size.height
+        toggle.press()
+        await pilot.pause()
+        assert quit_button.styles.padding.left == 0
+        assert layout.region.y < app.size.height
+        assert str(app.document.get_by_id("feedback").render()) == "Compact controls off"
+
+
+@pytest.mark.asyncio
+async def test_showcase_toggles_its_declared_button_border_preset():
+    from textui import ProjectApp, ProjectSource
+
+    entry = Path(__file__).parents[1] / "examples" / "showcase" / "app.ui"
+    app = ProjectApp(ProjectSource.discover(entry))
+
+    async with app.run_test() as pilot:
+        toggle = app.document.get_by_id("toggle-borders")
+        assert toggle._textui_command_name == "toggle_borders"
+        toggle.press()
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Button borders off"

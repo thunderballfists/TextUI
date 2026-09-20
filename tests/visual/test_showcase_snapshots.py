@@ -1,6 +1,8 @@
 """Opt-in SVG regression coverage for the runnable showcase."""
 
 from pathlib import Path
+import re
+import sys
 
 import pytest
 
@@ -9,6 +11,30 @@ from textui import ProjectApp, ProjectSource
 
 ENTRY = Path(__file__).resolve().parents[2] / "examples" / "showcase" / "app.ui"
 SNAPSHOTS = Path(__file__).parent / "__snapshots__"
+
+
+def canonicalize_svg(svg: str) -> str:
+    return re.sub(r"terminal-\d+", "terminal-ID", svg)
+
+
+def snapshot_path(name: str, platform: str) -> Path:
+    return SNAPSHOTS / platform / f"{name}.svg"
+
+
+def test_canonicalize_svg_ignores_generated_terminal_ids_only():
+    first = '<g id="terminal-123-r1" fill="red" x="4">First</g>'
+    second = '<g id="terminal-987-r1" fill="red" x="4">First</g>'
+
+    assert canonicalize_svg(first) == canonicalize_svg(second)
+    assert canonicalize_svg(first) != canonicalize_svg(second.replace("First", "Second"))
+    assert canonicalize_svg(first) != canonicalize_svg(second.replace('x="4"', 'x="5"'))
+    assert canonicalize_svg(first) != canonicalize_svg(second.replace('fill="red"', 'fill="blue"'))
+
+
+def test_snapshot_path_is_platform_specific():
+    assert snapshot_path("showcase-shell-80x24", "linux") == (
+        SNAPSHOTS / "linux" / "showcase-shell-80x24.svg"
+    )
 
 
 async def freeze_snapshot(pilot):
@@ -55,12 +81,12 @@ async def assert_snapshot(name, size, prepare, request):
     async with app.run_test(size=size) as pilot:
         await prepare(pilot)
         svg = app.export_screenshot(title="TextUI showcase", simplify=True)
-    path = SNAPSHOTS / f"{name}.svg"
+    path = snapshot_path(name, sys.platform)
     if request.config.getoption("--snapshot-update"):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(svg, encoding="utf-8")
     assert path.exists(), f"Missing baseline {path}; rerun with --snapshot-update after visual review."
-    assert svg == path.read_text(encoding="utf-8")
+    assert canonicalize_svg(svg) == canonicalize_svg(path.read_text(encoding="utf-8"))
 
 
 @pytest.mark.asyncio
