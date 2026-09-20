@@ -119,6 +119,8 @@ class ProjectApp(App):
         self.window.phase = "closing"
         self.window.timers.close()
         try:
+            if self.document is not None:
+                self.document.close()
             await self.controllers.hook("on_close")
         finally:
             self.window.phase = "closed"

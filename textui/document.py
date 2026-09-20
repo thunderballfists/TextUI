@@ -286,6 +286,16 @@ class BoundDocument:
             raise DocumentStateError('No TextUI modal is active')
         screen.dismiss(value)
 
+    def close(self) -> None:
+        """Cancel lifecycle work and clear loading state during application shutdown."""
+        for (name, target_id), task in tuple(self._lifecycle_tasks.items()):
+            if not task.done():
+                task.cancel()
+            target = self._widgets.get(target_id)
+            if target is not None:
+                target.remove_class("-loading")
+        self._lifecycle_tasks.clear()
+
     def get_by_id(self, element_id: str) -> Widget:
         """Look up declared IDs only, and only while the widget is mounted."""
         if element_id not in self._declared_ids:
@@ -332,6 +342,10 @@ class BoundDocument:
                     target.textui_error = None
                 result = self.actions[name](ActionContext(message, widget, self.app, self, target))
                 if isawaitable(result):
+                    if key is not None and getattr(options, "supersede", False):
+                        previous = self._lifecycle_tasks.get(key)
+                        if previous is not None and not previous.done():
+                            previous.cancel()
                     task = asyncio.ensure_future(result)
                     if key is not None:
                         self._lifecycle_tasks[key] = task
