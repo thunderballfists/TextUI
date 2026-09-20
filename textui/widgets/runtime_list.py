@@ -93,11 +93,19 @@ def _list_source(event: RuntimeList.ItemSelected) -> RuntimeList:
     return event.list_view
 
 
+def _format_fields(pattern: str) -> Iterable[str]:
+    for _literal, field_name, format_spec, _conversion in Formatter().parse(pattern):
+        if field_name is not None:
+            yield field_name
+        if format_spec:
+            yield from _format_fields(format_spec)
+
+
 def nonempty_string(value: str) -> str:
     if not value:
         raise ValueError("expected a nonempty value")
     try:
-        fields = tuple(field_name for _literal, field_name, _format, _conversion in Formatter().parse(value) if field_name is not None)
+        fields = tuple(_format_fields(value))
     except ValueError as error:
         raise ValueError("invalid item-label pattern") from error
     if any(not field_name.isidentifier() for field_name in fields):
