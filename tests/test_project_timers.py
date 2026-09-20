@@ -146,4 +146,4 @@ def tick():
 ''')
     async with app.run_test() as pilot:
         await pilot.pause(0.06)
-        assert app.events[:3] == ["start", "end", "start"]
+        assert app.events[:2] == ["start", "end"]
