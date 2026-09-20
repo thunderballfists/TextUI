@@ -9,6 +9,9 @@ All notable changes to TextUI are documented here.
 - Command shortcuts now reject invalid keys, duplicate declarations, and conflicts with tab accelerators.
 - Project-owned timers stop as soon as application exit begins, preventing teardown callbacks from touching disposed widgets.
 - Projects that exit during `on_ready` no longer try to start periodic timers during teardown.
+- Async action failures now preserve immediate dispatch errors and report delayed failures with their markup source location.
+- Modal state and action bindings are released when an application shuts down with a modal open.
+- Concurrent runtime-list replacements are serialized so stale rows cannot remain mounted.
 - Modal dismissal now releases anonymous and component-private action bindings, and failed modal pushes roll back their registrations.
 - Duplicate opens of one declared modal now raise `DocumentStateError` instead of leaking state or surfacing a native duplicate-ID error.
 - Modal result futures now resolve after their screen unmounts, allowing immediate reopen of the same declaration.

@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Mapping
 
 import pytest
@@ -56,6 +57,38 @@ async def test_list_keyboard_selection_and_replacement_keep_data_in_sync():
         await agents.set_items([{"name": "Charlie"}])
         assert [item.item["name"] for item in agents.items] == ["Charlie"]
         assert agents.selected is None
+
+
+@pytest.mark.asyncio
+async def test_list_serializes_overlapping_replacements(monkeypatch):
+    app = TextUI(DocumentLoader().from_string('<ui><list id="agents" item-label="{name}" /></ui>'))
+    async with app.run_test() as pilot:
+        agents = app.document.get_by_id("agents")
+        remove_children = agents.remove_children
+        first_removal_started = asyncio.Event()
+        release_first_removal = asyncio.Event()
+        removals = 0
+
+        async def pause_first_removal():
+            nonlocal removals
+            removals += 1
+            if removals == 1:
+                first_removal_started.set()
+                await release_first_removal.wait()
+            await remove_children()
+
+        monkeypatch.setattr(agents, "remove_children", pause_first_removal)
+        first = asyncio.create_task(agents.set_items([{"name": "Alpha"}]))
+        await first_removal_started.wait()
+        latest = asyncio.create_task(agents.set_items([{"name": "Bravo"}]))
+        await asyncio.sleep(0)
+        release_first_removal.set()
+        await asyncio.gather(first, latest)
+        await pilot.pause()
+
+        assert [item.item["name"] for item in agents.items] == ["Bravo"]
+        assert tuple(agents.children) == agents.items
+        assert agents.index == 0
 
 
 @pytest.mark.asyncio

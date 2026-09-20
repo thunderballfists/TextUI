@@ -1,6 +1,7 @@
 """A runtime-populated list with native Textual selection behavior."""
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Iterable, Mapping
 from types import MappingProxyType
 
@@ -47,17 +48,19 @@ class RuntimeList(ListView):
         super().__init__(initial_index=None)
         self.item_label = item_label
         self.items: tuple[RuntimeListItem, ...] = ()
+        self._set_items_lock = asyncio.Lock()
 
     async def set_items(self, items: Iterable[Mapping[str, object]]) -> None:
         """Replace rows with mappings and render each `item-label` pattern."""
-        rendered = tuple(self._make_item(item) for item in items)
-        self.items = rendered
-        self.selected = None
-        self.index = None
-        await self.remove_children()
-        await self.mount(*rendered)
-        if rendered:
-            self.index = 0
+        async with self._set_items_lock:
+            rendered = tuple(self._make_item(item) for item in items)
+            self.items = rendered
+            self.selected = None
+            self.index = None
+            await self.remove_children()
+            await self.mount(*rendered)
+            if rendered:
+                self.index = 0
 
     def _make_item(self, item: Mapping[str, object]) -> RuntimeListItem:
         if not isinstance(item, Mapping):

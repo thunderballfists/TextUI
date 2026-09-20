@@ -105,7 +105,7 @@ class BoundDocument:
         self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None and not node.private_id}
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
-        self._modal_finalizers: set[asyncio.Task[None]] = set()
+        self._action_tasks: set[asyncio.Future[object]] = set()
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
@@ -246,18 +246,16 @@ class BoundDocument:
                 if widget in self._compact_widgets:
                     self._compact_widgets.remove(widget)
 
-        async def finalize_dismissal(value: object | None) -> None:
-            while self.app.is_mounted(modal):
-                await asyncio.sleep(0)
+        def finalize_dismissal(value: object | None) -> None:
             remove_registrations()
             self._active_modal_ids.discard(modal_id)
             if not future.done():
                 future.set_result(value)
 
         def dismissed(value: object | None) -> None:
-            finalizer = asyncio.create_task(finalize_dismissal(value))
-            self._modal_finalizers.add(finalizer)
-            finalizer.add_done_callback(self._modal_finalizers.discard)
+            modal.set_dismissal_value(value)
+
+        modal.set_unmount_callback(finalize_dismissal)
 
         self._widgets.update(widgets)
         for message_type, entries in bindings.items():
@@ -314,12 +312,29 @@ class BoundDocument:
             try:
                 result = self.actions[name](ActionContext(message, widget, self.app, self))
                 if isawaitable(result):
-                    import asyncio
-
-                    task = asyncio.create_task(result)
+                    task = asyncio.ensure_future(result)
                     await asyncio.sleep(0)
                     if task.done():
                         await task
+                        return True
+                    self._action_tasks.add(task)
+
+                    def report_action_result(completed: asyncio.Future[object]) -> None:
+                        self._action_tasks.discard(completed)
+                        if completed.cancelled():
+                            return
+                        try:
+                            completed.result()
+                        except Exception as error:
+                            action_error = ActionExecutionError(
+                                f'Action {name!r} failed: {error}',
+                                location=node.location,
+                                value=name,
+                            )
+                            action_error.__cause__ = error
+                            self.app._handle_exception(action_error)
+
+                    task.add_done_callback(report_action_result)
             except Exception as error:
                 raise ActionExecutionError(f'Action {name!r} failed: {error}', location=node.location, value=name) from error
             return True
