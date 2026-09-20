@@ -12,6 +12,11 @@ from textual.widgets import RichLog
 
 from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, boolean, integer
 
+# Characters of already-streamed text to re-measure when checking that a delta's
+# width adds cleanly onto the active line. A grapheme cluster (emoji ZWJ
+# sequences being the longest in practice) stays well inside this window.
+_GRAPHEME_WINDOW = 32
+
 
 class TranscriptLog(RichLog):
     """A RichLog with committed entries and one replaceable streamed entry."""
@@ -134,7 +139,36 @@ class TranscriptLog(RichLog):
             and not self.wrap
             and self._inline_printable
             and text.isprintable()
+            and self._delta_width_is_additive(text)
         )
+
+    def _delta_width_is_additive(self, text: str) -> bool:
+        """Whether appending `text` as its own segment preserves the rendering.
+
+        Two things can go wrong when a delta lands mid grapheme cluster, and both
+        are detected from measured widths rather than from any table of our own:
+
+        * A continuation character occupies no cells at all (combining marks,
+          variation selectors, ZWJ, skin-tone modifiers, Indic matras, Hangul
+          jamo). Starting a new segment with one splits the cluster, and because
+          the piece is zero-width a later cell-based crop cannot express "keep
+          it", so it is silently dropped.
+        * Widths are not always additive across the join: `cell_len("\u2764")` is
+          1 and `cell_len("\ufe0f")` is 0, yet together they render as two cells.
+          Tracking the sum would then leave the line short and crop inside the
+          cluster.
+
+        ASCII can neither combine with what precedes it nor change its width, so
+        the common streaming case costs a single `isascii()` check.
+        """
+        if not text or not self._inline_text:
+            return True
+        if text[0].isascii():
+            return True
+        if not cell_len(text[0]):
+            return False
+        tail = self._inline_text[-_GRAPHEME_WINDOW:]
+        return cell_len(tail) + cell_len(text) == cell_len(tail + text)
 
     def _append_inline_delta(self, text: str) -> None:
         previous_width = self._inline_width

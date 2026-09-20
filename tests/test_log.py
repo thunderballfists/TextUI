@@ -194,3 +194,40 @@ async def test_log_falls_back_when_a_delta_is_not_printable():
         # Streaming continues to work after the fallback.
         log.append_inline("!")
         assert log._inline_width == cell_len(log._inline_text)
+
+
+
+@pytest.mark.parametrize(
+    "deltas",
+    [
+        pytest.param(["\u2764", "\ufe0f", "!"], id="emoji-variation-selector"),
+        pytest.param(["e", "\u0301", "!"], id="combining-acute"),
+        pytest.param(["\U0001F44D", "\U0001F3FD", "!"], id="skin-tone-modifier"),
+        pytest.param(["\U0001F468", "\u200d", "\U0001F469", "!"], id="zero-width-joiner"),
+        pytest.param(["1", "\ufe0f", "\u20e3", "!"], id="keycap-sequence"),
+        pytest.param(["\u1100", "\u1161", "!"], id="hangul-jamo"),
+        pytest.param(["\u0915", "\u093e", "!"], id="devanagari-matra"),
+        pytest.param(["\u05d0", "\u05b7", "!"], id="hebrew-niqqud"),
+        pytest.param(["\U0001F1EC", "\U0001F1E7", "!"], id="regional-indicators"),
+        pytest.param(["\u4f60", "\u597d", "!"], id="cjk-wide"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_log_keeps_grapheme_clusters_intact_across_deltas(deltas):
+    """A cluster split across deltas must survive.
+
+    Continuation characters occupy no cells, so appending one as its own segment
+    splits the cluster and a later cell-based crop silently drops it -- the
+    variation selector case rendered "\u2764!" instead of "\u2764\ufe0f!". Widths are also not
+    always additive across the join, which would leave the tracked width short.
+    Both are detected from measured widths, so the rewrite path takes over.
+    """
+    app = TextUI(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(60, 8)):
+        log = app.document.get_by_id("transcript")
+        for delta in deltas:
+            log.append_inline(delta)
+
+        assert log.lines[-1].text.rstrip() == "".join(deltas)
+        # The tracked width must still describe the text it belongs to.
+        assert log._inline_width == cell_len(log._inline_text)
