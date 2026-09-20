@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Iterable, Mapping
+from string import Formatter
 from types import MappingProxyType
 
 from textual import events
@@ -95,6 +96,12 @@ def _list_source(event: RuntimeList.ItemSelected) -> RuntimeList:
 def nonempty_string(value: str) -> str:
     if not value:
         raise ValueError("expected a nonempty value")
+    try:
+        fields = tuple(field_name for _literal, field_name, _format, _conversion in Formatter().parse(value) if field_name is not None)
+    except ValueError as error:
+        raise ValueError("invalid item-label pattern") from error
+    if any(not field_name.isidentifier() for field_name in fields):
+        raise ValueError("item-label fields must be simple mapping keys")
     return value
 
 

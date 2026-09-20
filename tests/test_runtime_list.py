@@ -16,6 +16,8 @@ def test_list_requires_a_nonempty_item_label_pattern():
         DocumentLoader().from_string('<ui><list id="agents" /></ui>')
     with pytest.raises(DocumentValidationError):
         DocumentLoader().from_string('<ui><list id="agents" item-label="" /></ui>')
+    with pytest.raises(DocumentValidationError, match="item-label field"):
+        DocumentLoader().from_string('<ui><list id="agents" item-label="{agent.name}" /></ui>')
 
 
 @pytest.mark.asyncio

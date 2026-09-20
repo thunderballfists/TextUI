@@ -10,6 +10,7 @@ from .display_controls import build_progress_bar, build_radio_button, build_radi
 from .form_controls import build_option, build_select
 from .tabbed import build_tab_pane, build_tabbed_content
 from .bars import SLOT_FACTORIES, build_bar
+from .modal import build_modal
 
 
 def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
@@ -17,6 +18,11 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
         return node.spec.factory is factory
 
     def visit(node: ElementNode, parent: ElementNode | None) -> None:
+        if is_builtin(node, build_modal):
+            if parent is not None:
+                raise DocumentValidationError("modal must be a document root", location=node.location)
+            if node.common["id"] is None:
+                raise DocumentValidationError("modal requires an id", location=node.location, attribute="id")
         if is_builtin(node, build_option):
             if parent is None or not is_builtin(parent, build_select):
                 raise DocumentValidationError("option must be a direct child of select", location=node.location)
@@ -63,9 +69,9 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
         if is_bar:
             slots = [child.spec.tag for child in node.children]
             if any(slot not in SLOT_FACTORIES for slot in slots):
-                raise DocumentValidationError("header accepts only left, center, and right slots", location=node.location)
+                raise DocumentValidationError(f"{node.spec.tag} accepts only left, center, and right slots", location=node.location)
             if len(slots) != len(set(slots)):
-                raise DocumentValidationError("header accepts each slot at most once", location=node.location)
+                raise DocumentValidationError(f"{node.spec.tag} accepts each slot at most once", location=node.location)
         if is_builtin(node, build_column) and (parent is None or not is_builtin(parent, build_data_table)):
             raise DocumentValidationError("column has an invalid parent", location=node.location)
         if is_builtin(node, build_row) and (parent is None or not is_builtin(parent, build_data_table)):
