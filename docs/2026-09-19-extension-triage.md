@@ -56,7 +56,7 @@ The historic implementation plans remain as engineering records. Their unchecked
 - [Preserved option-list highlighting](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/widgets/option_list.py) remains a useful reference when adding stronger identity preservation to lists.
 - [Confirmation dialog](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/dialogs/confirm.py) and [input dialog](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/dialogs/modal_input.py) remain references for a later higher-level dialog API.
 - [Textology observation patterns](https://github.com/pyranha-labs/textology#top-features) are design references only; do not import its application runtime.
-- Continue using [Textual testing](https://textual.textualize.io/guide/testing/) and [pytest-textual-snapshot](https://github.com/Textualize/pytest-textual-snapshot) rather than adding a testing runtime dependency.
+- Continue using [Textual testing](https://textual.textualize.io/guide/testing/) and the built-in `App.export_screenshot()` SVG comparison suite. `pytest-textual-snapshot` is incompatible with the supported pytest 9 range.
 
 ## Guardrails
 
