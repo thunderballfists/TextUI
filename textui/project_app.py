@@ -47,6 +47,7 @@ class ProjectApp(App):
                 self.document = definition.bind(
                     self,
                     actions={**self._host_actions, **self.controllers.actions},
+                    action_metadata=self.controllers.action_metadata,
                     commands=self.controllers.commands,
                     command_callbacks=self.controllers.command_callbacks,
                     command_locations=self.controllers.command_locations,
@@ -118,6 +119,8 @@ class ProjectApp(App):
         self.window.phase = "closing"
         self.window.timers.close()
         try:
+            if self.document is not None:
+                self.document.close()
             await self.controllers.hook("on_close")
         finally:
             self.window.phase = "closed"

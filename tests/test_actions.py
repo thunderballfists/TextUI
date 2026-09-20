@@ -5,6 +5,7 @@ from textual import on
 from textual.app import App
 from textual.widgets import Button, Checkbox, Input
 import textui
+from textui.actions import ActionOptions
 
 
 @pytest.mark.asyncio
@@ -88,6 +89,74 @@ async def test_delayed_callback_error_propagates_through_native_error_path():
             await pilot.pause()
     assert isinstance(error.value.__cause__, ValueError)
     assert error.value.location.source == "actions.xml"
+
+
+@pytest.mark.asyncio
+async def test_target_action_sets_loading_then_error_state():
+    async def fail(context):
+        assert context.target.id == "status"
+        assert context.cancelled is False
+        await asyncio.sleep(0)
+        raise ValueError("refresh failed")
+
+    doc = textui.DocumentLoader().from_string('<ui><button id="button" on-pressed="refresh">Refresh</button><label id="status">Ready</label></ui>')
+
+    class Host(App):
+        def __init__(self):
+            super().__init__()
+            self.document = doc.bind(self, actions={"refresh": fail}, action_metadata={"refresh": ActionOptions("status")})
+
+        def compose(self):
+            yield from self.document.compose()
+
+    app = Host()
+    with pytest.raises(textui.ActionExecutionError):
+        async with app.run_test() as pilot:
+            status = app.document.get_by_id("status")
+            assert await app.document.dispatch(Button.Pressed(app.document.get_by_id("button")))
+            assert status.has_class("-loading")
+            await pilot.pause()
+    assert not status.has_class("-loading")
+    assert status.has_class("-error")
+    assert status.textui_error == "refresh failed"
+
+
+@pytest.mark.asyncio
+async def test_superseding_target_action_cancels_prior_task_without_clearing_loading():
+    started = asyncio.Event()
+    cancelled = asyncio.Event()
+    release = asyncio.Event()
+
+    async def refresh(context):
+        started.set()
+        try:
+            await release.wait()
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+
+    doc = textui.DocumentLoader().from_string('<ui><button id="button" on-pressed="refresh">Refresh</button><label id="status">Ready</label></ui>')
+
+    class Host(App):
+        def __init__(self):
+            super().__init__()
+            self.document = doc.bind(self, actions={"refresh": refresh}, action_metadata={"refresh": ActionOptions("status", True)})
+
+        def compose(self):
+            yield from self.document.compose()
+
+    app = Host()
+    async with app.run_test() as pilot:
+        button = app.document.get_by_id("button")
+        status = app.document.get_by_id("status")
+        await app.document.dispatch(Button.Pressed(button))
+        await started.wait()
+        await app.document.dispatch(Button.Pressed(button))
+        await cancelled.wait()
+        assert status.has_class("-loading")
+        release.set()
+        await pilot.pause()
+        assert not status.has_class("-loading")
 
 
 @pytest.mark.asyncio

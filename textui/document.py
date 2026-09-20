@@ -14,7 +14,7 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TextArea
 
-from .actions import ActionCallback, ActionContext
+from .actions import ActionCallback, ActionContext, ActionInvocation
 from .errors import (
     ActionExecutionError, ComponentBuildError, DocumentStateError,
     DocumentValidationError, ElementNotFoundError,
@@ -50,6 +50,7 @@ class Document:
         app: App,
         *,
         actions: Mapping[str, ActionCallback],
+        action_metadata: Mapping[str, object] | None = None,
         commands: Mapping[str, object] | None = None,
         command_callbacks: Mapping[str, Callable[[], object]] | None = None,
         command_locations: Mapping[str, object] | None = None,
@@ -62,6 +63,12 @@ class Document:
         if hasattr(app, '_textui_document_binding'):
             raise DocumentStateError('An App may have only one document binding')
         callbacks = dict(actions)
+        metadata = dict(action_metadata or {})
+        declared_ids = {node.common['id'] for node in _walk(self.nodes) if node.common['id'] is not None and not node.private_id}
+        for name, options in metadata.items():
+            target = getattr(options, "target", None)
+            if target is not None and target not in declared_ids:
+                raise DocumentValidationError(f"Action {name!r} target {target!r} must name a declared ID")
         declared_commands = dict(commands or {})
         callbacks_by_command = dict(command_callbacks or {})
         locations_by_command = dict(command_locations or {})
@@ -78,7 +85,7 @@ class Document:
         for name, callback in callbacks.items():
             if not isinstance(name, str) or not name.isidentifier() or not callable(callback):
                 raise DocumentValidationError(f'Action {name!r} must have an identifier name and a callable value')
-        bound = BoundDocument(self, app, callbacks, declared_commands, callbacks_by_command, locations_by_command)
+        bound = BoundDocument(self, app, callbacks, metadata, declared_commands, callbacks_by_command, locations_by_command)
         app._textui_document_binding = bound
         return bound
 
@@ -91,6 +98,7 @@ class BoundDocument:
         definition: Document,
         app: App,
         actions: Mapping[str, ActionCallback],
+        action_metadata: Mapping[str, object],
         commands: Mapping[str, object],
         command_callbacks: Mapping[str, Callable[[], object]],
         command_locations: Mapping[str, object],
@@ -98,6 +106,7 @@ class BoundDocument:
         self.definition = definition
         self.app = app
         self.actions = MappingProxyType(dict(actions))
+        self.action_metadata = MappingProxyType(dict(action_metadata))
         self.commands = MappingProxyType(dict(commands))
         self._command_callbacks = MappingProxyType(dict(command_callbacks))
         self._command_locations = MappingProxyType(dict(command_locations))
@@ -106,6 +115,8 @@ class BoundDocument:
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
         self._action_tasks: set[asyncio.Future[object]] = set()
+        self._lifecycle_tasks: dict[tuple[str, str], asyncio.Future[object]] = {}
+        self._lifecycle_invocations: dict[tuple[str, str], ActionInvocation] = {}
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
@@ -276,6 +287,19 @@ class BoundDocument:
             raise DocumentStateError('No TextUI modal is active')
         screen.dismiss(value)
 
+    def close(self) -> None:
+        """Cancel lifecycle work and clear loading state during application shutdown."""
+        for (name, target_id), task in tuple(self._lifecycle_tasks.items()):
+            if not task.done():
+                task.cancel()
+            target = self._widgets.get(target_id)
+            if target is not None:
+                target.remove_class("-loading")
+            invocation = self._lifecycle_invocations.pop((name, target_id), None)
+            if invocation is not None:
+                invocation.cancelled = True
+        self._lifecycle_tasks.clear()
+
     def get_by_id(self, element_id: str) -> Widget:
         """Look up declared IDs only, and only while the widget is mounted."""
         if element_id not in self._declared_ids:
@@ -312,12 +336,48 @@ class BoundDocument:
             if name in self.commands and not self.commands[name].enabled:
                 return True
             try:
-                result = self.actions[name](ActionContext(message, widget, self.app, self))
+                options = self.action_metadata.get(name)
+                target_id = getattr(options, "target", None)
+                target = self.get_by_id(target_id) if target_id is not None else None
+                key = (name, target_id) if target_id is not None else None
+                if target is not None:
+                    target.add_class("-loading")
+                    target.remove_class("-error")
+                    target.textui_error = None
+                invocation = ActionInvocation(target) if target is not None else None
+                result = self.actions[name](ActionContext(message, widget, self.app, self, invocation))
                 if isawaitable(result):
+                    if key is not None and getattr(options, "supersede", False):
+                        previous = self._lifecycle_tasks.get(key)
+                        if previous is not None and not previous.done():
+                            previous_invocation = self._lifecycle_invocations.get(key)
+                            if previous_invocation is not None:
+                                previous_invocation.cancelled = True
+                            previous.cancel()
                     task = asyncio.ensure_future(result)
+                    if key is not None:
+                        self._lifecycle_tasks[key] = task
+                        self._lifecycle_invocations[key] = invocation
+
+                    def finish_lifecycle(completed: asyncio.Future[object], error: Exception | None = None) -> None:
+                        if key is None or self._lifecycle_tasks.get(key) is not completed:
+                            return
+                        self._lifecycle_tasks.pop(key, None)
+                        self._lifecycle_invocations.pop(key, None)
+                        if target is not None:
+                            target.remove_class("-loading")
+                            if error is not None:
+                                target.textui_error = str(error)
+                                target.add_class("-error")
+
                     await asyncio.sleep(0)
                     if task.done():
-                        await task
+                        try:
+                            await task
+                        except Exception as error:
+                            finish_lifecycle(task, error)
+                            raise
+                        finish_lifecycle(task)
                         return True
                     self._action_tasks.add(task)
 
@@ -328,6 +388,7 @@ class BoundDocument:
                         try:
                             completed.result()
                         except Exception as error:
+                            finish_lifecycle(completed, error)
                             action_error = ActionExecutionError(
                                 f'Action {name!r} failed: {error}',
                                 location=node.location,
@@ -335,6 +396,8 @@ class BoundDocument:
                             )
                             action_error.__cause__ = error
                             self.app._handle_exception(action_error)
+                        else:
+                            finish_lifecycle(completed)
 
                     task.add_done_callback(report_action_result)
             except Exception as error:
