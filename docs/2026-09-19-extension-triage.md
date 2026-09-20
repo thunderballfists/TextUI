@@ -54,10 +54,24 @@ The following review records candidate libraries as of 2026-09-20. Adopt stable 
 | [textual-plotext](https://github.com/Textualize/textual-plotext) | Useful full-chart integration. | Keep it optional; first add core `<sparkline>`, then publish a separate plotting adapter when a dashboard requires axes, legends, or multiple series. |
 | [textual-fspicker](https://github.com/davep/textual-fspicker) and [textual-universal-directorytree](https://github.com/juftin/textual-universal-directorytree) | Useful application-specific filesystem controls. | Offer optional adapters rather than making filesystem access part of core markup. |
 | [textual-filedrop](https://github.com/agmmnn/textual-filedrop) | Low-priority convenience. | Prefer native paste-event handling; add a file-drop adapter only after testing terminal and platform behavior. |
-| [textual-image](https://github.com/lnqs/textual-image) and [textual-imageview](https://github.com/adamviola/textual-imageview) | Image rendering remains valuable but renderer-dependent. | Keep images optional and select one renderer only after compatibility and terminal-capability tests. |
+| [textual-image](https://github.com/lnqs/textual-image) and [textual-imageview](https://github.com/adamviola/textual-imageview) | `textual-image` is the preferred renderer; `textual-imageview` remains an interaction reference. | Build a separate Python 3.12+ image extension. Preserve Python 3.11 and the dependency-free image boundary in core. |
 | [textual-terminal](https://github.com/mitosch/textual-terminal) and [textual-canvas](https://github.com/davep/textual-canvas) | Specialist, high-lifecycle-cost widgets. | Optional extensions only; terminal emulation and drawing do not belong in the initial markup core. |
 | [textual-select](https://github.com/mitosch/textual-select) | Overlaps the built-in `<select>`. | Do not add a duplicate; use it only as an interaction reference for searchable selection. |
 | [tuilwindcss](https://github.com/koaning/tuilwindcss) and [zandev_textual_widgets](https://github.com/ZandevOxford/zandev_textual_widgets) | Styling utility and broad widget catalog. | Do not add a utility-class layer over TCSS. Review individual widget contracts only when a concrete gap appears. |
+
+## Image extension decision
+
+Use [`textual-image`](https://github.com/lnqs/textual-image) as the renderer for a future optional image extension. It supports Kitty graphics, Sixel, half-cell, and Unicode output; selects a suitable protocol automatically; and exposes an updatable Textual widget. Its current release requires Python 3.12+ and uses LGPL-3.0-or-later, so place the integration in a separate distribution such as `textui-image`. Installing core TextUI must not install Pillow or change the supported Python `>=3.11,<4` range.
+
+The proposed extension registers an `<image>` component with a small backend-neutral contract:
+
+```xml
+<image src="assets/logo.png" protocol="auto" fit="contain" alt="TextUI logo" />
+```
+
+Resolve `src` through the existing project asset rules. `protocol` selects `auto`, `tgp`, `sixel`, `halfcell`, or `unicode`; `fit` controls aspect-preserving layout. Treat exact attribute names and fallback behavior as design work before implementation. A document using `<image>` without the extension should continue to fail normal unknown-component validation.
+
+[`textual-imageview`](https://github.com/adamviola/textual-imageview) remains useful as a reference for mouse/keyboard pan and zoom in a later `<image-viewer>` component. Do not make its older Textual-era widget the default renderer.
 
 ## Explicitly deferred boundaries
 
