@@ -75,8 +75,13 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `collapsible` | Widgets | `title`, boolean `collapsed` | `collapsed`, `expanded` |
 | `progress-bar` | None | Positive `total`, nonnegative `progress`, boolean `show-bar`, `show-percentage`, `show-eta` | None |
 | `rule` | None | `orientation`, `line-style` | None |
+| `header`, `status-bar` | Optional `left`, `center`, and `right` slots | None | None |
+| `log` | None | Optional `max-lines`, boolean `auto-scroll`, `wrap`, and `highlight` | None |
+| `list` | None | Required `item-label` with direct mapping-key fields | `selected` |
+| `modal` | Widgets; document root only | Required `id`, boolean `dismissable` | None |
 | `data-table` | `column` children, then `row` children | `cursor-type`: row, cell, column, none; optional `row-key` | `row-selected`, `cell-selected` |
 | `column`, `row`, `cell` | Column/cell text; rows contain cells | Columns: required `key`, optional `label`, `align`, positive `width`; rows: required `key` | None |
+| `tree`, `tree-node` | Tree nodes contain tree nodes | Nodes require `key`; trees support `guide-depth`, `show-root`, and `row-key` | `node-selected` |
 | `tree` | Nested `tree-node` children | Required `label`, boolean `show-root` | `node-selected` |
 | `tree-node` | Nested `tree-node` children | Required `key` and `label`, boolean `expanded` | None |
 

@@ -40,6 +40,16 @@ jobs:
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/textui-wheel/bin/python" -I "$GITHUB_WORKSPACE/tests/wheel_smoke.py"
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Lint Python sources
+        run: pipx run pyflakes textui
+
   visual:
     runs-on: ubuntu-24.04
     env:

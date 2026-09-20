@@ -158,7 +158,7 @@ def usage_selected(context):
 
 ## Runtime lists
 
-Use `<list>` when a native selectable rail is populated after markup loads. `item-label` is a required Python-format pattern evaluated against each item mapping. The element has no child content; give it an ID and optionally bind `on-selected`.
+Use `<list>` when a native selectable rail is populated after markup loads. `item-label` is a required Python-format pattern evaluated against each item mapping. Every replacement field must be a direct mapping key: `{name}` and `{count:03d}` are valid, while `{agent.name}` and `{items[0]}` are rejected. The element has no child content; give it an ID and optionally bind `on-selected`.
 
 ```xml
 <list id="agents" item-label="{name}" on-selected="select_agent" />

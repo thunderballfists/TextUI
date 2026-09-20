@@ -6,6 +6,7 @@ from numbers import Real
 from types import MappingProxyType
 
 from rich.text import Text
+from textual.coordinate import Coordinate
 from textual.widget import Widget
 from textual.widgets import DataTable, Tree
 

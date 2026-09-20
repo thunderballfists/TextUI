@@ -309,6 +309,8 @@ class BoundDocument:
         for widget, event, name, node in self._bindings.get(type(message), ()):
             if event.source_widget(message) is not widget:
                 continue
+            if name in self.commands and not self.commands[name].enabled:
+                return True
             try:
                 result = self.actions[name](ActionContext(message, widget, self.app, self))
                 if isawaitable(result):

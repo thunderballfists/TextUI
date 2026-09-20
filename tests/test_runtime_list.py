@@ -16,6 +16,19 @@ def test_list_requires_a_nonempty_item_label_pattern():
         DocumentLoader().from_string('<ui><list id="agents" /></ui>')
     with pytest.raises(DocumentValidationError):
         DocumentLoader().from_string('<ui><list id="agents" item-label="" /></ui>')
+    with pytest.raises(DocumentValidationError, match="item-label field"):
+        DocumentLoader().from_string('<ui><list id="agents" item-label="{agent.name}" /></ui>')
+
+
+@pytest.mark.parametrize("pattern", ["{name}", "{count:03d}", "{{literal}}"])
+def test_list_accepts_direct_item_label_fields(pattern: str):
+    DocumentLoader().from_string(f'<ui><list id="agents" item-label="{pattern}" /></ui>')
+
+
+@pytest.mark.parametrize("pattern", ["{name:{width.foo}}", "{name:{width[0]}}", "{name:{width}"])
+def test_list_rejects_nested_non_mapping_item_label_fields(pattern: str):
+    with pytest.raises(DocumentValidationError, match="item-label"):
+        DocumentLoader().from_string(f'<ui><list id="agents" item-label="{pattern}" /></ui>')
 
 
 @pytest.mark.asyncio

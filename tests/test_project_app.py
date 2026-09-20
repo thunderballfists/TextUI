@@ -245,6 +245,24 @@ def stop():
 
 
 @pytest.mark.asyncio
+async def test_disabled_command_ignores_direct_event_binding(tmp_path: Path):
+    source = project(tmp_path, '<button id="stop" on-pressed="stop">Stop</button>', '''
+from textui import command
+
+@command(enabled=False)
+def stop():
+    window.app.events.append("ran")
+''')
+    app = ProjectApp(source)
+    app.events = []
+
+    async with app.run_test() as pilot:
+        assert await pilot.click("#stop")
+        await pilot.pause()
+    assert app.events == []
+
+
+@pytest.mark.asyncio
 async def test_host_and_linked_action_name_collision_fails_before_mount(tmp_path: Path):
     source = project(tmp_path, '<button on-pressed="save">Save</button>', '''
 from textui import action

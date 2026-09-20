@@ -30,6 +30,11 @@ def test_slots_must_belong_to_one_header_or_status_bar(markup):
         DocumentLoader().from_string(markup)
 
 
+def test_status_bar_errors_name_the_status_bar_tag():
+    with pytest.raises(DocumentValidationError, match="status-bar accepts"):
+        DocumentLoader().from_string('<ui><status-bar><label>Unslotted</label></status-bar></ui>')
+
+
 @pytest.mark.asyncio
 async def test_header_places_center_between_flexible_edges_and_flushes_right_slot():
     app = TextUI(DocumentLoader().from_string(MARKUP))
