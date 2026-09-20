@@ -14,7 +14,7 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TextArea
 
-from .actions import ActionCallback, ActionContext
+from .actions import ActionCallback, ActionContext, ActionInvocation
 from .errors import (
     ActionExecutionError, ComponentBuildError, DocumentStateError,
     DocumentValidationError, ElementNotFoundError,
@@ -116,6 +116,7 @@ class BoundDocument:
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
         self._action_tasks: set[asyncio.Future[object]] = set()
         self._lifecycle_tasks: dict[tuple[str, str], asyncio.Future[object]] = {}
+        self._lifecycle_invocations: dict[tuple[str, str], ActionInvocation] = {}
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
@@ -294,6 +295,9 @@ class BoundDocument:
             target = self._widgets.get(target_id)
             if target is not None:
                 target.remove_class("-loading")
+            invocation = self._lifecycle_invocations.pop((name, target_id), None)
+            if invocation is not None:
+                invocation.cancelled = True
         self._lifecycle_tasks.clear()
 
     def get_by_id(self, element_id: str) -> Widget:
@@ -340,20 +344,26 @@ class BoundDocument:
                     target.add_class("-loading")
                     target.remove_class("-error")
                     target.textui_error = None
-                result = self.actions[name](ActionContext(message, widget, self.app, self, target))
+                invocation = ActionInvocation(target) if target is not None else None
+                result = self.actions[name](ActionContext(message, widget, self.app, self, invocation))
                 if isawaitable(result):
                     if key is not None and getattr(options, "supersede", False):
                         previous = self._lifecycle_tasks.get(key)
                         if previous is not None and not previous.done():
+                            previous_invocation = self._lifecycle_invocations.get(key)
+                            if previous_invocation is not None:
+                                previous_invocation.cancelled = True
                             previous.cancel()
                     task = asyncio.ensure_future(result)
                     if key is not None:
                         self._lifecycle_tasks[key] = task
+                        self._lifecycle_invocations[key] = invocation
 
                     def finish_lifecycle(completed: asyncio.Future[object], error: Exception | None = None) -> None:
                         if key is None or self._lifecycle_tasks.get(key) is not completed:
                             return
                         self._lifecycle_tasks.pop(key, None)
+                        self._lifecycle_invocations.pop(key, None)
                         if target is not None:
                             target.remove_class("-loading")
                             if error is not None:

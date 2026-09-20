@@ -19,22 +19,27 @@ class ActionOptions:
     supersede: bool = False
 
 
+@dataclass(slots=True)
+class ActionInvocation:
+    target: Widget | None = None
+    cancelled: bool = False
+
+
 @dataclass(frozen=True, slots=True)
 class ActionContext:
     event: Message
     widget: Widget
     app: App
     document: BoundDocument
-    _target: Widget | None = None
-    _cancelled: bool = False
+    _invocation: ActionInvocation | None = None
 
     @property
     def target(self) -> Widget | None:
-        return self._target
+        return self._invocation.target if self._invocation is not None else None
 
     @property
     def cancelled(self) -> bool:
-        return self._cancelled
+        return self._invocation.cancelled if self._invocation is not None else False
 
     def push_modal(self, modal_id: str):
         """Push a declared modal and return its awaitable dismissal value."""
