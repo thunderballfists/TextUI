@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -173,6 +174,63 @@ def quit_app():
         await pilot.press("ctrl+q")
 
     assert app.events == ["quit", "quit"]
+
+
+@pytest.mark.asyncio
+async def test_command_target_lifecycle_tracks_async_command(tmp_path: Path):
+    source = project(tmp_path, '<command-button id="refresh" command="refresh"/><label id="status">Ready</label>', '''
+import asyncio
+from textui import command
+
+@command(target="status")
+async def refresh():
+    window.app.started.set()
+    await window.app.release.wait()
+''')
+    app = ProjectApp(source)
+    app.started = asyncio.Event()
+    app.release = asyncio.Event()
+
+    async with app.run_test() as pilot:
+        task = asyncio.create_task(app.document.invoke_command("refresh"))
+        await app.started.wait()
+        assert app.document.get_by_id("status").has_class("-loading")
+        app.release.set()
+        assert await task is True
+        await pilot.pause()
+        assert not app.document.get_by_id("status").has_class("-loading")
+
+
+@pytest.mark.asyncio
+async def test_command_target_lifecycle_can_supersede_previous_invocation(tmp_path: Path):
+    source = project(tmp_path, '<label id="status">Ready</label>', '''
+import asyncio
+from textui import command
+
+@command(target="status", supersede=True)
+async def refresh():
+    window.app.calls += 1
+    if window.app.calls == 2:
+        window.app.second_started.set()
+    await window.app.release.wait()
+''')
+    app = ProjectApp(source)
+    app.calls = 0
+    app.release = asyncio.Event()
+    app.second_started = asyncio.Event()
+
+    async with app.run_test() as pilot:
+        first = asyncio.create_task(app.document.invoke_command("refresh"))
+        await pilot.pause()
+        second = asyncio.create_task(app.document.invoke_command("refresh"))
+        await app.second_started.wait()
+        with pytest.raises(asyncio.CancelledError):
+            await first
+        assert app.document.get_by_id("status").has_class("-loading")
+        app.release.set()
+        assert await second is True
+        await pilot.pause()
+        assert not app.document.get_by_id("status").has_class("-loading")
 
 
 @pytest.mark.asyncio
