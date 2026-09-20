@@ -115,6 +115,7 @@ class BoundDocument:
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
         self._action_tasks: set[asyncio.Future[object]] = set()
+        self._lifecycle_tasks: dict[tuple[str, str], asyncio.Future[object]] = {}
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
@@ -321,12 +322,38 @@ class BoundDocument:
             if name in self.commands and not self.commands[name].enabled:
                 return True
             try:
-                result = self.actions[name](ActionContext(message, widget, self.app, self))
+                options = self.action_metadata.get(name)
+                target_id = getattr(options, "target", None)
+                target = self.get_by_id(target_id) if target_id is not None else None
+                key = (name, target_id) if target_id is not None else None
+                if target is not None:
+                    target.add_class("-loading")
+                    target.remove_class("-error")
+                    target.textui_error = None
+                result = self.actions[name](ActionContext(message, widget, self.app, self, target))
                 if isawaitable(result):
                     task = asyncio.ensure_future(result)
+                    if key is not None:
+                        self._lifecycle_tasks[key] = task
+
+                    def finish_lifecycle(completed: asyncio.Future[object], error: Exception | None = None) -> None:
+                        if key is None or self._lifecycle_tasks.get(key) is not completed:
+                            return
+                        self._lifecycle_tasks.pop(key, None)
+                        if target is not None:
+                            target.remove_class("-loading")
+                            if error is not None:
+                                target.textui_error = str(error)
+                                target.add_class("-error")
+
                     await asyncio.sleep(0)
                     if task.done():
-                        await task
+                        try:
+                            await task
+                        except Exception as error:
+                            finish_lifecycle(task, error)
+                            raise
+                        finish_lifecycle(task)
                         return True
                     self._action_tasks.add(task)
 
@@ -337,6 +364,7 @@ class BoundDocument:
                         try:
                             completed.result()
                         except Exception as error:
+                            finish_lifecycle(completed, error)
                             action_error = ActionExecutionError(
                                 f'Action {name!r} failed: {error}',
                                 location=node.location,
@@ -344,6 +372,8 @@ class BoundDocument:
                             )
                             action_error.__cause__ = error
                             self.app._handle_exception(action_error)
+                        else:
+                            finish_lifecycle(completed)
 
                     task.add_done_callback(report_action_result)
             except Exception as error:

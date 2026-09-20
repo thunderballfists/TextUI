@@ -5,6 +5,7 @@ from textual import on
 from textual.app import App
 from textual.widgets import Button, Checkbox, Input
 import textui
+from textui.actions import ActionOptions
 
 
 @pytest.mark.asyncio
@@ -88,6 +89,36 @@ async def test_delayed_callback_error_propagates_through_native_error_path():
             await pilot.pause()
     assert isinstance(error.value.__cause__, ValueError)
     assert error.value.location.source == "actions.xml"
+
+
+@pytest.mark.asyncio
+async def test_target_action_sets_loading_then_error_state():
+    async def fail(context):
+        assert context.target.id == "status"
+        assert context.cancelled is False
+        await asyncio.sleep(0)
+        raise ValueError("refresh failed")
+
+    doc = textui.DocumentLoader().from_string('<ui><button id="button" on-pressed="refresh">Refresh</button><label id="status">Ready</label></ui>')
+
+    class Host(App):
+        def __init__(self):
+            super().__init__()
+            self.document = doc.bind(self, actions={"refresh": fail}, action_metadata={"refresh": ActionOptions("status")})
+
+        def compose(self):
+            yield from self.document.compose()
+
+    app = Host()
+    with pytest.raises(textui.ActionExecutionError):
+        async with app.run_test() as pilot:
+            status = app.document.get_by_id("status")
+            assert await app.document.dispatch(Button.Pressed(app.document.get_by_id("button")))
+            assert status.has_class("-loading")
+            await pilot.pause()
+    assert not status.has_class("-loading")
+    assert status.has_class("-error")
+    assert status.textui_error == "refresh failed"
 
 
 @pytest.mark.asyncio
