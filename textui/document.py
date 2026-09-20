@@ -115,8 +115,8 @@ class BoundDocument:
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
         self._action_tasks: set[asyncio.Future[object]] = set()
-        self._lifecycle_tasks: dict[tuple[str, str], asyncio.Future[object]] = {}
-        self._lifecycle_invocations: dict[tuple[str, str], ActionInvocation] = {}
+        self._lifecycle_tasks: dict[tuple[str, str], set[asyncio.Future[object]]] = {}
+        self._lifecycle_invocations: dict[asyncio.Future[object], ActionInvocation] = {}
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
@@ -289,15 +289,16 @@ class BoundDocument:
 
     def close(self) -> None:
         """Cancel lifecycle work and clear loading state during application shutdown."""
-        for (name, target_id), task in tuple(self._lifecycle_tasks.items()):
-            if not task.done():
-                task.cancel()
+        for (_name, target_id), tasks in tuple(self._lifecycle_tasks.items()):
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+                invocation = self._lifecycle_invocations.pop(task, None)
+                if invocation is not None:
+                    invocation.cancelled = True
             target = self._widgets.get(target_id)
             if target is not None:
                 target.remove_class("-loading")
-            invocation = self._lifecycle_invocations.pop((name, target_id), None)
-            if invocation is not None:
-                invocation.cancelled = True
         self._lifecycle_tasks.clear()
 
     def get_by_id(self, element_id: str) -> Widget:
@@ -329,28 +330,35 @@ class BoundDocument:
                     target.textui_error = None
 
                 if key is not None and getattr(options, "supersede", False):
-                    previous = self._lifecycle_tasks.get(key)
-                    if previous is not None and not previous.done():
-                        previous_invocation = self._lifecycle_invocations.get(key)
+                    for previous in tuple(self._lifecycle_tasks.get(key, ())):
+                        if previous.done():
+                            continue
+                        previous_invocation = self._lifecycle_invocations.get(previous)
                         if previous_invocation is not None:
                             previous_invocation.cancelled = True
                         previous.cancel()
 
                 task = asyncio.ensure_future(result)
                 if key is not None:
-                    self._lifecycle_tasks[key] = task
-                    self._lifecycle_invocations[key] = ActionInvocation(target)
+                    self._lifecycle_tasks.setdefault(key, set()).add(task)
+                    self._lifecycle_invocations[task] = ActionInvocation(target)
 
                 def finish_lifecycle(error: Exception | None = None) -> None:
-                    if key is None or self._lifecycle_tasks.get(key) is not task:
+                    if key is None:
                         return
-                    self._lifecycle_tasks.pop(key, None)
-                    self._lifecycle_invocations.pop(key, None)
+                    tasks = self._lifecycle_tasks.get(key)
+                    if tasks is None:
+                        return
+                    tasks.discard(task)
+                    self._lifecycle_invocations.pop(task, None)
                     if target is not None:
-                        target.remove_class("-loading")
                         if error is not None:
                             target.textui_error = str(error)
                             target.add_class("-error")
+                        if not tasks:
+                            target.remove_class("-loading")
+                    if not tasks:
+                        self._lifecycle_tasks.pop(key, None)
 
                 try:
                     await task
@@ -375,6 +383,22 @@ class BoundDocument:
             ) from error
         return True
 
+    def start_command(self, name: str) -> None:
+        """Schedule a command without holding up Textual's input dispatcher."""
+        task = asyncio.ensure_future(self.invoke_command(name))
+        self._action_tasks.add(task)
+
+        def report_command_result(completed: asyncio.Future[object]) -> None:
+            self._action_tasks.discard(completed)
+            if completed.cancelled():
+                return
+            try:
+                completed.result()
+            except Exception as error:
+                self.app._handle_exception(error)
+
+        task.add_done_callback(report_command_result)
+
     async def dispatch(self, message: Message) -> bool:
         """Await one exact-type/identity action without altering native bubbling."""
         for widget, event, name, node in self._bindings.get(type(message), ()):
@@ -395,32 +419,43 @@ class BoundDocument:
                 result = self.actions[name](ActionContext(message, widget, self.app, self, invocation))
                 if isawaitable(result):
                     if key is not None and getattr(options, "supersede", False):
-                        previous = self._lifecycle_tasks.get(key)
-                        if previous is not None and not previous.done():
-                            previous_invocation = self._lifecycle_invocations.get(key)
+                        for previous in tuple(self._lifecycle_tasks.get(key, ())):
+                            if previous.done():
+                                continue
+                            previous_invocation = self._lifecycle_invocations.get(previous)
                             if previous_invocation is not None:
                                 previous_invocation.cancelled = True
                             previous.cancel()
                     task = asyncio.ensure_future(result)
                     if key is not None:
-                        self._lifecycle_tasks[key] = task
-                        self._lifecycle_invocations[key] = invocation
+                        self._lifecycle_tasks.setdefault(key, set()).add(task)
+                        if invocation is not None:
+                            self._lifecycle_invocations[task] = invocation
 
                     def finish_lifecycle(completed: asyncio.Future[object], error: Exception | None = None) -> None:
-                        if key is None or self._lifecycle_tasks.get(key) is not completed:
+                        if key is None:
                             return
-                        self._lifecycle_tasks.pop(key, None)
-                        self._lifecycle_invocations.pop(key, None)
+                        tasks = self._lifecycle_tasks.get(key)
+                        if tasks is None:
+                            return
+                        tasks.discard(completed)
+                        self._lifecycle_invocations.pop(completed, None)
                         if target is not None:
-                            target.remove_class("-loading")
                             if error is not None:
                                 target.textui_error = str(error)
                                 target.add_class("-error")
+                            if not tasks:
+                                target.remove_class("-loading")
+                        if not tasks:
+                            self._lifecycle_tasks.pop(key, None)
 
                     await asyncio.sleep(0)
                     if task.done():
                         try:
                             await task
+                        except asyncio.CancelledError:
+                            finish_lifecycle(task)
+                            raise
                         except Exception as error:
                             finish_lifecycle(task, error)
                             raise
@@ -431,6 +466,7 @@ class BoundDocument:
                     def report_action_result(completed: asyncio.Future[object]) -> None:
                         self._action_tasks.discard(completed)
                         if completed.cancelled():
+                            finish_lifecycle(completed)
                             return
                         try:
                             completed.result()
