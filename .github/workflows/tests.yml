@@ -30,8 +30,6 @@ jobs:
           poetry install --with test --no-interaction
       - name: Run headless suite
         run: poetry run python -m pytest -q
-      - name: Lint Python sources
-        run: pipx run pyflakes textui
       - name: Build distributions
         run: poetry build
       - name: Verify clean wheel installation outside checkout
@@ -41,6 +39,16 @@ jobs:
           "$RUNNER_TEMP/textui-wheel/bin/python" -m pip check
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/textui-wheel/bin/python" -I "$GITHUB_WORKSPACE/tests/wheel_smoke.py"
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Lint Python sources
+        run: pipx run pyflakes textui
 
   visual:
     runs-on: ubuntu-24.04

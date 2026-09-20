@@ -20,6 +20,7 @@ All notable changes to TextUI are documented here.
 ### Changed
 
 - Compound-control validation now rejects unreachable nested radio-button events while preserving custom registry components that reuse built-in tag names.
+- Runtime-list `item-label` patterns now require every replacement field to be a direct mapping key, including nested format specifications.
 
 ### Added
 
