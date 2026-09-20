@@ -1,12 +1,13 @@
 # TextUI Extension Triage and Delivery Order
 
 Date: 2026-09-19
+Updated: 2026-09-20
 
 ## Direction
 
-Finish the runtime-data API in issue #28, then improve dialogs and commands. Adopt useful patterns through TextUI's existing markup, controller, and registry boundaries. Markup declares structure, TCSS controls presentation, and included Python supplies data and behavior.
+TextUI has completed the original runtime-data, layout, dialog-lifecycle, command, and visual-regression work. The next work should add one useful application capability at a time through the existing markup, controller, and registry boundaries. Markup declares structure, TCSS controls presentation, and included Python supplies data and behavior.
 
-This is a proposed roadmap, not a commitment to install the referenced libraries. Item 0 has an [implementation plan](superpowers/plans/2026-09-19-lifecycle-visual-regressions.md).
+This is a proposed roadmap, not a commitment to install the referenced libraries.
 
 ## External Projects
 
@@ -20,73 +21,42 @@ Compatibility evidence: TextUI requires `textual>=8.2.8,<9`; [Textology requires
 
 Use native Textual capabilities first, small TextUI adapters second, and optional third-party dependencies for specialist features. If copying source rather than independently implementing an idea, retain the upstream license and attribution.
 
-## Issue #28: Partly Complete
+## Completed from the original triage
 
-[Issue #28](https://github.com/thunderballfists/TextUI/issues/28) requests markup-declared columns and runtime rows for usage/cost API data. Its original statement that there is no `<data-table>` is outdated; the issue should remain open for the missing convenience API.
+[Issue #28](https://github.com/thunderballfists/TextUI/issues/28) is closed. The original table contract now provides markup columns, runtime `set_rows()` replacement, stable row keys, record lookup, column metadata, and header-click sorting that persists when rows refresh. The data example exercises the API.
 
-Existing support in `textui/widgets/data_widgets.py`:
+- Lifecycle and visual regression coverage now checks repeatable modal behavior, cleanup, shell geometry, pointer reachability, and opt-in visual baselines.
+- Compact and border style presets are implemented and may be switched at runtime.
+- Modal lifecycle behavior, shared commands, shortcuts, async lifecycle targets, and shutdown cancellation are implemented.
+- Reusable local components support imports, literal properties, named slots, fallback content, and isolated template IDs.
 
-- Declared columns and optional seed rows.
-- Native `add_row()`, cell updates, scrolling, and selection.
-- `row-selected` and `cell-selected` actions.
+The historic implementation plans remain as engineering records. Their unchecked task lists do not indicate unfinished shipped work.
 
-Remaining work:
+## Remaining roadmap
 
-- `set_rows()` accepting mapping records from APIs.
-- Column `label`, `align`, and `width` attributes.
-- Explicit replacement and selection behavior.
-- Empty-state content.
-
-Proposed contract, not currently implemented:
-
-```xml
-<data-table id="usage" row-key="date" on-row-selected="select_usage">
-  <column key="date" label="Date" />
-  <column key="requests" label="Requests" align="right" width="10" />
-</data-table>
-```
-
-```python
-window.document.get_by_id("usage").set_rows(records)
-```
-
-Column keys select record fields, while existing text-label syntax remains supported. Validate the entire batch before replacing displayed rows. Retain raw numeric values for sorting and format only for display. Preserve the cursor's row by stable key when possible and document the fallback when it disappears. Empty input clears rows while retaining columns. Keep current selection events compatible and provide a documented way to retrieve the associated record.
-
-Use a stable, unique field for `row-key`; cost data with multiple agents per date needs a distinct record key rather than date alone. Define missing-field, duplicate-key, and `None` handling in the table design before implementation.
-
-Put arbitrary empty-state slots in a separate follow-up: they require composition around the native table and affect its public widget API. Track that explicitly before closing the issue's core work. Native sorting exists; automatic header-click sorting is a separate interaction decision.
-
-## Delivery Order
-
-| Order | Deliverable | Integration and rationale |
+| Order | Deliverable | Scope and rationale |
 | --- | --- | --- |
-| 0 | Lifecycle and visual regression coverage | Verify repeated modal open/click/Escape behavior, visible bounds, narrow terminals, and cleanup. Add selected opt-in snapshots. Passing tests recently missed visible failures. |
-| 1 | Issue #28's core runtime-table contract | Extend the existing native DataTable adapter without another runtime dependency. Directly supports usage/cost dashboards. |
-| 2 | Compact styles and reusable dialogs | Opt-in TCSS preset plus confirm/prompt patterns. Explicit content/action regions let applications control sizing and alignment. |
-| 3 | Shared commands and shortcuts | Add labels, shortcuts, help text, and enabled state around registered actions. Buttons, menus, and command palettes invoke the same command. |
-| 4 | Targeted missing controls | Start with multiple selection and loading/empty/error presentations. Prefer native adapters; Textual already supplies SelectionList. |
-| 5 | Reactive data and richer navigation | Establish table/list refresh semantics before observation. Add routing/history when an application needs more than a switcher. |
-| 6 | Plotting and specialist widgets | Optional integrations driven by an actual dashboard requirement. |
+| 1 | Dashboard widgets | Add a native `<sparkline>` adapter for compact numeric trends. Keep full line/bar/scatter charts as an optional plotting extension, driven by a real dashboard requirement. |
+| 2 | Selection and state presentation | Add a `selection-list` adapter and reusable loading, empty, and error presentation patterns. These fill practical control gaps without adding a reactive template language. |
+| 3 | Command surfaces | Build menus or a command palette on the existing `@command` metadata when an application needs them. Dynamic enabled predicates and user-configurable shortcuts remain separate design work. |
+| 4 | Reactive navigation | Define observation, refresh, routing, and history only after a project demonstrates the need beyond the existing content switcher, runtime lists, and tables. |
+| 5 | Dynamic component authoring | Consider reactive properties, repetition, conditional templates, component-local styles, and a component registry together. Do not introduce expressions or embedded Python as an incremental shortcut. |
 
-Item 0 is a quality gate for subsequent additions, not a general framework rewrite. Use regression failures to justify narrowly scoped production fixes. Do not implement #28, new dialog APIs, commands, observers, or routing as part of item 0.
+## Explicitly deferred boundaries
+
+- Core remains strict XML with linked Python; there is no expression evaluation, embedded Python, automatic data binding, or browser HTML compatibility.
+- Hot reload, recomposition, document replacement, multiple stylesheet scopes, and aggregated validation diagnostics need separate lifecycle designs.
+- Images and full plotting remain optional dependencies. Do not add Pillow, textual-imageview, Textology, or textual-enhanced to core.
+- An untrusted-document mode requires enforceable capability limits and is not implied by strict XML validation.
 
 ## Specific Patterns to Study
 
-- [Preserved option-list highlighting](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/widgets/option_list.py): preserve identity across refresh. Apply the principle to tables, then runtime lists.
-- [Command metadata](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/commands/command.py): share invocation and display metadata across interaction surfaces.
-- [Confirmation dialog](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/dialogs/confirm.py) and [input dialog](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/dialogs/modal_input.py): study layout, focus, result values, and Escape behavior.
-- [Textology observation and testing patterns](https://github.com/pyranha-labs/textology#top-features): useful design examples; do not import its incompatible application runtime.
-- [Native SelectionList](https://textual.textualize.io/widgets/selection_list/): a substrate for multiple selection, distinct from a dropdown multi-select.
-- [Textual testing](https://textual.textualize.io/guide/testing/) and [pytest-textual-snapshot](https://github.com/Textualize/pytest-textual-snapshot): use current native testing infrastructure rather than importing Textology for screenshots.
-
-## Item 0 Acceptance Criteria
-
-- Modal content and its action controls are visible and clickable on repeated opens, including after resize and Escape dismissal.
-- Modal results, focus restoration, mounted-ID lookup, and handler cleanup behave consistently; anonymous and component-private controls do not leave retained event bindings.
-- Showcase header/status bar remain visible at 120×50 and 80×24. At 60×20, content can scroll and the sidebar can be hidden; primary controls remain reachable.
-- Tests assert geometry, hit targets, results, and cleanup, not exact TCSS source strings or only screen identity.
-- A few deterministic SVG baselines cover the shell and reopened modal. Snapshot generation is explicitly enabled, consistent with AGENTS.md; normal pytest remains headless and does not generate screenshots.
-- CI executes functional tests on Python 3.11/3.12/3.14 and snapshot comparisons in one pinned Linux/Python environment. Human inspection approves baseline changes.
+- [Native SelectionList](https://textual.textualize.io/widgets/selection_list/) is the likely substrate for multiple selection, distinct from a dropdown multi-select.
+- [Textual Sparkline](https://textual.textualize.io/widgets/sparkline/) is the preferred substrate for a first core trend widget.
+- [Preserved option-list highlighting](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/widgets/option_list.py) remains a useful reference when adding stronger identity preservation to lists.
+- [Confirmation dialog](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/dialogs/confirm.py) and [input dialog](https://github.com/davep/textual-enhanced/blob/main/src/textual_enhanced/dialogs/modal_input.py) remain references for a later higher-level dialog API.
+- [Textology observation patterns](https://github.com/pyranha-labs/textology#top-features) are design references only; do not import its application runtime.
+- Continue using [Textual testing](https://textual.textualize.io/guide/testing/) and [pytest-textual-snapshot](https://github.com/Textualize/pytest-textual-snapshot) rather than adding a testing runtime dependency.
 
 ## Guardrails
 
