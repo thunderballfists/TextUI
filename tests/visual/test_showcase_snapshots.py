@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import re
+import sys
 
 import pytest
 
@@ -16,6 +17,10 @@ def canonicalize_svg(svg: str) -> str:
     return re.sub(r"terminal-\d+", "terminal-ID", svg)
 
 
+def snapshot_path(name: str, platform: str) -> Path:
+    return SNAPSHOTS / platform / f"{name}.svg"
+
+
 def test_canonicalize_svg_ignores_generated_terminal_ids_only():
     first = '<g id="terminal-123-r1" fill="red" x="4">First</g>'
     second = '<g id="terminal-987-r1" fill="red" x="4">First</g>'
@@ -24,6 +29,12 @@ def test_canonicalize_svg_ignores_generated_terminal_ids_only():
     assert canonicalize_svg(first) != canonicalize_svg(second.replace("First", "Second"))
     assert canonicalize_svg(first) != canonicalize_svg(second.replace('x="4"', 'x="5"'))
     assert canonicalize_svg(first) != canonicalize_svg(second.replace('fill="red"', 'fill="blue"'))
+
+
+def test_snapshot_path_is_platform_specific():
+    assert snapshot_path("showcase-shell-80x24", "linux") == (
+        SNAPSHOTS / "linux" / "showcase-shell-80x24.svg"
+    )
 
 
 async def freeze_snapshot(pilot):
@@ -70,7 +81,7 @@ async def assert_snapshot(name, size, prepare, request):
     async with app.run_test(size=size) as pilot:
         await prepare(pilot)
         svg = app.export_screenshot(title="TextUI showcase", simplify=True)
-    path = SNAPSHOTS / f"{name}.svg"
+    path = snapshot_path(name, sys.platform)
     if request.config.getoption("--snapshot-update"):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(svg, encoding="utf-8")

@@ -59,10 +59,13 @@ jobs:
           poetry install --with test --no-interaction
       - name: Compare reviewed visual baselines
         run: poetry run python -m pytest tests/visual -q
+      - name: Regenerate platform baseline after a visual failure
+        if: failure()
+        run: poetry run python -m pytest tests/visual -q --snapshot-update
       - name: Upload reviewed SVG baselines after a visual failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: textui-visual-baselines
-          path: tests/visual/__snapshots__/*.svg
+          path: tests/visual/__snapshots__/**/*.svg
           if-no-files-found: error
