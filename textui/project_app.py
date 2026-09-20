@@ -96,6 +96,8 @@ class ProjectApp(App):
     async def on_mount(self) -> None:
         self.window.phase = "ready"
         await self.controllers.hook("on_ready")
+        if self.window.phase != "ready":
+            return
         for seconds, callback, thread in self.controllers.periodic:
             self.window.every(seconds, callback, thread=thread)
 
