@@ -12,6 +12,7 @@ All notable changes to TextUI are documented here.
 - Async action failures now preserve immediate dispatch errors and report delayed failures with their markup source location.
 - Modal state and action bindings are released when an application shuts down with a modal open.
 - Concurrent runtime-list replacements are serialized so stale rows cannot remain mounted.
+- Transcript streaming retains text finalized before initial layout and falls back to Rich rendering for control characters.
 - Modal dismissal now releases anonymous and component-private action bindings, and failed modal pushes roll back their registrations.
 - Duplicate opens of one declared modal now raise `DocumentStateError` instead of leaking state or surfacing a native duplicate-ID error.
 - Modal result futures now resolve after their screen unmounts, allowing immediate reopen of the same declaration.
@@ -24,6 +25,7 @@ All notable changes to TextUI are documented here.
 
 - Opt-in `<style preset="compact"/>` TCSS for dense native controls, including native borderless vertical compaction, normal project stylesheet override order, and runtime switching through `window.document.toggle_style_preset()`.
 - Opt-in `<style preset="borders"/>` TCSS for rounded and double Unicode button outlines, independently switchable at runtime.
+- `<log>` transcripts with bounded history, Rich complete entries, literal streamed deltas, and scroll-following state.
 - Shared project commands through `@command`, self-labeling `<command-button>` markup, static enabled state, and shortcut help.
 - Project-local reusable `.ui` components with explicit imports, literal string properties, named slots, fallback content, and per-instance private template IDs.
 - A runnable feature showcase that combines every built-in widget family and project-runtime facility.

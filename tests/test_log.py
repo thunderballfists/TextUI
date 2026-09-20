@@ -1,5 +1,6 @@
 import pytest
 from rich.text import Text
+from textual.widgets import RichLog
 
 from textui import DocumentLoader, DocumentValidationError, TextUI
 
@@ -47,6 +48,63 @@ async def test_log_commits_rich_lines_and_grows_one_literal_stream_line():
             "[red]The forecast[/red]",
             "complete",
         ]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("finalizer", "expected"),
+    [
+        ("commit", ["token"]),
+        ("append", ["token", "complete"]),
+    ],
+)
+async def test_log_keeps_inline_text_finalized_before_its_first_layout(finalizer, expected):
+    class PreLayoutApp(TextUI):
+        def on_mount(self) -> None:
+            log = self.document.get_by_id("transcript")
+            log.append_inline("token")
+            if finalizer == "commit":
+                log.commit_line()
+            else:
+                log.append("complete")
+
+    app = PreLayoutApp(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(40, 8)):
+        log = app.document.get_by_id("transcript")
+        assert [line.text.rstrip() for line in log.lines] == expected
+
+
+@pytest.mark.asyncio
+async def test_log_streams_a_long_single_line_with_linear_rendered_text(monkeypatch):
+    rendered_character_count = 0
+    rich_log_write = RichLog.write
+
+    def track_rendered_text(self, content, *args, **kwargs):
+        nonlocal rendered_character_count
+        if isinstance(content, Text):
+            rendered_character_count += len(content.plain)
+        return rich_log_write(self, content, *args, **kwargs)
+
+    monkeypatch.setattr(RichLog, "write", track_rendered_text)
+    app = TextUI(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(40, 8)):
+        log = app.document.get_by_id("transcript")
+        for _ in range(200):
+            log.append_inline("x")
+
+        assert "".join(line.text.rstrip() for line in log.lines) == "x" * 200
+        assert rendered_character_count <= 400
+
+
+@pytest.mark.asyncio
+async def test_log_renders_control_character_deltas_through_rich():
+    app = TextUI(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(40, 8)):
+        log = app.document.get_by_id("transcript")
+        log.append_inline("before")
+        log.append_inline("\x07after")
+
+        assert "\x07" not in "".join(line.text for line in log.lines)
 
 
 @pytest.mark.asyncio
