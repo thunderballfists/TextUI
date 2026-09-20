@@ -81,7 +81,6 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `modal` | Widgets; document root only | Required `id`, boolean `dismissable` | None |
 | `data-table` | `column` children, then `row` children | `cursor-type`: row, cell, column, none; optional `row-key` | `row-selected`, `cell-selected` |
 | `column`, `row`, `cell` | Column/cell text; rows contain cells | Columns: required `key`, optional `label`, `align`, positive `width`; rows: required `key` | None |
-| `tree`, `tree-node` | Tree nodes contain tree nodes | Nodes require `key`; trees support `guide-depth`, `show-root`, and `row-key` | `node-selected` |
 | `tree` | Nested `tree-node` children | Required `label`, boolean `show-root` | `node-selected` |
 | `tree-node` | Nested `tree-node` children | Required `key` and `label`, boolean `expanded` | None |
 
