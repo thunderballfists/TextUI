@@ -147,3 +147,33 @@ def tick():
     async with app.run_test() as pilot:
         await pilot.pause(0.06)
         assert app.events[:2] == ["start", "end"]
+
+
+
+@pytest.mark.asyncio
+async def test_timer_stands_down_once_the_message_pump_stops(tmp_path: Path):
+    """A tick scheduled during teardown must not reach an unmounted document.
+
+    `window.phase` only leaves "ready" once the app's own teardown hooks run,
+    which is after Textual has begun removing widgets. A timer firing in that
+    window previously reached elements that were already unmounted and raised
+    DocumentStateError out of the timer.
+    """
+    app = app_from(tmp_path, '''
+from textui import every
+
+@every(0.01)
+def touch_status() -> None:
+    window.document.get_by_id("status").update("tick")
+    window.app.events.append("tick")
+''')
+    async with app.run_test() as pilot:
+        await pilot.pause(0.05)
+        assert app.events.count("tick") >= 1
+        # Simulate the teardown window: the pump has stopped but the phase has
+        # not yet been moved on by the app's unmount hook.
+        app._running = False
+        before = len(app.events)
+        await pilot.pause(0.05)
+        assert len(app.events) == before, "timer fired after the message pump stopped"
+        app._running = True

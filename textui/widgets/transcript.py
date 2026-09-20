@@ -39,6 +39,11 @@ class TranscriptLog(RichLog):
         self._inline_line_count = 0
         self._inline_open = False
         self._inline_pending = False
+        # Width and printability of `_inline_text`, tracked incrementally so
+        # extending a streamed line stays proportional to the delta rather than
+        # rescanning everything accumulated so far.
+        self._inline_width = 0
+        self._inline_printable = True
 
     def watch_scroll_y(self, old_value: float, new_value: float) -> None:
         super().watch_scroll_y(old_value, new_value)
@@ -75,6 +80,10 @@ class TranscriptLog(RichLog):
                 break
             self._inline_line_count += 1
         self._inline_open = self._inline_line_count > 0
+        # Re-derive the incremental state from the text actually written, so the
+        # fast path can trust it on the next delta.
+        self._inline_width = cell_len(self._inline_text)
+        self._inline_printable = self._inline_text.isprintable()
         return self
 
     def _write_pending_inline(self) -> None:
@@ -94,6 +103,8 @@ class TranscriptLog(RichLog):
         self._inline_line_count = 0
         self._inline_open = False
         self._inline_pending = False
+        self._inline_width = 0
+        self._inline_printable = True
         return self
 
     def clear(self) -> TranscriptLog:
@@ -102,6 +113,8 @@ class TranscriptLog(RichLog):
         self._inline_line_count = 0
         self._inline_open = False
         self._inline_pending = False
+        self._inline_width = 0
+        self._inline_printable = True
         self.is_following = self.auto_scroll
         return self
 
@@ -119,16 +132,19 @@ class TranscriptLog(RichLog):
             self._inline_open
             and self._inline_line_count == 1
             and not self.wrap
-            and all(character.isprintable() for character in self._inline_text + text)
+            and self._inline_printable
+            and text.isprintable()
         )
 
     def _append_inline_delta(self, text: str) -> None:
-        previous_width = cell_len(self._inline_text)
+        previous_width = self._inline_width
         delta_width = cell_len(text)
         extended = self.lines[-1].crop(0, previous_width) + Strip([Segment(text)], delta_width)
-        line_width = max(previous_width + delta_width, self.min_width)
+        total_width = previous_width + delta_width
+        line_width = max(total_width, self.min_width)
         self.lines[-1] = extended.adjust_cell_length(line_width)
-        self._widest_line_width = max(self._widest_line_width, previous_width + delta_width)
+        self._inline_width = total_width
+        self._widest_line_width = max(self._widest_line_width, total_width)
         self._line_cache.clear()
         self.virtual_size = Size(self._widest_line_width, len(self.lines))
         self.refresh()

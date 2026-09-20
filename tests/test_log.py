@@ -1,8 +1,10 @@
 import pytest
+from rich.cells import cell_len
 from rich.text import Text
 from textual.widgets import RichLog
 
 from textui import DocumentLoader, DocumentValidationError, TextUI
+from textui.widgets import transcript as transcript_module
 
 
 MARKUP = '''<ui>
@@ -142,3 +144,53 @@ async def test_log_pauses_following_after_user_scrolls_away_from_tail():
         log.scroll_end(immediate=True, animate=False)
         await pilot.pause()
         assert log.is_following is True
+
+
+
+@pytest.mark.asyncio
+async def test_log_streams_without_rescanning_accumulated_text(monkeypatch):
+    """Per-delta work must be proportional to the delta, not the whole line.
+
+    The printability check and the width measurement previously ran over
+    `_inline_text + text` on every delta, making a long streamed line quadratic
+    even though the rendered output was already linear.
+    """
+    measured_characters = 0
+    real_cell_len = transcript_module.cell_len
+
+    def counting_cell_len(text):
+        nonlocal measured_characters
+        measured_characters += len(text)
+        return real_cell_len(text)
+
+    monkeypatch.setattr(transcript_module, "cell_len", counting_cell_len)
+
+    app = TextUI(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(40, 8)):
+        log = app.document.get_by_id("transcript")
+        deltas = 200
+        for _ in range(deltas):
+            log.append_inline("x")
+
+        assert "".join(line.text.rstrip() for line in log.lines) == "x" * deltas
+        # Linear behaviour keeps this proportional to the streamed length; the
+        # previous implementation measured ~deltas**2 / 2 characters.
+        assert measured_characters <= deltas * 4
+        # The incremental state must still agree with the text it describes.
+        assert log._inline_width == real_cell_len(log._inline_text)
+        assert log._inline_printable is True
+
+
+@pytest.mark.asyncio
+async def test_log_falls_back_when_a_delta_is_not_printable():
+    """A control-character delta must still render, via the rewrite path."""
+    app = TextUI(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(40, 8)):
+        log = app.document.get_by_id("transcript")
+        log.append_inline("before")
+        log.append_inline("\tafter")
+        assert log._inline_printable is False
+        assert "".join(line.text for line in log.lines).startswith("before")
+        # Streaming continues to work after the fallback.
+        log.append_inline("!")
+        assert log._inline_width == cell_len(log._inline_text)
