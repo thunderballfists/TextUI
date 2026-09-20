@@ -10,6 +10,8 @@ from typing import Any
 from uuid import uuid4
 import sys
 
+from textual.keys import KEY_ALIASES, Keys
+
 from .actions import ActionContext
 from .document import BoundDocument
 from .errors import DocumentStateError, DocumentValidationError, SourceLocation, TextUIError
@@ -70,6 +72,21 @@ def _arity(function: Callable[..., Any], allowed: set[int], location: SourceLoca
     return len(parameters)
 
 
+_TEXTUAL_SHORTCUTS = {key.value for key in Keys}
+_SHORTCUT_ALIASES = {alias: key for key, aliases in KEY_ALIASES.items() for alias in aliases}
+
+
+def _shortcut(value: str, location: SourceLocation) -> str:
+    if "," in value:
+        raise DocumentValidationError("command shortcut must name one Textual key", location=location)
+    value = _SHORTCUT_ALIASES.get(value, value)
+    if len(value) == 1 and value.isprintable():
+        return value
+    if value not in _TEXTUAL_SHORTCUTS:
+        raise DocumentValidationError(f"command shortcut {value!r} is not a valid Textual key", location=location)
+    return value
+
+
 def _command_metadata(name: str, options: _CommandOptions, location: SourceLocation) -> Command:
     for field, value in (("label", options.label), ("shortcut", options.shortcut), ("description", options.description)):
         if value is not None and (not isinstance(value, str) or not value.strip()):
@@ -77,7 +94,8 @@ def _command_metadata(name: str, options: _CommandOptions, location: SourceLocat
     if not isinstance(options.enabled, bool):
         raise DocumentValidationError("command enabled must be a boolean", location=location)
     label = options.label or " ".join(part.capitalize() for part in name.strip("_").split("_"))
-    return Command(name, label, options.shortcut, options.description or label, options.enabled)
+    shortcut = _shortcut(options.shortcut, location) if options.shortcut is not None else None
+    return Command(name, label, shortcut, options.description or label, options.enabled)
 
 
 class ProjectWindow:
@@ -141,7 +159,10 @@ class ControllerSet:
                 if not isinstance(command_options, _CommandOptions):
                     raise DocumentValidationError(f"invalid command {name!r}", location=location)
                 _arity(value, {0}, location)
-                self.commands[name] = _command_metadata(name, command_options, location)
+                command = _command_metadata(name, command_options, location)
+                if command.shortcut is not None and any(existing.shortcut == command.shortcut for existing in self.commands.values()):
+                    raise DocumentValidationError(f"duplicate command shortcut {command.shortcut!r}", location=location)
+                self.commands[name] = command
                 self.command_callbacks[name] = value
                 self.command_locations[name] = location
                 self.actions[name] = lambda context, callback=value: callback()

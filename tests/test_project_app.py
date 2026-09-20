@@ -143,6 +143,58 @@ def quit_app():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("shortcut", ["not a real key!!", "ctrl+unknown", "ctrl+q,ctrl+w"])
+async def test_command_rejects_invalid_shortcuts(tmp_path: Path, shortcut: str):
+    source = project(tmp_path, '<label>Ready</label>', f'''
+from textui import command
+
+@command(shortcut={shortcut!r})
+def invalid():
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="command shortcut"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
+async def test_project_rejects_duplicate_command_shortcuts(tmp_path: Path):
+    source = project(tmp_path, '<label>Ready</label>', '''
+from textui import command
+
+@command(shortcut="ctrl+k")
+def first():
+    pass
+
+@command(shortcut="ctrl+k")
+def second():
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="duplicate command shortcut 'ctrl\\+k'"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
+async def test_project_rejects_command_shortcut_that_shadows_tab_accelerator(tmp_path: Path):
+    source = project(tmp_path, '''
+<tabbed-content><tab-pane id="one" title="One" accelerator="1" accelerator-scope="document"><label>One</label></tab-pane></tabbed-content>
+''', '''
+from textui import command
+
+@command(shortcut="1")
+def first():
+    pass
+''')
+
+    with pytest.raises(DocumentValidationError, match="conflicts with tab accelerator '1'"):
+        async with ProjectApp(source).run_test():
+            pass
+
+
+@pytest.mark.asyncio
 async def test_command_button_requires_a_declared_command(tmp_path: Path):
     source = project(tmp_path, '<command-button command="missing"/>', '')
 

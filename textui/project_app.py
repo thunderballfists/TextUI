@@ -10,7 +10,7 @@ from textual.widgets import Button, Checkbox, Collapsible, DataTable, Input, Rad
 from .widgets.split import Split
 from .widgets.navigation import Nav
 from .widgets.runtime_list import RuntimeList
-from .accelerators import activate_tab, install_tab_accelerators
+from .accelerators import activate_tab, install_tab_accelerators, tab_accelerators
 
 from .actions import ActionCallback
 from .controllers import ControllerSet, ProjectWindow
@@ -54,6 +54,13 @@ class ProjectApp(App):
             finally:
                 self._textui_loading = False
             self.window._document = self.document
+            tab_keys = {key for key, _pane_id in tab_accelerators(definition.nodes)}
+            for name, command in self.controllers.commands.items():
+                if command.shortcut in tab_keys:
+                    raise DocumentValidationError(
+                        f"command shortcut {command.shortcut!r} conflicts with tab accelerator {command.shortcut!r}",
+                        location=self.controllers.command_locations[name],
+                    )
             install_tab_accelerators(self, definition.nodes)
             for name, command in self.controllers.commands.items():
                 if command.shortcut is not None:
@@ -94,6 +101,13 @@ class ProjectApp(App):
 
     async def on_unmount(self) -> None:
         await self._close_once()
+
+    def exit(self, result: Any = None, return_code: int = 0, message: Any = None) -> None:
+        """Stop project-owned timers before Textual starts application teardown."""
+        if self.window.phase == "ready":
+            self.window.phase = "closing"
+            self.window.timers.close()
+        super().exit(result=result, return_code=return_code, message=message)
 
     async def _close_once(self) -> None:
         if self._closed:
