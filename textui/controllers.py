@@ -5,12 +5,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from inspect import Parameter, isawaitable, signature
 from pathlib import Path
+from string import printable
 from types import ModuleType
 from typing import Any
 from uuid import uuid4
 import sys
 
-from textual.keys import KEY_ALIASES, Keys
+from textual.binding import Binding
+from textual.keys import Keys
 
 from .actions import ActionContext
 from .document import BoundDocument
@@ -72,17 +74,27 @@ def _arity(function: Callable[..., Any], allowed: set[int], location: SourceLoca
     return len(parameters)
 
 
+def _normalize_shortcut(value: str) -> str:
+    binding = next(iter(Binding.make_bindings([Binding(value, "textui_noop")])))
+    return binding.key
+
+
 _TEXTUAL_SHORTCUTS = {key.value for key in Keys}
-_SHORTCUT_ALIASES = {alias: key for key, aliases in KEY_ALIASES.items() for alias in aliases}
+_PRINTABLE_SHORTCUTS = {
+    _normalize_shortcut(value)
+    for value in printable
+    if value.isprintable() and not value.isspace() and value != ","
+}
 
 
 def _shortcut(value: str, location: SourceLocation) -> str:
     if "," in value:
         raise DocumentValidationError("command shortcut must name one Textual key", location=location)
-    value = _SHORTCUT_ALIASES.get(value, value)
-    if len(value) == 1 and value.isprintable():
-        return value
-    if value not in _TEXTUAL_SHORTCUTS:
+    try:
+        value = _normalize_shortcut(value)
+    except Exception as error:
+        raise DocumentValidationError(f"command shortcut {value!r} is not a valid Textual key", location=location) from error
+    if value not in _TEXTUAL_SHORTCUTS | _PRINTABLE_SHORTCUTS:
         raise DocumentValidationError(f"command shortcut {value!r} is not a valid Textual key", location=location)
     return value
 

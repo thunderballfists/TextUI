@@ -143,6 +143,29 @@ def quit_app():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("declared_shortcut", "canonical_shortcut"),
+    [("+", "plus"), ("plus", "plus"), ("!", "exclamation_mark"), ("exclamation_mark", "exclamation_mark")],
+)
+async def test_command_printable_shortcuts_normalize_and_invoke(tmp_path: Path, declared_shortcut: str, canonical_shortcut: str):
+    source = project(tmp_path, '<label>Ready</label>', f'''
+from textui import command
+
+@command(shortcut={declared_shortcut!r})
+def run():
+    window.app.events.append("run")
+''')
+    app = ProjectApp(source)
+    app.events = []
+
+    async with app.run_test() as pilot:
+        assert app.controllers.commands["run"].shortcut == canonical_shortcut
+        await pilot.press(canonical_shortcut)
+
+    assert app.events == ["run"]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("shortcut", ["not a real key!!", "ctrl+unknown", "ctrl+q,ctrl+w"])
 async def test_command_rejects_invalid_shortcuts(tmp_path: Path, shortcut: str):
     source = project(tmp_path, '<label>Ready</label>', f'''
