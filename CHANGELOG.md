@@ -6,6 +6,14 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Streaming a single transcript line no longer rescans everything already
+  accumulated on each delta: `TranscriptLog` tracks the active line's width and
+  printability incrementally, so per-delta work is proportional to the delta.
+- Streamed transcript deltas that land mid grapheme cluster now fall back to the
+  rewrite path, so combining marks, variation selectors, joiners, skin-tone
+  modifiers, matras, and jamo are no longer dropped from a streamed line.
+- Project-owned timers now also stand down once the message pump stops, closing
+  the teardown window in which a tick could reach an already-unmounted document.
 - Async commands now apply declared target lifecycle state when invoked from command controls and shortcuts.
 - Command shortcuts now schedule async work without blocking later input, and lifecycle targets retain every concurrent task through completion or shutdown.
 - Command shortcuts now reject invalid keys, duplicate declarations, and conflicts with tab accelerators.

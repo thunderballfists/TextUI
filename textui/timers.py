@@ -53,7 +53,11 @@ class RuntimeTimers:
 
         def run() -> None:
             nonlocal busy
-            if busy or self.window.phase != "ready":
+            # `phase` only leaves "ready" once the app's own teardown hooks run,
+            # which is after Textual has begun removing widgets. A timer firing in
+            # that window reaches a document whose elements are already unmounted,
+            # so also stand down as soon as the message pump stops running.
+            if busy or self.window.phase != "ready" or not self.app.is_running:
                 return
             busy = True
 
