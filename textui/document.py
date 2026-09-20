@@ -319,8 +319,55 @@ class BoundDocument:
         try:
             result = self._command_callbacks[name]()
             if isawaitable(result):
-                await result
+                options = self.action_metadata.get(name)
+                target_id = getattr(options, "target", None)
+                target = self.get_by_id(target_id) if target_id is not None else None
+                key = (name, target_id) if target_id is not None else None
+                if target is not None:
+                    target.add_class("-loading")
+                    target.remove_class("-error")
+                    target.textui_error = None
+
+                if key is not None and getattr(options, "supersede", False):
+                    previous = self._lifecycle_tasks.get(key)
+                    if previous is not None and not previous.done():
+                        previous_invocation = self._lifecycle_invocations.get(key)
+                        if previous_invocation is not None:
+                            previous_invocation.cancelled = True
+                        previous.cancel()
+
+                task = asyncio.ensure_future(result)
+                if key is not None:
+                    self._lifecycle_tasks[key] = task
+                    self._lifecycle_invocations[key] = ActionInvocation(target)
+
+                def finish_lifecycle(error: Exception | None = None) -> None:
+                    if key is None or self._lifecycle_tasks.get(key) is not task:
+                        return
+                    self._lifecycle_tasks.pop(key, None)
+                    self._lifecycle_invocations.pop(key, None)
+                    if target is not None:
+                        target.remove_class("-loading")
+                        if error is not None:
+                            target.textui_error = str(error)
+                            target.add_class("-error")
+
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    finish_lifecycle()
+                    raise
+                except Exception as error:
+                    finish_lifecycle(error)
+                    raise ActionExecutionError(
+                        f"Command {name!r} failed: {error}",
+                        location=self._command_locations.get(name),
+                        value=name,
+                    ) from error
+                finish_lifecycle()
         except Exception as error:
+            if isinstance(error, ActionExecutionError):
+                raise
             raise ActionExecutionError(
                 f"Command {name!r} failed: {error}",
                 location=self._command_locations.get(name),
