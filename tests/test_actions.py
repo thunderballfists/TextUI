@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from textual import on
 from textual.app import App
@@ -55,8 +57,8 @@ async def test_dispatch_identity_exact_type_no_binding_and_no_stop_or_prevent():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('async_callback', [False, True])
-async def test_callback_error_propagates_with_original_cause(async_callback):
+@pytest.mark.parametrize("async_callback", [False, True])
+async def test_immediate_callback_error_propagates_with_original_cause(async_callback):
     original = ValueError('action exploded')
     def sync(ctx):
         raise original
@@ -70,6 +72,22 @@ async def test_callback_error_propagates_with_original_cause(async_callback):
         assert error.value.__cause__ is original
         assert error.value.location.source == 'actions.xml'
         assert 'explode' in str(error.value)
+
+
+@pytest.mark.asyncio
+async def test_delayed_callback_error_propagates_through_native_error_path():
+    async def fail_after_await(context):
+        await asyncio.sleep(0.01)
+        raise ValueError("action exploded after await")
+
+    doc = textui.DocumentLoader().from_string('<ui><button id="button" on-pressed="explode">Explode</button></ui>', source_name="actions.xml")
+    app = textui.TextUI(doc, actions={"explode": fail_after_await})
+    with pytest.raises(textui.ActionExecutionError) as error:
+        async with app.run_test() as pilot:
+            assert await pilot.click("#button")
+            await pilot.pause()
+    assert isinstance(error.value.__cause__, ValueError)
+    assert error.value.location.source == "actions.xml"
 
 
 @pytest.mark.asyncio

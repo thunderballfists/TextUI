@@ -245,6 +245,21 @@ async def test_dismissal_releases_modal_compact_controls():
 
 
 @pytest.mark.asyncio
+async def test_app_shutdown_resolves_open_modal_and_releases_its_state():
+    """Shutdown must not strand modal callers or leave a modal marked active."""
+    app = TextUI(DocumentLoader().from_string(MODAL_MARKUP), actions={"open_modal": lambda context: None, "choose": lambda context: None})
+    async with app.run_test() as pilot:
+        baseline = binding_count(app.document)
+        result = app.document.push_modal("pick")
+        await pilot.pause()
+        app.exit()
+    assert result.done()
+    assert result.result() is None
+    assert "pick" not in app.document._active_modal_ids
+    assert binding_count(app.document) == baseline
+
+
+@pytest.mark.asyncio
 async def test_private_component_modal_button_binding_is_released(tmp_path):
     """Component-private IDs are not public, but their modal actions still expire."""
     (tmp_path / "components").mkdir()
