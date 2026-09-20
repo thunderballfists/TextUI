@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from rich.console import RenderableType
+from rich.cells import cell_len
+from rich.segment import Segment
 from rich.text import Text
 from textual.geometry import Size
 from textual.reactive import var
+from textual.strip import Strip
 from textual.widgets import RichLog
 
 from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, boolean, integer
@@ -58,6 +61,10 @@ class TranscriptLog(RichLog):
                 self._inline_pending = True
                 self.call_after_refresh(self._write_pending_inline)
             return self
+        if self._can_extend_inline(text):
+            self._append_inline_delta(text)
+            self._inline_text += text
+            return self
         self._discard_inline()
         self._inline_text += text
         old_line_ids = {id(line) for line in self.lines}
@@ -81,6 +88,8 @@ class TranscriptLog(RichLog):
 
     def commit_line(self) -> TranscriptLog:
         """Finalize the active streamed entry without adding another line."""
+        if self._inline_pending:
+            self.write(Text(self._inline_text), scroll_end=self.auto_scroll and self.is_following)
         self._inline_text = ""
         self._inline_line_count = 0
         self._inline_open = False
@@ -104,6 +113,27 @@ class TranscriptLog(RichLog):
         self._line_cache.clear()
         self.virtual_size = Size(self._widest_line_width, len(self.lines))
         self.refresh()
+
+    def _can_extend_inline(self, text: str) -> bool:
+        return (
+            self._inline_open
+            and self._inline_line_count == 1
+            and not self.wrap
+            and all(character.isprintable() for character in self._inline_text + text)
+        )
+
+    def _append_inline_delta(self, text: str) -> None:
+        previous_width = cell_len(self._inline_text)
+        delta_width = cell_len(text)
+        extended = self.lines[-1].crop(0, previous_width) + Strip([Segment(text)], delta_width)
+        line_width = max(previous_width + delta_width, self.min_width)
+        self.lines[-1] = extended.adjust_cell_length(line_width)
+        self._widest_line_width = max(self._widest_line_width, previous_width + delta_width)
+        self._line_cache.clear()
+        self.virtual_size = Size(self._widest_line_width, len(self.lines))
+        self.refresh()
+        if self.auto_scroll and self.is_following:
+            self.scroll_end(animate=False, immediate=False, x_axis=False)
 
 
 def build_log(context: BuildContext) -> TranscriptLog:
