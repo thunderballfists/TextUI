@@ -7,6 +7,7 @@ All notable changes to TextUI are documented here.
 ### Fixed
 
 - Async commands now apply declared target lifecycle state when invoked from command controls and shortcuts.
+- Command shortcuts now schedule async work without blocking later input, and lifecycle targets retain every concurrent task through completion or shutdown.
 - Command shortcuts now reject invalid keys, duplicate declarations, and conflicts with tab accelerators.
 - Project-owned timers stop as soon as application exit begins, preventing teardown callbacks from touching disposed widgets.
 - Projects that exit during `on_ready` no longer try to start periodic timers during teardown.

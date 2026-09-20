@@ -234,6 +234,103 @@ async def refresh():
 
 
 @pytest.mark.asyncio
+async def test_command_shortcut_starts_superseding_work_without_blocking_input(tmp_path: Path):
+    source = project(tmp_path, '<label id="status">Ready</label>', '''
+import asyncio
+from textui import command
+
+@command(shortcut="ctrl+r", target="status", supersede=True)
+async def refresh():
+    window.app.calls += 1
+    if window.app.calls == 1:
+        window.app.first_started.set()
+    else:
+        window.app.second_started.set()
+    await window.app.release.wait()
+''')
+    app = ProjectApp(source)
+    app.calls = 0
+    app.first_started = asyncio.Event()
+    app.second_started = asyncio.Event()
+    app.release = asyncio.Event()
+
+    async with app.run_test() as pilot:
+        first_press = asyncio.create_task(pilot.press("ctrl+r"))
+        await app.first_started.wait()
+        second_press = asyncio.create_task(pilot.press("ctrl+r"))
+        try:
+            await asyncio.wait_for(app.second_started.wait(), timeout=0.2)
+        finally:
+            app.release.set()
+            await asyncio.gather(first_press, second_press)
+        assert app.calls == 2
+
+
+@pytest.mark.asyncio
+async def test_concurrent_command_lifecycle_keeps_loading_until_every_task_finishes(tmp_path: Path):
+    source = project(tmp_path, '<label id="status">Ready</label>', '''
+import asyncio
+from textui import command
+
+@command(target="status")
+async def refresh():
+    index = window.app.calls
+    window.app.calls += 1
+    window.app.started[index].set()
+    await window.app.releases[index].wait()
+''')
+    app = ProjectApp(source)
+    app.calls = 0
+    app.started = [asyncio.Event(), asyncio.Event()]
+    app.releases = [asyncio.Event(), asyncio.Event()]
+
+    async with app.run_test() as pilot:
+        first = asyncio.create_task(app.document.invoke_command("refresh"))
+        second = asyncio.create_task(app.document.invoke_command("refresh"))
+        await asyncio.gather(*(started.wait() for started in app.started))
+        app.releases[1].set()
+        assert await second is True
+        assert app.document.get_by_id("status").has_class("-loading")
+        app.releases[0].set()
+        assert await first is True
+        await pilot.pause()
+        assert not app.document.get_by_id("status").has_class("-loading")
+
+
+@pytest.mark.asyncio
+async def test_document_close_cancels_every_concurrent_command_lifecycle_task(tmp_path: Path):
+    source = project(tmp_path, '<label id="status">Ready</label>', '''
+import asyncio
+from textui import command
+
+@command(target="status")
+async def refresh():
+    index = window.app.calls
+    window.app.calls += 1
+    window.app.started[index].set()
+    await window.app.release.wait()
+''')
+    app = ProjectApp(source)
+    app.calls = 0
+    app.started = [asyncio.Event(), asyncio.Event()]
+    app.release = asyncio.Event()
+
+    async with app.run_test():
+        first = asyncio.create_task(app.document.invoke_command("refresh"))
+        second = asyncio.create_task(app.document.invoke_command("refresh"))
+        await asyncio.gather(*(started.wait() for started in app.started))
+        app.document.close()
+        done, pending = await asyncio.wait({first, second}, timeout=0.2)
+        try:
+            assert not pending
+            assert all(task.cancelled() for task in done)
+            assert not app.document.get_by_id("status").has_class("-loading")
+        finally:
+            app.release.set()
+            await asyncio.gather(first, second, return_exceptions=True)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("declared_shortcut", "canonical_shortcut"),
     [("+", "plus"), ("plus", "plus"), ("!", "exclamation_mark"), ("exclamation_mark", "exclamation_mark")],

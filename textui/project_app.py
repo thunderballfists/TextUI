@@ -89,10 +89,10 @@ class ProjectApp(App):
             raise RuntimeError("project document has not been bound")
         activate_tab(self.document, pane_id)
 
-    async def action_textui_invoke_command(self, command_name: str) -> None:
+    def action_textui_invoke_command(self, command_name: str) -> None:
         if self.document is None:
             raise RuntimeError("project document has not been bound")
-        await self.document.invoke_command(command_name)
+        self.document.start_command(command_name)
 
     async def on_mount(self) -> None:
         self.window.phase = "ready"
