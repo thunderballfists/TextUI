@@ -1,6 +1,9 @@
 import pytest
 from rich.cells import cell_len
+from rich.segment import Segment
+from rich.style import Style
 from rich.text import Text
+from textual.strip import Strip
 from textual.widgets import RichLog
 
 from textui import DocumentLoader, DocumentValidationError, TextUI
@@ -231,3 +234,47 @@ async def test_log_keeps_grapheme_clusters_intact_across_deltas(deltas):
         assert log.lines[-1].text.rstrip() == "".join(deltas)
         # The tracked width must still describe the text it belongs to.
         assert log._inline_width == cell_len(log._inline_text)
+@pytest.mark.asyncio
+async def test_log_coalesces_streamed_segments_into_one_run():
+    """Streaming must not accumulate one segment per delta.
+
+    Each delta previously appended its own Segment, so the line ended up holding
+    one segment per token and every subsequent delta paid Strip.join summing over
+    the whole list -- quadratic even though the scanning work was linear.
+    """
+    app = TextUI(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(40, 8)):
+        log = app.document.get_by_id("transcript")
+        deltas = 200
+        for _ in range(deltas):
+            log.append_inline("x")
+
+        assert "".join(line.text.rstrip() for line in log.lines) == "x" * deltas
+        # Same style throughout, so the run folds down to a single segment.
+        assert len(log.lines[-1]._segments) == 1
+        assert log._inline_width == deltas
+
+
+@pytest.mark.asyncio
+async def test_log_keeps_distinct_styles_separate_while_streaming():
+    """Coalescing merges equal styles only; a styled run must survive intact."""
+    app = TextUI(DocumentLoader().from_string('<ui><log id="transcript" /></ui>'))
+    async with app.run_test(size=(40, 8)):
+        log = app.document.get_by_id("transcript")
+        log.append_inline("plain")
+        # Seed a styled trailing run on the active line, mimicking a styled
+        # renderable, then keep streaming onto it.
+        styled = Style(color="red")
+        log.lines[-1] = Strip(
+            [Segment("plain"), Segment("RED", styled)],
+            log._inline_width + 3,
+        )
+        log._inline_text += "RED"
+        log._inline_width += 3
+
+        log.append_inline("tail")
+
+        segments = log.lines[-1]._segments
+        assert [segment.text for segment in segments][:3] == ["plain", "RED", "tail"]
+        assert segments[1].style == styled, "styled run was merged away"
+        assert log.lines[-1].text.startswith("plainREDtail")

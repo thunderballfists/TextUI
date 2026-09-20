@@ -12,6 +12,9 @@ All notable changes to TextUI are documented here.
 - Streamed transcript deltas that land mid grapheme cluster now fall back to the
   rewrite path, so combining marks, variation selectors, joiners, skin-tone
   modifiers, matras, and jamo are no longer dropped from a streamed line.
+- Streamed transcript deltas are folded into the preceding same-style run
+  instead of appending a segment each time, so a long streamed line no longer
+  pays a growing per-delta cost walking its own segments.
 - Project-owned timers now also stand down once the message pump stops, closing
   the teardown window in which a tick could reach an already-unmounted document.
 - Async commands now apply declared target lifecycle state when invoked from command controls and shortcuts.

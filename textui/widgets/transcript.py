@@ -173,9 +173,18 @@ class TranscriptLog(RichLog):
     def _append_inline_delta(self, text: str) -> None:
         previous_width = self._inline_width
         delta_width = cell_len(text)
-        extended = self.lines[-1].crop(0, previous_width) + Strip([Segment(text)], delta_width)
         total_width = previous_width + delta_width
         line_width = max(total_width, self.min_width)
+        # Build the extended line directly instead of via `+`: the combined width
+        # is already known, so there is no need for Strip.join to re-derive it by
+        # summing over every segment. `simplify` then folds the new delta into the
+        # preceding run whenever the style matches, which keeps a streamed line at
+        # a handful of segments rather than one per delta. Styled runs (markup) are
+        # only merged with identical styles, so rendering is unchanged.
+        extended = Strip(
+            [*self.lines[-1].crop(0, previous_width), Segment(text)],
+            total_width,
+        ).simplify()
         self.lines[-1] = extended.adjust_cell_length(line_width)
         self._inline_width = total_width
         self._widest_line_width = max(self._widest_line_width, total_width)
