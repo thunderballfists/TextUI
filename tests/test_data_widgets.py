@@ -201,37 +201,48 @@ async def test_set_rows_rejects_invalid_batch_without_changing_current_rows():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("rows", "match"), [
-    ([{"name": "Missing"}], "invalid 'id'"),
-    ([{"id": None, "name": "None"}], "invalid 'id'"),
-    ([{"id": "", "name": "Empty"}], "invalid 'id'"),
-    ([{"id": 1, "name": "Numeric"}], "invalid 'id'"),
-    ([{"id": "duplicate", "name": "One"}, {"id": "duplicate", "name": "Two"}], "duplicate row key"),
-    (["not a mapping"], "must be a mapping"),
+@pytest.mark.parametrize(("rows", "error", "match"), [
+    ([{"name": "Missing"}], ValueError, "invalid 'id'"),
+    ([{"id": None, "name": "None"}], ValueError, "invalid 'id'"),
+    ([{"id": "", "name": "Empty"}], ValueError, "invalid 'id'"),
+    ([{"id": 1, "name": "Numeric"}], ValueError, "invalid 'id'"),
+    ([{"id": "duplicate", "name": "One"}, {"id": "duplicate", "name": "Two"}], DocumentStateError, "duplicate row-key"),
+    (["not a mapping"], ValueError, "must be a mapping"),
 ])
-async def test_set_rows_rejects_invalid_runtime_keys_without_replacing_rows(rows, match):
+async def test_set_rows_rejects_invalid_runtime_keys_without_replacing_rows(rows, error, match):
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
       <column key="name">Name</column>
     </data-table></ui>'''))
     async with app.run_test():
         table = app.document.get_by_id("usage")
         table.set_rows([{"id": "current", "name": "Current"}])
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(error, match=match):
             table.set_rows(rows)
         assert [key.value for key in table.rows] == ["current"]
         assert table.get_cell("current", "name").plain == "Current"
 
 
 @pytest.mark.asyncio
-async def test_set_rows_requires_declared_row_key():
+async def test_set_rows_without_row_key_uses_positional_keys():
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
       <column key="name">Name</column><row key="seed"><cell>Seed</cell></row>
     </data-table></ui>'''))
     async with app.run_test():
         table = app.document.get_by_id("usage")
-        with pytest.raises(DocumentStateError, match="row-key"):
-            table.set_rows([{"id": "new", "name": "New"}])
-        assert table.get_cell("seed", "name").plain == "Seed"
+        table.set_rows([{"name": "New"}, {"name": "Next"}])
+        assert [key.value for key in table.rows] == ["0", "1"]
+        assert table.get_cell("0", "name").plain == "New"
+
+
+@pytest.mark.asyncio
+async def test_duplicate_runtime_row_key_names_the_table_and_markup_location():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name">Name</column>
+    </data-table></ui>''', source_name="app.ui"))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        with pytest.raises(DocumentStateError, match=r"app\.ui.*usage.*duplicate row-key 'id' value 'same'"):
+            table.set_rows([{"id": "same", "name": "One"}, {"id": "same", "name": "Two"}])
 
 
 @pytest.mark.asyncio

@@ -15,7 +15,7 @@ from textual.events import MouseDown, MouseUp
 from textual.widget import Widget
 from textual.widgets import DataTable, Tree
 
-from ..errors import DocumentStateError
+from ..errors import DocumentStateError, SourceLocation
 from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, enum, integer
 
 
@@ -97,6 +97,7 @@ class SeededDataTable(DataTable):
         striped: bool,
         column_borders: bool,
         resizable: bool,
+        location: SourceLocation,
     ) -> None:
         super().__init__(cursor_type=cursor_type, zebra_stripes=striped)
         self._seed_columns = columns
@@ -104,6 +105,7 @@ class SeededDataTable(DataTable):
         self.row_key_field = row_key
         self.column_borders = column_borders
         self.resizable = resizable
+        self._location = location
         self._runtime_records: dict[str, Mapping[str, object]] = {}
         self._sort_column: str | None = None
         self._sort_reverse = False
@@ -219,9 +221,6 @@ class SeededDataTable(DataTable):
         return bordered
 
     def set_rows(self, rows: Iterable[Mapping[str, object]]) -> None:
-        if self.row_key_field is None:
-            raise DocumentStateError("set_rows requires a data-table row-key")
-
         validated: list[tuple[str, Mapping[str, object], tuple[Text, ...]]] = []
         keys: set[str] = set()
         for index, record in enumerate(rows):
@@ -230,11 +229,19 @@ class SeededDataTable(DataTable):
             missing = [column.key for column in self._seed_columns if column.key not in record]
             if missing:
                 raise ValueError(f"row {index} is missing column {missing[0]!r}")
-            key = record.get(self.row_key_field)
-            if not isinstance(key, str) or not key:
-                raise ValueError(f"row {index} has an invalid {self.row_key_field!r}")
+            if self.row_key_field is None:
+                key = str(index)
+            else:
+                key = record.get(self.row_key_field)
+                if not isinstance(key, str) or not key:
+                    raise ValueError(f"row {index} has an invalid {self.row_key_field!r}")
             if key in keys:
-                raise ValueError(f"duplicate row key {key!r}")
+                raise DocumentStateError(
+                    f"<data-table id={self.id!r}>: duplicate row-key {self.row_key_field!r} value {key!r}",
+                    location=self._location,
+                    attribute="row-key",
+                    value=key,
+                )
             keys.add(key)
             cells = tuple(
                 Text(
@@ -337,6 +344,7 @@ def build_data_table(context: BuildContext) -> SeededDataTable:
         striped=context.attributes["striped"],
         column_borders=context.attributes["column-borders"],
         resizable=context.attributes["resizable"],
+        location=context.location,
     )
 
 
