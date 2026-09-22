@@ -159,6 +159,20 @@ async def test_modal_can_reopen_immediately_after_its_result_resolves():
 
 
 @pytest.mark.asyncio
+async def test_modal_result_exposes_mount_completion_before_dismissal():
+    app = TextUI(DocumentLoader().from_string(MODAL_MARKUP), actions={"open_modal": lambda context: None, "choose": lambda context: None})
+    async with app.run_test() as pilot:
+        result = app.document.push_modal("pick")
+        await result.mounted
+        account_button = app.document.get_by_id("choose")
+        assert account_button.is_mounted
+        assert not result.done()
+        app.document.dismiss_modal("selected")
+        await pilot.pause()
+        assert await result == "selected"
+
+
+@pytest.mark.asyncio
 async def test_failed_modal_push_leaves_no_registered_modal_state(monkeypatch):
     """A synchronous screen-push failure must not poison the next real open."""
     app = TextUI(DocumentLoader().from_string(MODAL_MARKUP), actions={"open_modal": lambda context: None, "choose": lambda context: None})

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass
 from inspect import isawaitable
 from types import MappingProxyType
@@ -27,6 +27,12 @@ from .styling import apply_inline, commit_styles, prepare_styles, prepare_styles
 # A factory may not recycle an instance across bindings, even before mounting.
 _built_widgets: WeakSet[Widget] = WeakSet()
 COMPACT_WIDGET_TYPES = (Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TextArea)
+
+
+class ModalResult(asyncio.Future[object | None]):
+    """A modal dismissal future with a separate awaitable for its initial mount."""
+
+    mounted: Awaitable[object]
 
 
 def _walk(nodes: tuple[ElementNode, ...]) -> Iterable[ElementNode]:
@@ -240,7 +246,7 @@ class BoundDocument:
         if not isinstance(modal, MarkupModal):
             del self._compact_widgets[compact_start:]
             raise DocumentStateError(f'Element {modal_id!r} is not a modal')
-        future: asyncio.Future[object | None] = asyncio.get_running_loop().create_future()
+        future = ModalResult()
         owned_entries = {id(entry) for entries in bindings.values() for entry in entries}
 
         def remove_registrations() -> None:
@@ -273,7 +279,7 @@ class BoundDocument:
             self._bindings.setdefault(message_type, []).extend(entries)
         self._active_modal_ids.add(modal_id)
         try:
-            self.app.push_screen(modal, callback=dismissed)
+            future.mounted = self.app.push_screen(modal, callback=dismissed)
         except BaseException:
             remove_registrations()
             self._active_modal_ids.discard(modal_id)
