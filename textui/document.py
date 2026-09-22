@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from dataclasses import dataclass
 from inspect import isawaitable
 from types import MappingProxyType
@@ -27,6 +27,12 @@ from .styling import apply_inline, commit_styles, prepare_styles, prepare_styles
 # A factory may not recycle an instance across bindings, even before mounting.
 _built_widgets: WeakSet[Widget] = WeakSet()
 COMPACT_WIDGET_TYPES = (Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TextArea)
+
+
+class ModalResult(asyncio.Future[object | None]):
+    """A modal dismissal future with a separate awaitable for its initial mount."""
+
+    mounted: Awaitable[object]
 
 
 def _walk(nodes: tuple[ElementNode, ...]) -> Iterable[ElementNode]:
@@ -125,6 +131,7 @@ class BoundDocument:
         self._active_modal_ids: set[str] = set()
         self._preset_enabled = {block.preset: True for block in definition.styles if block.preset is not None}
         self._compact_widgets: list[Widget] = []
+        self._autofocus_widgets: list[Widget] = []
 
     def _apply_compact_preset(self, widget: Widget) -> None:
         """Use Textual's native compact state for controls that support it."""
@@ -156,6 +163,11 @@ class BoundDocument:
                 widget.id = node.common['id']
             widget.add_class(*node.common['classes'])
             widget.disabled = node.common['disabled']
+            if node.common['autofocus']:
+                if not widget.can_focus:
+                    raise ValueError('autofocus requires a focusable widget')
+                widget._textui_autofocus = True
+                self._autofocus_widgets.append(widget)
             self._apply_compact_preset(widget)
             command_name = getattr(widget, "_textui_command_name", None)
             if command_name is not None:
@@ -198,7 +210,18 @@ class BoundDocument:
             raise
         self._widgets, self._bindings = widgets, bindings
         self._state = 'prepared'
+        self.app.call_after_refresh(self._focus_autofocus)
         return iter(roots)
+
+    def _focus_autofocus(self) -> None:
+        self._focus_widgets(self._autofocus_widgets)
+
+    @staticmethod
+    def _focus_widgets(widgets: Iterable[Widget]) -> None:
+        for widget in reversed(tuple(widgets)):
+            if widget.is_mounted and widget.display:
+                widget.focus()
+                return
 
     def toggle_style_preset(self, name: str) -> bool:
         """Toggle a declared style preset and return whether it is now enabled."""
@@ -221,7 +244,7 @@ class BoundDocument:
         self.app.refresh_css(animate=False)
         return enabled
 
-    def push_modal(self, modal_id: str):
+    def push_modal(self, modal_id: str) -> ModalResult:
         """Push a declared modal and return a future resolved by dismissal."""
         node = self._modal_nodes.get(modal_id)
         if node is None:
@@ -240,7 +263,7 @@ class BoundDocument:
         if not isinstance(modal, MarkupModal):
             del self._compact_widgets[compact_start:]
             raise DocumentStateError(f'Element {modal_id!r} is not a modal')
-        future: asyncio.Future[object | None] = asyncio.get_running_loop().create_future()
+        future = ModalResult()
         owned_entries = {id(entry) for entries in bindings.values() for entry in entries}
 
         def remove_registrations() -> None:
@@ -256,6 +279,9 @@ class BoundDocument:
             for widget in compact_widgets:
                 if widget in self._compact_widgets:
                     self._compact_widgets.remove(widget)
+            for widget in widgets.values():
+                if widget in self._autofocus_widgets:
+                    self._autofocus_widgets.remove(widget)
 
         def finalize_dismissal(value: object | None) -> None:
             remove_registrations()
@@ -267,13 +293,16 @@ class BoundDocument:
             modal.set_dismissal_value(value)
 
         modal.set_unmount_callback(finalize_dismissal)
+        modal.set_mount_callback(lambda: self._focus_widgets(
+            widget for widget in widgets.values() if getattr(widget, '_textui_autofocus', False)
+        ))
 
         self._widgets.update(widgets)
         for message_type, entries in bindings.items():
             self._bindings.setdefault(message_type, []).extend(entries)
         self._active_modal_ids.add(modal_id)
         try:
-            self.app.push_screen(modal, callback=dismissed)
+            future.mounted = self.app.push_screen(modal, callback=dismissed)
         except BaseException:
             remove_registrations()
             self._active_modal_ids.discard(modal_id)

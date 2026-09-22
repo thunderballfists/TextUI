@@ -111,7 +111,7 @@ The low-level `DocumentLoader`, `Document.bind`, and `TextUI(Document, actions=.
 
 ## Modals
 
-Declare a root-level `<modal id="pick" dismissable="true">` with normal widget content. An action may await `context.push_modal("pick")`; call `context.dismiss_modal(value)` from a modal action to return a value. Escape dismisses a dismissable modal with `None`; a non-dismissable modal ignores Escape. Focus returns to the prior screen after dismissal.
+Declare a root-level `<modal id="pick" dismissable="true">` with normal widget content. `context.push_modal("pick")` returns a dismissal future with a `.mounted` awaitable. Await `.mounted` before looking up or populating runtime modal widgets; await the result itself only when waiting for dismissal. Call `context.dismiss_modal(value)` from a modal action to return a value. Escape dismisses a dismissable modal with `None`; a non-dismissable modal ignores Escape. Focus returns to the prior screen after dismissal.
 
 Each declared modal can be active once. Calling `push_modal("pick")` again before it closes raises `DocumentStateError`; distinct modal declarations may nest. A completed `push_modal()` await means the old modal screen has unmounted, so the same declaration can open again immediately. Dismissal removes the modal's public IDs and all of its event bindings, including anonymous and component-private controls. Cancelling the future returned by `push_modal()` does not dismiss its screen; later dismissal still releases its bindings.
 

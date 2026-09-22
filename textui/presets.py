@@ -15,6 +15,14 @@ Checkbox, Switch, RadioButton {
 }
 """
 
+FOCUS_TCSS = """
+Button:focus, Input:focus, Select:focus, TextArea:focus, Checkbox:focus,
+Switch:focus, RadioButton:focus, RadioSet:focus, DataTable:focus,
+Tree:focus, RuntimeList:focus {
+    outline: solid $accent;
+}
+"""
+
 BUTTON_BORDERS_TCSS = """
 Button {
     border: round $primary !important;

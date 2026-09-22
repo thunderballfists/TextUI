@@ -10,7 +10,7 @@ from textual.message import Message
 from textual.widget import Widget
 
 if TYPE_CHECKING:
-    from .document import BoundDocument
+    from .document import BoundDocument, ModalResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,7 +41,7 @@ class ActionContext:
     def cancelled(self) -> bool:
         return self._invocation.cancelled if self._invocation is not None else False
 
-    def push_modal(self, modal_id: str):
+    def push_modal(self, modal_id: str) -> ModalResult:
         """Push a declared modal and return its awaitable dismissal value."""
         return self.document.push_modal(modal_id)
 
