@@ -67,7 +67,7 @@ class Divider(Static):
 
 
 class Split(Container):
-    DEFAULT_CSS = "Split { width: 100%; height: 100%; }"
+    DEFAULT_CSS = "Split { width: 100%; height: 1fr; }"
 
     class Resized(Message):
         def __init__(self, split: Split, size: int) -> None:
