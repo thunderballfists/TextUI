@@ -18,9 +18,11 @@ from .document import BoundDocument
 from .errors import DocumentValidationError
 from .project import ProjectSource
 from .widgets.builtin_widgets import default_component_registry
+from .presets import FOCUS_TCSS
 
 
 class ProjectApp(App):
+    CSS = FOCUS_TCSS
     def __init__(self, source: ProjectSource, *, actions: Mapping[str, ActionCallback] | None = None, **app_options: Any) -> None:
         super().__init__(**app_options)
         self.source = source

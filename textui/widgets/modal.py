@@ -43,6 +43,7 @@ class MarkupModal(ModalScreen[object]):
         self._children = tuple(children)
         self.dismissable = dismissable
         self._dismissal_value: object | None = None
+        self._on_mount_callback: Callable[[], None] | None = None
         self._on_unmount_callback: Callable[[object | None], None] | None = None
 
     def compose(self) -> ComposeResult:
@@ -59,6 +60,14 @@ class MarkupModal(ModalScreen[object]):
     def set_unmount_callback(self, callback: Callable[[object | None], None]) -> None:
         """Register one owner cleanup callback for this screen's removal."""
         self._on_unmount_callback = callback
+
+    def set_mount_callback(self, callback: Callable[[], None]) -> None:
+        """Register work that requires the modal's children to be mounted."""
+        self._on_mount_callback = callback
+
+    def on_mount(self) -> None:
+        if self._on_mount_callback is not None:
+            self._on_mount_callback()
 
     def on_unmount(self) -> None:
         """Release document-owned state after normal dismissal or app shutdown."""
