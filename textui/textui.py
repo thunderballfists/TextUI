@@ -14,9 +14,11 @@ from .accelerators import activate_tab, install_tab_accelerators
 
 from .actions import ActionCallback
 from .document import Document
+from .presets import FOCUS_TCSS
 
 
 class TextUI(App):
+    CSS = FOCUS_TCSS
     def __init__(self, document: Document, *, actions: Mapping[str, ActionCallback] | None = None, **app_options: Any) -> None:
         super().__init__(**app_options)
         self.document = document.bind(self, actions={} if actions is None else actions)

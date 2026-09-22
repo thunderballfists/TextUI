@@ -4,6 +4,32 @@ from textual.widgets import Collapsible, ProgressBar, RadioButton, RadioSet, Rul
 from textui import DocumentLoader, DocumentValidationError, TextUI
 
 
+@pytest.mark.asyncio
+async def test_autofocus_moves_keyboard_focus_to_a_declared_control_after_mount():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <input id="prompt" autofocus="true" />
+      <button id="send">Send</button>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert app.focused is app.document.get_by_id("prompt")
+
+
+@pytest.mark.asyncio
+async def test_modal_autofocus_moves_focus_when_the_modal_is_revealed():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <button id="open" on-pressed="open_modal">Open</button>
+      <modal id="dialog"><input id="prompt" autofocus="true" /></modal>
+    </ui>'''), actions={"open_modal": lambda context: context.push_modal("dialog")})
+    async with app.run_test() as pilot:
+        assert await pilot.click("#open")
+        await pilot.pause()
+        assert app.focused is app.document.get_by_id("prompt")
+        app.document.dismiss_modal()
+        await pilot.pause()
+        assert app.document._autofocus_widgets == []
+
+
 MARKUP = '''<ui>
   <radio-set id="choice" on-changed="choose">
     <radio-button id="alpha">Alpha</radio-button>

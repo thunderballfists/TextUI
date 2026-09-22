@@ -131,6 +131,7 @@ class BoundDocument:
         self._active_modal_ids: set[str] = set()
         self._preset_enabled = {block.preset: True for block in definition.styles if block.preset is not None}
         self._compact_widgets: list[Widget] = []
+        self._autofocus_widgets: list[Widget] = []
 
     def _apply_compact_preset(self, widget: Widget) -> None:
         """Use Textual's native compact state for controls that support it."""
@@ -162,6 +163,11 @@ class BoundDocument:
                 widget.id = node.common['id']
             widget.add_class(*node.common['classes'])
             widget.disabled = node.common['disabled']
+            if node.common['autofocus']:
+                if not widget.can_focus:
+                    raise ValueError('autofocus requires a focusable widget')
+                widget._textui_autofocus = True
+                self._autofocus_widgets.append(widget)
             self._apply_compact_preset(widget)
             command_name = getattr(widget, "_textui_command_name", None)
             if command_name is not None:
@@ -204,7 +210,18 @@ class BoundDocument:
             raise
         self._widgets, self._bindings = widgets, bindings
         self._state = 'prepared'
+        self.app.call_after_refresh(self._focus_autofocus)
         return iter(roots)
+
+    def _focus_autofocus(self) -> None:
+        self._focus_widgets(self._autofocus_widgets)
+
+    @staticmethod
+    def _focus_widgets(widgets: Iterable[Widget]) -> None:
+        for widget in reversed(tuple(widgets)):
+            if widget.is_mounted and widget.display:
+                widget.focus()
+                return
 
     def toggle_style_preset(self, name: str) -> bool:
         """Toggle a declared style preset and return whether it is now enabled."""
@@ -262,6 +279,9 @@ class BoundDocument:
             for widget in compact_widgets:
                 if widget in self._compact_widgets:
                     self._compact_widgets.remove(widget)
+            for widget in widgets.values():
+                if widget in self._autofocus_widgets:
+                    self._autofocus_widgets.remove(widget)
 
         def finalize_dismissal(value: object | None) -> None:
             remove_registrations()
@@ -273,6 +293,9 @@ class BoundDocument:
             modal.set_dismissal_value(value)
 
         modal.set_unmount_callback(finalize_dismissal)
+        modal.set_mount_callback(lambda: self._focus_widgets(
+            widget for widget in widgets.values() if getattr(widget, '_textui_autofocus', False)
+        ))
 
         self._widgets.update(widgets)
         for message_type, entries in bindings.items():

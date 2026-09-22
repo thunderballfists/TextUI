@@ -20,7 +20,7 @@ from .widgets.structure import validate_control_structure
 
 _KEBAB = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*\Z")
 _ACTION = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
-_COMMON = frozenset({"id", "class", "style", "disabled"})
+_COMMON = frozenset({"id", "class", "style", "disabled", "autofocus"})
 
 
 class DocumentLoader:
@@ -148,7 +148,7 @@ class DocumentLoader:
                         location=location, attribute=name,
                     )
         attributes: dict[str, Any] = {}
-        common: dict[str, Any] = {"id": None, "classes": (), "style": None, "disabled": False}
+        common: dict[str, Any] = {"id": None, "classes": (), "style": None, "disabled": False, "autofocus": False}
         events: dict[str, str] = {}
         for name, raw in element.attrib.items():
             if not _KEBAB.fullmatch(name):
@@ -218,6 +218,10 @@ class DocumentLoader:
             common["classes"] = classes
         elif name == "disabled":
             common["disabled"] = self._convert(
+                AttributeSpec(boolean), raw, location, name
+            )
+        elif name == "autofocus":
+            common["autofocus"] = self._convert(
                 AttributeSpec(boolean), raw, location, name
             )
         else:

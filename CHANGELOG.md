@@ -34,6 +34,7 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- `autofocus="true"` for focusable controls, including component instances and newly opened modal controls, with default accent focus outlines.
 - Modal dismissal results now expose a `.mounted` awaitable for safely populating widgets after a modal opens.
 - Optional `target` and `supersede` lifecycle metadata for async actions and commands, including target loading/error state and shutdown cancellation.
 - Opt-in `<style preset="compact"/>` TCSS for dense native controls, including native borderless vertical compaction, normal project stylesheet override order, and runtime switching through `window.document.toggle_style_preset()`.
