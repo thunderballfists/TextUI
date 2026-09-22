@@ -12,7 +12,7 @@ from textual.app import App
 from textual.content import Content
 from textual.message import Message
 from textual.widget import Widget
-from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TextArea
+from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TabPane, TextArea
 
 from .actions import ActionCallback, ActionContext, ActionInvocation
 from .errors import (
@@ -219,9 +219,30 @@ class BoundDocument:
     @staticmethod
     def _focus_widgets(widgets: Iterable[Widget]) -> None:
         for widget in reversed(tuple(widgets)):
-            if widget.is_mounted and widget.display:
+            if widget.is_mounted and widget.display and BoundDocument._in_active_tabs(widget):
                 widget.focus()
                 return
+
+    @staticmethod
+    def _in_active_tabs(widget: Widget) -> bool:
+        """Return whether every tab pane containing a widget is active."""
+        current = widget.parent
+        while current is not None:
+            if isinstance(current, TabPane):
+                container = current.parent
+                while container is not None and not isinstance(container, TabbedContent):
+                    container = container.parent
+                if container is not None and container.active != current.id:
+                    return False
+            current = current.parent
+        return True
+
+    def _focus_autofocus_in_tab(self, pane: TabPane) -> None:
+        self._focus_widgets(
+            widget
+            for widget in self._autofocus_widgets
+            if any(ancestor is pane for ancestor in widget.ancestors)
+        )
 
     def toggle_style_preset(self, name: str) -> bool:
         """Toggle a declared style preset and return whether it is now enabled."""
@@ -430,6 +451,8 @@ class BoundDocument:
 
     async def dispatch(self, message: Message) -> bool:
         """Await one exact-type/identity action without altering native bubbling."""
+        if isinstance(message, TabbedContent.TabActivated):
+            self._focus_autofocus_in_tab(message.pane)
         for widget, event, name, node in self._bindings.get(type(message), ()):
             if event.source_widget(message) is not widget:
                 continue
