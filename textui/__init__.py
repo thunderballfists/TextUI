@@ -1,7 +1,7 @@
 """The strict, typed TextUI document definition API."""
 
 from .actions import ActionCallback, ActionContext
-from .document import BoundDocument, Document
+from .document import BoundDocument, Document, ModalResult
 from .textui import TextUI
 from .controllers import Command, action, command
 from .timers import every
@@ -54,6 +54,7 @@ __all__ = [
     "DocumentValidationError",
     "ElementNode",
     "ElementNotFoundError",
+    "ModalResult",
     "EventSpec",
     "RegistryError",
     "SourceLocation",

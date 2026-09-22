@@ -227,7 +227,7 @@ class BoundDocument:
         self.app.refresh_css(animate=False)
         return enabled
 
-    def push_modal(self, modal_id: str):
+    def push_modal(self, modal_id: str) -> ModalResult:
         """Push a declared modal and return a future resolved by dismissal."""
         node = self._modal_nodes.get(modal_id)
         if node is None:
