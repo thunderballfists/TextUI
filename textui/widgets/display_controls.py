@@ -6,7 +6,8 @@ from math import isfinite
 from textual.content import Content
 from textual.widgets import Collapsible, ProgressBar, RadioButton, RadioSet, Rule
 
-from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, enum
+from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, enum, integer
+from .range_control import RangeControl
 
 
 def finite_number(*, positive: bool = False):
@@ -57,6 +58,16 @@ def build_rule(context: BuildContext) -> Rule:
     )
 
 
+def build_range(context: BuildContext) -> RangeControl:
+    return RangeControl(
+        minimum=context.attributes["min"],
+        maximum=context.attributes["max"],
+        step=context.attributes["step"],
+        value=context.attributes["value"],
+        show_value=context.attributes["show-value"],
+    )
+
+
 def register_display_controls(registry: ComponentRegistry) -> None:
     registry.register(ComponentSpec(
         tag="radio-button", factory=build_radio_button, text_policy="text",
@@ -94,4 +105,15 @@ def register_display_controls(registry: ComponentRegistry) -> None:
             "orientation": AttributeSpec(enum("horizontal", "vertical"), default="horizontal"),
             "line-style": AttributeSpec(enum("ascii", "blank", "dashed", "double", "heavy", "hidden", "none", "solid", "thick"), default="solid"),
         },
+    ))
+    registry.register(ComponentSpec(
+        tag="range", factory=build_range,
+        attributes={
+            "min": AttributeSpec(integer(), default=0),
+            "max": AttributeSpec(integer(), default=100),
+            "step": AttributeSpec(integer(minimum=1), default=1),
+            "value": AttributeSpec(integer()),
+            "show-value": AttributeSpec(boolean, default=False),
+        },
+        events={"changed": EventSpec(RangeControl.Changed, lambda event: event.range_control)},
     ))

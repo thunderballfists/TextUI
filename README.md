@@ -74,6 +74,7 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `radio-button` | Text | Boolean `value` | `changed` |
 | `collapsible` | Widgets | `title`, boolean `collapsed` | `collapsed`, `expanded` |
 | `progress-bar` | None | Positive `total`, nonnegative `progress`, boolean `show-bar`, `show-percentage`, `show-eta` | None |
+| `range` | None | Integer `min`, `max`, positive `step`, optional aligned `value`, boolean `show-value` | `changed` |
 | `rule` | None | `orientation`, `line-style` | None |
 | `header`, `status-bar` | Optional `left`, `center`, and `right` slots | None | None |
 | `log` | None | Optional `max-lines`, boolean `auto-scroll`, `wrap`, and `highlight` | None |

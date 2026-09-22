@@ -32,6 +32,12 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         app.document.get_by_id("toggle-sidebar").press()
         await pilot.click(app.document.get_by_id("navigation").items[1])
         await pilot.pause()
+        volume = app.document.get_by_id("volume")
+        assert volume.value == 40
+        volume.focus()
+        await pilot.press("right")
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Volume: 45"
         await pilot.press("2")
         await pilot.pause()
         assert app.document.get_by_id("tabs").active == "details"
