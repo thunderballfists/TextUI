@@ -235,6 +235,26 @@ async def test_set_rows_without_row_key_uses_positional_keys():
 
 
 @pytest.mark.asyncio
+async def test_keyless_runtime_sort_keeps_records_bound_to_their_original_keys():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
+      <column key="name">Name</column><column key="count">Count</column>
+    </data-table></ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"name": "Zulu", "count": 2},
+            {"name": "Alpha", "count": 1},
+        ])
+        column = table.columns["name"]
+        table.post_message(DataTable.HeaderSelected(table, column.key, 0, column.label))
+        await pilot.pause()
+        table.post_message(DataTable.HeaderSelected(table, column.key, 0, column.label))
+        await pilot.pause()
+        assert table.get_record("0")["name"] == "Zulu"
+        assert table.get_record("1")["name"] == "Alpha"
+
+
+@pytest.mark.asyncio
 async def test_duplicate_runtime_row_key_names_the_table_and_markup_location():
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
       <column key="name">Name</column>

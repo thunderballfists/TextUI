@@ -34,6 +34,7 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- Runtime data tables without `row-key` now use stable positional keys for each replacement batch; declared duplicate keys report their table and markup source.
 - Opt-in data-table striping, vertical column borders, and keyboard or drag resizing, with headers and seeded cells honoring each column's alignment.
 - Native integer `<range>` controls with keyboard and pointer interaction, controller-settable values, changed events, and TCSS component classes.
 - Optional `target` and `supersede` lifecycle metadata for async actions and commands, including target loading/error state and shutdown cancellation.

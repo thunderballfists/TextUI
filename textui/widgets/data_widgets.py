@@ -252,6 +252,9 @@ class SeededDataTable(DataTable):
             )
             validated.append((key, MappingProxyType(dict(record)), cells))
 
+        self._replace_rows(validated)
+
+    def _replace_rows(self, validated: list[tuple[str, Mapping[str, object], tuple[Text, ...]]]) -> None:
         if self._sort_column is not None:
             validated.sort(
                 key=lambda row: self._sort_value(row[1][self._sort_column]),
@@ -284,7 +287,20 @@ class SeededDataTable(DataTable):
         if self._runtime_records:
             self._sort_column = column_key
             self._sort_reverse = reverse
-            self.set_rows(self._runtime_records.values())
+            if self.row_key_field is None:
+                self._replace_rows([
+                    (
+                        key,
+                        record,
+                        tuple(
+                            Text("" if record[column.key] is None else str(record[column.key]), justify=column.align)
+                            for column in self._seed_columns
+                        ),
+                    )
+                    for key, record in self._runtime_records.items()
+                ])
+            else:
+                self.set_rows(self._runtime_records.values())
         else:
             self.sort(
                 event.column_key,
