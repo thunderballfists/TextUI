@@ -42,6 +42,18 @@ def test_data_table_column_metadata_and_optional_runtime_key_lower():
     assert table.children[1].attributes["width"] == 8
 
 
+def test_data_table_display_options_lower_as_booleans():
+    document = DocumentLoader().from_string('''<ui>
+      <data-table id="usage" striped="true" column-borders="true" resizable="true">
+        <column key="requests" align="right">Requests</column>
+      </data-table>
+    </ui>''')
+    table = document.nodes[0]
+    assert table.attributes["striped"] is True
+    assert table.attributes["column-borders"] is True
+    assert table.attributes["resizable"] is True
+
+
 @pytest.mark.asyncio
 async def test_column_metadata_uses_literal_label_and_width():
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
@@ -51,6 +63,79 @@ async def test_column_metadata_uses_literal_label_and_width():
         column = app.document.get_by_id("usage").columns["requests"]
         assert column.label.plain == "Reqs"
         assert column.width == 8
+
+
+@pytest.mark.asyncio
+async def test_column_alignment_applies_to_titles_and_seeded_cells():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
+      <column key="requests" align="right" width="8">Requests</column>
+      <row key="today"><cell>42</cell></row>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        assert table.columns["requests"].label.justify == "right"
+        assert table.get_cell("today", "requests").justify == "right"
+
+
+@pytest.mark.asyncio
+async def test_column_borders_render_between_headers_and_cells():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" column-borders="true">
+      <column key="name">Name</column><column key="state">State</column>
+      <row key="today"><cell>Alpha</cell><cell>Ready</cell></row>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        assert "│" in table.render_line(0).text
+        assert "│" in table.render_line(1).text
+
+
+@pytest.mark.asyncio
+async def test_resizable_table_supports_keyboard_and_drag_without_sorting():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
+      <column key="name" width="8">Name</column><column key="state" width="8">State</column>
+      <row key="zulu"><cell>Zulu</cell><cell>Ready</cell></row>
+      <row key="alpha"><cell>Alpha</cell><cell>Queued</cell></row>
+    </data-table></ui>'''))
+    async with app.run_test(size=(40, 8)) as pilot:
+        table = app.document.get_by_id("usage")
+        first = table.columns["name"]
+        table.focus()
+        await pilot.press("ctrl+right")
+        await pilot.pause()
+        assert first.width == 9
+
+        edge = first.get_render_width(table) - 1
+        await pilot.mouse_down(table, offset=(edge, 0))
+        end = (table.region.x + edge + 4, table.region.y)
+        await pilot.hover(offset=end)
+        await pilot.mouse_up(offset=end)
+        await pilot.pause()
+        assert first.width == 13
+        assert [key.value for key in table.rows] == ["zulu", "alpha"]
+
+
+@pytest.mark.asyncio
+async def test_resizing_a_narrow_fixed_width_column_never_enlarges_it():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
+      <column key="id" width="2">ID</column>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.resize_column(0, -1)
+        assert table.columns["id"].width == 2
+
+
+@pytest.mark.asyncio
+async def test_frozen_column_resize_edge_does_not_move_with_horizontal_scroll():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
+      <column key="id" width="8">ID</column><column key="name" width="20">Name</column>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.fixed_columns = 1
+        expected = table._row_label_column_width + table.ordered_columns[0].get_render_width(table) - 1
+        table.scroll_x = 4
+        assert table._header_right_edge(0) == expected
 
 
 @pytest.mark.parametrize("markup", [
@@ -116,37 +201,68 @@ async def test_set_rows_rejects_invalid_batch_without_changing_current_rows():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("rows", "match"), [
-    ([{"name": "Missing"}], "invalid 'id'"),
-    ([{"id": None, "name": "None"}], "invalid 'id'"),
-    ([{"id": "", "name": "Empty"}], "invalid 'id'"),
-    ([{"id": 1, "name": "Numeric"}], "invalid 'id'"),
-    ([{"id": "duplicate", "name": "One"}, {"id": "duplicate", "name": "Two"}], "duplicate row key"),
-    (["not a mapping"], "must be a mapping"),
+@pytest.mark.parametrize(("rows", "error", "match"), [
+    ([{"name": "Missing"}], ValueError, "invalid 'id'"),
+    ([{"id": None, "name": "None"}], ValueError, "invalid 'id'"),
+    ([{"id": "", "name": "Empty"}], ValueError, "invalid 'id'"),
+    ([{"id": 1, "name": "Numeric"}], ValueError, "invalid 'id'"),
+    ([{"id": "duplicate", "name": "One"}, {"id": "duplicate", "name": "Two"}], DocumentStateError, "duplicate row-key"),
+    (["not a mapping"], ValueError, "must be a mapping"),
 ])
-async def test_set_rows_rejects_invalid_runtime_keys_without_replacing_rows(rows, match):
+async def test_set_rows_rejects_invalid_runtime_keys_without_replacing_rows(rows, error, match):
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
       <column key="name">Name</column>
     </data-table></ui>'''))
     async with app.run_test():
         table = app.document.get_by_id("usage")
         table.set_rows([{"id": "current", "name": "Current"}])
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(error, match=match):
             table.set_rows(rows)
         assert [key.value for key in table.rows] == ["current"]
         assert table.get_cell("current", "name").plain == "Current"
 
 
 @pytest.mark.asyncio
-async def test_set_rows_requires_declared_row_key():
+async def test_set_rows_without_row_key_uses_positional_keys():
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
       <column key="name">Name</column><row key="seed"><cell>Seed</cell></row>
     </data-table></ui>'''))
     async with app.run_test():
         table = app.document.get_by_id("usage")
-        with pytest.raises(DocumentStateError, match="row-key"):
-            table.set_rows([{"id": "new", "name": "New"}])
-        assert table.get_cell("seed", "name").plain == "Seed"
+        table.set_rows([{"name": "New"}, {"name": "Next"}])
+        assert [key.value for key in table.rows] == ["0", "1"]
+        assert table.get_cell("0", "name").plain == "New"
+
+
+@pytest.mark.asyncio
+async def test_keyless_runtime_sort_keeps_records_bound_to_their_original_keys():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage">
+      <column key="name">Name</column><column key="count">Count</column>
+    </data-table></ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"name": "Zulu", "count": 2},
+            {"name": "Alpha", "count": 1},
+        ])
+        column = table.columns["name"]
+        table.post_message(DataTable.HeaderSelected(table, column.key, 0, column.label))
+        await pilot.pause()
+        table.post_message(DataTable.HeaderSelected(table, column.key, 0, column.label))
+        await pilot.pause()
+        assert table.get_record("0")["name"] == "Zulu"
+        assert table.get_record("1")["name"] == "Alpha"
+
+
+@pytest.mark.asyncio
+async def test_duplicate_runtime_row_key_names_the_table_and_markup_location():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name">Name</column>
+    </data-table></ui>''', source_name="app.ui"))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        with pytest.raises(DocumentStateError, match=r"app\.ui.*usage.*duplicate row-key 'id' value 'same'"):
+            table.set_rows([{"id": "same", "name": "One"}, {"id": "same", "name": "Two"}])
 
 
 @pytest.mark.asyncio

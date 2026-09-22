@@ -15,6 +15,7 @@ from .nodes import ElementNode, StyleBlock
 from .presets import style_preset
 from .registry import AttributeSpec, ComponentRegistry, UNSET, boolean
 from .widgets.builtin_widgets import default_component_registry
+from .widgets.display_controls import build_range
 from .widgets.navigation import validate_navigation_targets
 from .widgets.structure import validate_control_structure
 
@@ -174,6 +175,8 @@ class DocumentLoader:
             default = attribute_spec.value_or_default()
             if default is not UNSET:
                 attributes[name] = default
+        if spec.factory is build_range and "value" not in attributes:
+            attributes["value"] = attributes["min"]
         children = tuple(self._children(element, source_name, identifiers, spec.child_policy, location, sources, private_ids))
         if spec.text_policy in {"text", "verbatim"}:
             if any(not isinstance(child, etree._Comment) for child in element):

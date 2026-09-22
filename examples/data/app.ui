@@ -4,7 +4,7 @@
   <vertical id="demo">
     <label>Runtime table, seeded table, and tree</label>
     <horizontal id="data-panels">
-      <data-table id="usage" row-key="record_id" cursor-type="row" on-row-selected="usage_selected">
+      <data-table id="usage" row-key="record_id" cursor-type="row" striped="true" column-borders="true" resizable="true" on-row-selected="usage_selected">
         <column key="date" label="Date" />
         <column key="requests" label="Requests" align="right" width="10" />
         <column key="cost_usd" label="Cost" align="right" width="8" />

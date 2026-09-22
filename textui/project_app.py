@@ -10,6 +10,7 @@ from textual.widgets import Button, Checkbox, Collapsible, DataTable, Input, Rad
 from .widgets.split import Split
 from .widgets.navigation import Nav
 from .widgets.runtime_list import RuntimeList
+from .widgets.range_control import RangeControl
 from .accelerators import activate_tab, install_tab_accelerators, tab_accelerators
 
 from .actions import ActionCallback
@@ -146,6 +147,7 @@ class ProjectApp(App):
     @on(DataTable.CellSelected)
     @on(Tree.NodeSelected)
     @on(RuntimeList.ItemSelected)
-    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded | DataTable.RowSelected | DataTable.CellSelected | Tree.NodeSelected | RuntimeList.ItemSelected) -> None:
+    @on(RangeControl.Changed)
+    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded | DataTable.RowSelected | DataTable.CellSelected | Tree.NodeSelected | RuntimeList.ItemSelected | RangeControl.Changed) -> None:
         if self.document is not None:
             await self.document.dispatch(event)

@@ -32,6 +32,12 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         app.document.get_by_id("toggle-sidebar").press()
         await pilot.click(app.document.get_by_id("navigation").items[1])
         await pilot.pause()
+        volume = app.document.get_by_id("volume")
+        assert volume.value == 40
+        volume.focus()
+        await pilot.press("right")
+        await pilot.pause()
+        assert str(app.document.get_by_id("feedback").render()) == "Volume: 45"
         await pilot.press("2")
         await pilot.pause()
         assert app.document.get_by_id("tabs").active == "details"
@@ -42,6 +48,13 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         app.document.get_by_id("refresh-usage").press()
         await pilot.pause()
         assert usage.get_cell("2026-09-19-alpha", "requests").plain == "42"
+        assert usage.zebra_stripes is True
+        assert usage.column_borders is True
+        assert usage.resizable is True
+        usage.focus()
+        await pilot.press("ctrl+right")
+        await pilot.pause()
+        assert usage.columns["date"].auto_width is False
         usage.focus()
         await pilot.press("enter")
         await pilot.pause()

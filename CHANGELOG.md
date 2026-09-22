@@ -29,6 +29,7 @@ All notable changes to TextUI are documented here.
 
 ### Changed
 
+- Splits now consume the remaining height in structural application shells, leaving header and status-bar space without custom height rules.
 - Compound-control validation now rejects unreachable nested radio-button events while preserving custom registry components that reuse built-in tag names.
 - Runtime-list `item-label` patterns now require every replacement field to be a direct mapping key, including nested format specifications.
 
@@ -36,6 +37,9 @@ All notable changes to TextUI are documented here.
 
 - `autofocus="true"` for focusable controls, including component instances and newly opened modal controls, with default accent focus outlines.
 - Modal dismissal results now expose a `.mounted` awaitable for safely populating widgets after a modal opens.
+- Runtime data tables without `row-key` now use stable positional keys for each replacement batch; declared duplicate keys report their table and markup source.
+- Opt-in data-table striping, vertical column borders, and keyboard or drag resizing, with headers and seeded cells honoring each column's alignment.
+- Native integer `<range>` controls with keyboard and pointer interaction, controller-settable values, changed events, and TCSS component classes.
 - Optional `target` and `supersede` lifecycle metadata for async actions and commands, including target loading/error state and shutdown cancellation.
 - Opt-in `<style preset="compact"/>` TCSS for dense native controls, including native borderless vertical compaction, normal project stylesheet override order, and runtime switching through `window.document.toggle_style_preset()`.
 - Opt-in `<style preset="borders"/>` TCSS for rounded and double Unicode button outlines, independently switchable at runtime.

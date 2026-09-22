@@ -39,6 +39,7 @@
                 <radio-set id="priority" on-changed="priority_changed"><radio-button id="low">Low</radio-button><radio-button id="high" value="true">High</radio-button></radio-set>
                 <rule line-style="dashed" />
                 <progress-bar id="progress" total="100" progress="40" show-eta="false" />
+                <range id="volume" min="0" max="100" step="5" value="40" show-value="true" on-changed="volume_changed" />
               </tab-pane>
               <tab-pane id="details" title="Details" accelerator="2" accelerator-scope="document">
                 <collapsible id="details-panel" title="Native disclosure" collapsed="true" on-expanded="details_expanded" on-collapsed="details_collapsed"><label>Use the mouse or keyboard to expand this section.</label></collapsible>
@@ -46,8 +47,8 @@
             </tabbed-content>
           </vertical>
           <vertical id="data">
-            <label>Runtime API records — click a heading to sort</label>
-            <data-table id="usage" row-key="record_id" cursor-type="row" on-row-selected="usage_selected">
+            <label>Runtime API records — click a heading to sort or drag a divider to resize</label>
+            <data-table id="usage" row-key="record_id" cursor-type="row" striped="true" column-borders="true" resizable="true" on-row-selected="usage_selected">
               <column key="date" label="Date" />
               <column key="requests" label="Requests" align="right" width="10" />
               <column key="cost_usd" label="Cost" align="right" width="8" />

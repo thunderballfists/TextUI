@@ -80,6 +80,10 @@ def priority_changed(context) -> None: _feedback(f"Priority: {context.event.pres
 
 
 @action
+def volume_changed(context) -> None: _feedback(f"Volume: {context.event.value}")
+
+
+@action
 def details_expanded() -> None: _feedback("Details expanded")
 
 

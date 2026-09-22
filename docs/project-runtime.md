@@ -117,6 +117,8 @@ Each declared modal can be active once. Calling `push_modal("pick")` again befor
 
 Use `<split direction="horizontal">` with exactly two `<pane>` children. A pane can set `size` for its initial width (or height in a vertical split) and `min-size` for its lower bound. Drag the divider with the mouse or focus it and press arrow keys. Setting a pane's Textual `display` property to `False` hides it; setting it back to `True` restores the stored size. The split publishes `resized` and `toggled` events to `on-resized` and `on-toggled` actions.
 
+A split fills the remaining height of its structural parent by default, so a `<vertical>` shell can place a `<header>`, split body, and `<status-bar>` without hand-written height rules. Set an explicit height only when the body is intentionally fixed.
+
 Use `<nav on-selected="show_page">` with `<nav-item target="home">Home</nav-item>` children. Each target must name a direct child of a `<content-switcher>`. The selected event carries `context.event.target`; an action can switch the native content area:
 
 ```python
@@ -162,7 +164,7 @@ def usage_selected(context):
     record = window.document.get_by_id("usage").get_record(context.event.row_key.value)
 ```
 
-`set_rows()` accepts a complete iterable of mappings and changes no rows until all records validate. Each record needs every declared column and a unique, non-empty string record key. `None` cells display empty, while extra record fields remain accessible through read-only `get_record()` results. Each heading highlights independently under the mouse. Click a column heading to sort ascending and click again to reverse it; the active header uses a full-cell background and shows an `↑` or `↓` indicator. Runtime records use their original values so numbers retain numeric order, and later `set_rows()` refreshes retain the active sort. Refreshing keeps the selected row and column when its key remains; an absent key or an empty batch uses the native first-cell fallback. Static seed rows and direct native `add_row()` calls continue to work without `row-key`, with displayed literal values used for header sorting.
+`set_rows()` accepts a complete iterable of mappings and changes no rows until all records validate. Each record needs every declared column. A declared `row-key` must be a unique, non-empty string and preserves the cursor across refreshes; duplicate keys identify the table and source attribute in the error. Without `row-key`, TextUI uses zero-based positional keys for the replacement batch. `None` cells display empty, while extra record fields remain accessible through read-only `get_record()` results. Each heading highlights independently under the mouse. Click a column heading to sort ascending and click again to reverse it; the active header uses a full-cell background and shows an `↑` or `↓` indicator. Runtime records use their original values so numbers retain numeric order, and later `set_rows()` refreshes retain the active sort. Refreshing keeps the selected row and column when its key remains; an absent key or an empty batch uses the native first-cell fallback. Static seed rows and direct native `add_row()` calls continue to work without `row-key`, with displayed literal values used for header sorting.
 
 ## Runtime lists
 

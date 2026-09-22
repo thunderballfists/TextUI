@@ -40,12 +40,15 @@ Each pane needs an ID and title. `initial` must name one of those panes; without
   <label>Additional information</label>
 </collapsible>
 <progress-bar id="work" total="100" progress="25" show-eta="false" />
+<range id="volume" min="0" max="100" step="5" value="40" show-value="true" on-changed="volume_changed" />
 <rule orientation="horizontal" line-style="dashed" />
 ```
 
 A radio set needs direct radio-button children and allows at most one initially selected button. Put `on-changed` on the set: its event provides `context.event.pressed` and `context.event.index`. A standalone radio button supports `on-changed`, but a button inside a set cannot declare events because Textual consumes its change message. Collapsible content uses native pointer and Enter-key toggling. Use `on-collapsed` and `on-expanded` for its two exact native message types.
 
-Progress values are finite numbers. `total` must be positive when supplied, `progress` cannot be negative or exceed a declared total, and omitted `total` creates an indeterminate bar. Controller code can call `window.document.get_by_id("work").update(advance=5)`. A rule can be horizontal or vertical and accepts Textual line styles such as `solid`, `dashed`, `heavy`, and `double`. The [Indicators tab](../examples/controls/app.ui) demonstrates these widgets together.
+Progress values are finite numbers. `total` must be positive when supplied, `progress` cannot be negative or exceed a declared total, and omitted `total` creates an indeterminate bar. Controller code can call `window.document.get_by_id("work").update(advance=5)`.
+
+`<range>` is an integer slider. It defaults to `min="0"`, `max="100"`, `step="1"`, and a value equal to `min`. Its bounds must satisfy `min &lt; max`, and the step must divide the span so Home and End always reach exact bounds. Values must be within those bounds and aligned to the step. Arrow keys adjust by one step; Home and End set the bounds; mouse clicks and drags choose a value. Set `show-value="true"` to render the number. Controller code can read or assign `window.document.get_by_id("volume").value`; each change emits `context.event.value`. Style `RangeControl` or its `range--track`, `range--filled`, `range--thumb`, and `range--value` component classes in TCSS. A rule can be horizontal or vertical and accepts Textual line styles such as `solid`, `dashed`, `heavy`, and `double`. The [Indicators tab](../examples/controls/app.ui) demonstrates these widgets together.
 
 ## Tables and trees
 
@@ -71,10 +74,14 @@ After mounting, use native APIs: `window.document.get_by_id("jobs").add_row("Dep
 For API records that replace a complete table, declare a `row-key` field and column metadata:
 
 ```xml
-<data-table id="usage" row-key="record_id" on-row-selected="usage_selected">
+<data-table id="usage" row-key="record_id" striped="true" column-borders="true" resizable="true" on-row-selected="usage_selected">
   <column key="date" label="Date" />
   <column key="requests" label="Requests" align="right" width="10" />
 </data-table>
 ```
 
-`label` overrides a column's literal body text; `align` accepts `left`, `center`, or `right`; and `width` is a positive native column width. Each heading has its own hover highlight. Click a column heading to sort ascending; click it again to reverse the order. The active heading uses a full-cell background and shows an `↑` or `↓` indicator, so leave room for it when using a fixed width. Runtime rows sort by their original values, so numeric fields remain numeric; seeded and manually added literal cells sort by their displayed values. Call `set_rows(records)` only after mounting. Every record must be a mapping with a non-empty string in the declared `row-key` field and every declared column key. TextUI validates the full batch before changing rows, renders `None` as an empty literal cell, and retains extra fields without adding columns. `get_record(row_key)` returns the read-only source record for the current batch and raises `KeyError` when absent. A refresh retains the active sort and cursor when its row key remains; otherwise the native cursor returns to the first cell. The [data example](../examples/data/app.ui) shows this runtime pattern beside seeded table and tree updates.
+`label` overrides a column's literal body text; `align` accepts `left`, `center`, or `right`; and `width` is a positive native column width. Alignment applies to headings and seeded or runtime cells. Each heading has its own hover highlight. Click a column heading to sort ascending; click it again to reverse the order. The active heading uses a full-cell background and shows an `↑` or `↓` indicator, so leave room for it when using a fixed width.
+
+Set `striped="true"` for alternating row backgrounds; style native `datatable--odd-row` and `datatable--even-row` parts in TCSS to adjust the colors. Set `column-borders="true"` to draw vertical separators between headings and cells; style `table--column-border` to adjust their color. Set `resizable="true"` to allow dragging a heading's right edge. With table focus, `Ctrl+Left` and `Ctrl+Right` shrink or grow the current column. A dragged automatic column becomes a fixed width; widths never shrink below three cells. Divider interaction does not sort the table.
+
+Runtime rows sort by their original values, so numeric fields remain numeric; seeded and manually added literal cells sort by their displayed values. Call `set_rows(records)` only after mounting. Every record must be a mapping with a non-empty string in the declared `row-key` field and every declared column key. TextUI validates the full batch before changing rows, renders `None` as an empty literal cell, and retains extra fields without adding columns. `get_record(row_key)` returns the read-only source record for the current batch and raises `KeyError` when absent. A refresh retains the active sort and cursor when its row key remains; otherwise the native cursor returns to the first cell. The [data example](../examples/data/app.ui) shows this runtime pattern beside seeded table and tree updates.

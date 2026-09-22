@@ -5,12 +5,17 @@ from collections.abc import Iterable, Mapping
 from numbers import Real
 from types import MappingProxyType
 
+from rich.segment import Segment
+from rich.style import Style
 from rich.text import Text
+from textual import events
+from textual.binding import Binding
 from textual.coordinate import Coordinate
+from textual.events import MouseDown, MouseUp
 from textual.widget import Widget
 from textual.widgets import DataTable, Tree
 
-from ..errors import DocumentStateError
+from ..errors import DocumentStateError, SourceLocation
 from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, enum, integer
 
 
@@ -52,6 +57,11 @@ class TreeSeedNode(Widget):
 
 
 class SeededDataTable(DataTable):
+    BINDINGS = DataTable.BINDINGS + [
+        Binding("ctrl+left", "resize_column_smaller", "Shrink column", show=False),
+        Binding("ctrl+right", "resize_column_larger", "Grow column", show=False),
+    ]
+    COMPONENT_CLASSES = DataTable.COMPONENT_CLASSES | {"table--column-border"}
     DEFAULT_CSS = """
     SeededDataTable:focus > .datatable--header {
         background: $panel;
@@ -66,6 +76,15 @@ class SeededDataTable(DataTable):
         color: $foreground;
         text-style: bold;
     }
+    SeededDataTable > .datatable--odd-row {
+        background: $surface-darken-1;
+    }
+    SeededDataTable > .datatable--even-row {
+        background: $surface;
+    }
+    SeededDataTable > .table--column-border {
+        color: $primary 45%;
+    }
     """
 
     def __init__(
@@ -75,30 +94,133 @@ class SeededDataTable(DataTable):
         *,
         cursor_type: str,
         row_key: str | None,
+        striped: bool,
+        column_borders: bool,
+        resizable: bool,
+        location: SourceLocation,
     ) -> None:
-        super().__init__(cursor_type=cursor_type)
+        super().__init__(cursor_type=cursor_type, zebra_stripes=striped)
         self._seed_columns = columns
         self._seed_rows = rows
         self.row_key_field = row_key
+        self.column_borders = column_borders
+        self.resizable = resizable
+        self._location = location
         self._runtime_records: dict[str, Mapping[str, object]] = {}
         self._sort_column: str | None = None
         self._sort_reverse = False
         self._header_labels: dict[str, Text] = {}
         self._seeded = False
+        self._resize_drag: tuple[int, int, int] | None = None
+        self._suppress_header_click = False
 
     def on_mount(self) -> None:
         if self._seeded:
             return
         for column in self._seed_columns:
-            self.add_column(Text(column.label), width=column.width, key=column.key)
+            self.add_column(Text(column.label, justify=column.align), width=column.width, key=column.key)
         for row in self._seed_rows:
-            self.add_row(*(Text(cell) for cell in row.cells), key=row.key)
+            self.add_row(
+                *(Text(cell, justify=column.align) for cell, column in zip(row.cells, self._seed_columns)),
+                key=row.key,
+            )
         self._seeded = True
 
-    def set_rows(self, rows: Iterable[Mapping[str, object]]) -> None:
-        if self.row_key_field is None:
-            raise DocumentStateError("set_rows requires a data-table row-key")
+    def action_resize_column_smaller(self) -> None:
+        self.resize_column(self.cursor_column, -1)
 
+    def action_resize_column_larger(self) -> None:
+        self.resize_column(self.cursor_column, 1)
+
+    def resize_column(self, column_index: int, delta: int) -> None:
+        if not self.resizable or not 0 <= column_index < len(self.columns):
+            return
+        column = self.ordered_columns[column_index]
+        width = column.content_width if column.auto_width else column.width
+        self._set_column_width(column_index, width + delta)
+
+    def _set_column_width(self, column_index: int, width: int) -> None:
+        column = self.ordered_columns[column_index]
+        minimum_width = 3 if column.auto_width else min(3, column.width)
+        width = max(minimum_width, width)
+        if not column.auto_width and column.width == width:
+            return
+        column.width = width
+        column.auto_width = False
+        self._require_update_dimensions = True
+        self._update_count += 1
+        self.check_idle()
+        self.refresh()
+
+    def _header_right_edge(self, column_index: int) -> int:
+        scroll_offset = 0 if column_index < self.fixed_columns else int(self.scroll_x)
+        return self._row_label_column_width + sum(
+            column.get_render_width(self)
+            for column in self.ordered_columns[: column_index + 1]
+        ) - 1 - scroll_offset
+
+    def on_mouse_down(self, event: MouseDown) -> None:
+        if not self.resizable or self.disabled or event.button != 1:
+            return
+        metadata = event.style.meta
+        column_index = metadata.get("column")
+        if metadata.get("row") != -1 or not isinstance(column_index, int):
+            return
+        if abs(event.x - self._header_right_edge(column_index)) > 1:
+            return
+        column = self.ordered_columns[column_index]
+        width = column.content_width if column.auto_width else column.width
+        self._resize_drag = (column_index, width, event.x)
+        self._suppress_header_click = True
+        self.capture_mouse()
+        event.stop()
+
+    def _on_mouse_move(self, event: events.MouseMove) -> None:
+        if self._resize_drag is None:
+            super()._on_mouse_move(event)
+            return
+        column_index, width, start_x = self._resize_drag
+        self._set_column_width(column_index, width + event.x - start_x)
+        event.stop()
+
+    def on_mouse_up(self, event: MouseUp) -> None:
+        if self._resize_drag is not None:
+            self._resize_drag = None
+            self.release_mouse()
+            event.stop()
+
+    async def _on_click(self, event: events.Click) -> None:
+        if self._suppress_header_click:
+            self._suppress_header_click = False
+            event.stop()
+            return
+        await super()._on_click(event)
+
+    def _render_cell(self, *args, **kwargs):
+        lines = super()._render_cell(*args, **kwargs)
+        column_index = args[1]
+        if not self.column_borders or column_index < 0 or column_index == len(self.columns) - 1:
+            return lines
+        border_style = self.get_component_rich_style("table--column-border")
+        return [self._with_column_border(line, border_style) for line in lines]
+
+    @staticmethod
+    def _with_column_border(line: list[Segment], border_style: Style) -> list[Segment]:
+        bordered = list(line)
+        for index in range(len(bordered) - 1, -1, -1):
+            segment = bordered[index]
+            if not segment.text:
+                continue
+            prefix, _ = segment.text[:-1], segment.text[-1]
+            replacement = []
+            if prefix:
+                replacement.append(Segment(prefix, segment.style, segment.control))
+            replacement.append(Segment("│", (segment.style or Style()) + border_style, segment.control))
+            bordered[index:index + 1] = replacement
+            break
+        return bordered
+
+    def set_rows(self, rows: Iterable[Mapping[str, object]]) -> None:
         validated: list[tuple[str, Mapping[str, object], tuple[Text, ...]]] = []
         keys: set[str] = set()
         for index, record in enumerate(rows):
@@ -107,11 +229,19 @@ class SeededDataTable(DataTable):
             missing = [column.key for column in self._seed_columns if column.key not in record]
             if missing:
                 raise ValueError(f"row {index} is missing column {missing[0]!r}")
-            key = record.get(self.row_key_field)
-            if not isinstance(key, str) or not key:
-                raise ValueError(f"row {index} has an invalid {self.row_key_field!r}")
+            if self.row_key_field is None:
+                key = str(index)
+            else:
+                key = record.get(self.row_key_field)
+                if not isinstance(key, str) or not key:
+                    raise ValueError(f"row {index} has an invalid {self.row_key_field!r}")
             if key in keys:
-                raise ValueError(f"duplicate row key {key!r}")
+                raise DocumentStateError(
+                    f"<data-table id={self.id!r}>: duplicate row-key {self.row_key_field!r} value {key!r}",
+                    location=self._location,
+                    attribute="row-key",
+                    value=key,
+                )
             keys.add(key)
             cells = tuple(
                 Text(
@@ -122,6 +252,9 @@ class SeededDataTable(DataTable):
             )
             validated.append((key, MappingProxyType(dict(record)), cells))
 
+        self._replace_rows(validated)
+
+    def _replace_rows(self, validated: list[tuple[str, Mapping[str, object], tuple[Text, ...]]]) -> None:
         if self._sort_column is not None:
             validated.sort(
                 key=lambda row: self._sort_value(row[1][self._sort_column]),
@@ -154,7 +287,20 @@ class SeededDataTable(DataTable):
         if self._runtime_records:
             self._sort_column = column_key
             self._sort_reverse = reverse
-            self.set_rows(self._runtime_records.values())
+            if self.row_key_field is None:
+                self._replace_rows([
+                    (
+                        key,
+                        record,
+                        tuple(
+                            Text("" if record[column.key] is None else str(record[column.key]), justify=column.align)
+                            for column in self._seed_columns
+                        ),
+                    )
+                    for key, record in self._runtime_records.items()
+                ])
+            else:
+                self.set_rows(self._runtime_records.values())
         else:
             self.sort(
                 event.column_key,
@@ -211,6 +357,10 @@ def build_data_table(context: BuildContext) -> SeededDataTable:
         rows,
         cursor_type=context.attributes["cursor-type"],
         row_key=context.attributes.get("row-key"),
+        striped=context.attributes["striped"],
+        column_borders=context.attributes["column-borders"],
+        resizable=context.attributes["resizable"],
+        location=context.location,
     )
 
 
@@ -279,6 +429,9 @@ def register_data_widgets(registry: ComponentRegistry) -> None:
         attributes={
             "cursor-type": AttributeSpec(enum("cell", "row", "column", "none"), default="row"),
             "row-key": AttributeSpec(nonempty_key),
+            "striped": AttributeSpec(boolean, default=False),
+            "column-borders": AttributeSpec(boolean, default=False),
+            "resizable": AttributeSpec(boolean, default=False),
         },
         events={
             "row-selected": EventSpec(DataTable.RowSelected, lambda event: event.data_table),

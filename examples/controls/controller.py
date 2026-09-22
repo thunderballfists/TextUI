@@ -31,6 +31,11 @@ def priority_changed(context) -> None:
 
 
 @action
+def volume_changed(context) -> None:
+    _feedback(f"Volume: {context.event.value}")
+
+
+@action
 def details_collapsed() -> None:
     _feedback("Details collapsed")
 
