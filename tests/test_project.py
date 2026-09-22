@@ -126,7 +126,7 @@ def test_project_expands_component_properties_slots_and_private_ids(tmp_path: Pa
     )
     (tmp_path / "app.ui").write_text(
         "<ui><component src=\"components/card.ui\" as=\"agent-card\"/>"
-        "<agent-card id=\"alpha\" name=\"Alpha\" class=\"selected\">"
+        "<agent-card id=\"alpha\" name=\"Alpha\" class=\"selected\" autofocus=\"true\">"
         "<slot name=\"actions\"><button on-pressed=\"open_alpha\">Open</button></slot>"
         "</agent-card><agent-card id=\"beta\" name=\"Beta\"/></ui>",
         encoding="utf-8",
@@ -136,6 +136,7 @@ def test_project_expands_component_properties_slots_and_private_ids(tmp_path: Pa
     alpha, beta = document.nodes
     assert alpha.common["id"] == "alpha"
     assert alpha.common["classes"] == ("card", "selected")
+    assert alpha.common["autofocus"] is True
     assert alpha.children[0].common["id"].startswith("__component_1_")
     assert alpha.children[0].text == "Alpha"
     assert alpha.children[1].text == "Unknown"

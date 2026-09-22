@@ -25,6 +25,9 @@ async def test_modal_autofocus_moves_focus_when_the_modal_is_revealed():
         assert await pilot.click("#open")
         await pilot.pause()
         assert app.focused is app.document.get_by_id("prompt")
+        app.document.dismiss_modal()
+        await pilot.pause()
+        assert app.document._autofocus_widgets == []
 
 
 MARKUP = '''<ui>

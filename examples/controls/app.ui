@@ -5,7 +5,7 @@
     <label>Native form controls</label>
     <tabbed-content id="tabs" initial="form" on-tab-activated="tab_changed">
       <tab-pane id="form" title="Form">
-        <select id="status" prompt="Status" value="new" allow-blank="false" on-changed="status_changed">
+        <select id="status" autofocus="true" prompt="Status" value="new" allow-blank="false" on-changed="status_changed">
           <option value="new">New</option>
           <option value="done">Done</option>
         </select>

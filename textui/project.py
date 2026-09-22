@@ -19,7 +19,7 @@ from .widgets.structure import validate_control_structure
 
 _KEBAB = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*\Z")
 _PLACEHOLDER = re.compile(r"\{([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\}")
-_COMMON = frozenset({"id", "class", "style", "disabled"})
+_COMMON = frozenset({"id", "class", "style", "disabled", "autofocus"})
 
 
 @dataclass(slots=True, frozen=True)
@@ -333,7 +333,7 @@ class ProjectSource:
                     result.set(name, value)
                 elif name == "class":
                     result.set(name, " ".join(filter(None, [result.get(name, ""), value])))
-                elif name in {"style", "disabled"} or name.startswith("on-"):
+                elif name in {"style", "disabled", "autofocus"} or name.startswith("on-"):
                     result.set(name, value)
             return expand_element(result, template.imports, (*chain, template.path))
 

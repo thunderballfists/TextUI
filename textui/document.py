@@ -279,6 +279,9 @@ class BoundDocument:
             for widget in compact_widgets:
                 if widget in self._compact_widgets:
                     self._compact_widgets.remove(widget)
+            for widget in widgets.values():
+                if widget in self._autofocus_widgets:
+                    self._autofocus_widgets.remove(widget)
 
         def finalize_dismissal(value: object | None) -> None:
             remove_registrations()
