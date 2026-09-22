@@ -117,6 +117,8 @@ Each declared modal can be active once. Calling `push_modal("pick")` again befor
 
 Use `<split direction="horizontal">` with exactly two `<pane>` children. A pane can set `size` for its initial width (or height in a vertical split) and `min-size` for its lower bound. Drag the divider with the mouse or focus it and press arrow keys. Setting a pane's Textual `display` property to `False` hides it; setting it back to `True` restores the stored size. The split publishes `resized` and `toggled` events to `on-resized` and `on-toggled` actions.
 
+A split fills the remaining height of its structural parent by default, so a `<vertical>` shell can place a `<header>`, split body, and `<status-bar>` without hand-written height rules. Set an explicit height only when the body is intentionally fixed.
+
 Use `<nav on-selected="show_page">` with `<nav-item target="home">Home</nav-item>` children. Each target must name a direct child of a `<content-switcher>`. The selected event carries `context.event.target`; an action can switch the native content area:
 
 ```python
