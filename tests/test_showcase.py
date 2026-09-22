@@ -48,6 +48,13 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         app.document.get_by_id("refresh-usage").press()
         await pilot.pause()
         assert usage.get_cell("2026-09-19-alpha", "requests").plain == "42"
+        assert usage.zebra_stripes is True
+        assert usage.column_borders is True
+        assert usage.resizable is True
+        usage.focus()
+        await pilot.press("ctrl+right")
+        await pilot.pause()
+        assert usage.columns["date"].auto_width is False
         usage.focus()
         await pilot.press("enter")
         await pilot.pause()

@@ -47,8 +47,8 @@
             </tabbed-content>
           </vertical>
           <vertical id="data">
-            <label>Runtime API records — click a heading to sort</label>
-            <data-table id="usage" row-key="record_id" cursor-type="row" on-row-selected="usage_selected">
+            <label>Runtime API records — click a heading to sort or drag a divider to resize</label>
+            <data-table id="usage" row-key="record_id" cursor-type="row" striped="true" column-borders="true" resizable="true" on-row-selected="usage_selected">
               <column key="date" label="Date" />
               <column key="requests" label="Requests" align="right" width="10" />
               <column key="cost_usd" label="Cost" align="right" width="8" />
