@@ -40,12 +40,15 @@ Each pane needs an ID and title. `initial` must name one of those panes; without
   <label>Additional information</label>
 </collapsible>
 <progress-bar id="work" total="100" progress="25" show-eta="false" />
+<range id="volume" min="0" max="100" step="5" value="40" show-value="true" on-changed="volume_changed" />
 <rule orientation="horizontal" line-style="dashed" />
 ```
 
 A radio set needs direct radio-button children and allows at most one initially selected button. Put `on-changed` on the set: its event provides `context.event.pressed` and `context.event.index`. A standalone radio button supports `on-changed`, but a button inside a set cannot declare events because Textual consumes its change message. Collapsible content uses native pointer and Enter-key toggling. Use `on-collapsed` and `on-expanded` for its two exact native message types.
 
-Progress values are finite numbers. `total` must be positive when supplied, `progress` cannot be negative or exceed a declared total, and omitted `total` creates an indeterminate bar. Controller code can call `window.document.get_by_id("work").update(advance=5)`. A rule can be horizontal or vertical and accepts Textual line styles such as `solid`, `dashed`, `heavy`, and `double`. The [Indicators tab](../examples/controls/app.ui) demonstrates these widgets together.
+Progress values are finite numbers. `total` must be positive when supplied, `progress` cannot be negative or exceed a declared total, and omitted `total` creates an indeterminate bar. Controller code can call `window.document.get_by_id("work").update(advance=5)`.
+
+`<range>` is an integer slider. It defaults to `min="0"`, `max="100"`, `step="1"`, and a value equal to `min`. Its bounds must satisfy `min &lt; max`, and the step must divide the span so Home and End always reach exact bounds. Values must be within those bounds and aligned to the step. Arrow keys adjust by one step; Home and End set the bounds; mouse clicks and drags choose a value. Set `show-value="true"` to render the number. Controller code can read or assign `window.document.get_by_id("volume").value`; each change emits `context.event.value`. Style `RangeControl` or its `range--track`, `range--filled`, `range--thumb`, and `range--value` component classes in TCSS. A rule can be horizontal or vertical and accepts Textual line styles such as `solid`, `dashed`, `heavy`, and `double`. The [Indicators tab](../examples/controls/app.ui) demonstrates these widgets together.
 
 ## Tables and trees
 

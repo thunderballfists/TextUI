@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from ..errors import DocumentValidationError
 from ..nodes import ElementNode
 from .data_widgets import build_cell, build_column, build_data_table, build_row, build_tree, build_tree_node
-from .display_controls import build_progress_bar, build_radio_button, build_radio_set
+from .display_controls import build_progress_bar, build_radio_button, build_radio_set, build_range
 from .form_controls import build_option, build_select
 from .tabbed import build_tab_pane, build_tabbed_content
 from .bars import SLOT_FACTORIES, build_bar
@@ -62,6 +62,19 @@ def validate_control_structure(nodes: Iterable[ElementNode]) -> None:
             total = node.attributes.get("total")
             if total is not None and node.attributes["progress"] > total:
                 raise DocumentValidationError("progress cannot exceed total", location=node.location, attribute="progress")
+        if is_builtin(node, build_range):
+            minimum = node.attributes["min"]
+            maximum = node.attributes["max"]
+            step = node.attributes["step"]
+            value = node.attributes.get("value", minimum)
+            if minimum >= maximum:
+                raise DocumentValidationError("range min must be less than max", location=node.location, attribute="min")
+            if (maximum - minimum) % step:
+                raise DocumentValidationError("range step must divide the declared bounds", location=node.location, attribute="step")
+            if not minimum <= value <= maximum:
+                raise DocumentValidationError("range value must be within min and max", location=node.location, attribute="value")
+            if (value - minimum) % step:
+                raise DocumentValidationError("range value must align to step", location=node.location, attribute="value")
         is_slot = node.spec.tag in SLOT_FACTORIES and node.spec.factory is SLOT_FACTORIES[node.spec.tag]
         is_bar = node.spec.tag in {"header", "status-bar"} and node.spec.factory is build_bar
         if is_slot and (parent is None or parent.spec.factory is not build_bar):
