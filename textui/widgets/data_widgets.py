@@ -164,8 +164,22 @@ class SeededDataTable(DataTable):
             return
         metadata = event.style.meta
         column_index = metadata.get("column")
-        if metadata.get("row") != -1 or not isinstance(column_index, int):
-            return
+        if metadata:
+            if metadata.get("row") != -1 or not isinstance(column_index, int):
+                return
+        else:
+            if event.y != 0:
+                return
+            column_index = next(
+                (
+                    index
+                    for index in range(len(self.columns))
+                    if abs(event.x - self._header_right_edge(index)) <= 1
+                ),
+                None,
+            )
+            if column_index is None:
+                return
         if abs(event.x - self._header_right_edge(column_index)) > 1:
             return
         column = self.ordered_columns[column_index]

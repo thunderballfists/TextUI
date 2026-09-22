@@ -30,6 +30,65 @@ async def test_modal_autofocus_moves_focus_when_the_modal_is_revealed():
         assert app.document._autofocus_widgets == []
 
 
+@pytest.mark.asyncio
+async def test_autofocus_does_not_override_the_initial_tab():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <tabbed-content id="tabs" initial="home">
+        <tab-pane id="home" title="Home"><button id="home-button">Home</button></tab-pane>
+        <tab-pane id="form" title="Form"><input id="prompt" autofocus="true" /></tab-pane>
+      </tabbed-content>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        tabs = app.document.get_by_id("tabs")
+        prompt = app.document.get_by_id("prompt")
+        assert tabs.active == "home"
+        assert app.focused is not prompt
+
+
+@pytest.mark.asyncio
+async def test_autofocus_moves_focus_when_its_tab_activates():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <tabbed-content id="tabs" initial="home">
+        <tab-pane id="home" title="Home"><button id="home-button">Home</button></tab-pane>
+        <tab-pane id="form" title="Form"><input id="prompt" autofocus="true" /></tab-pane>
+      </tabbed-content>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        tabs = app.document.get_by_id("tabs")
+        home = app.document.get_by_id("home-button")
+        prompt = app.document.get_by_id("prompt")
+        await pilot.pause()
+        tabs.active = "home"
+        await pilot.pause()
+        home.focus()
+        tabs.active = "form"
+        await pilot.pause()
+        assert app.focused is prompt
+
+
+@pytest.mark.asyncio
+async def test_tab_autofocus_does_not_focus_a_pane_redirected_by_its_action():
+    def redirect(context):
+        if context.event.pane.id == "form":
+            context.widget.active = "home"
+
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <tabbed-content id="tabs" initial="home" on-tab-activated="redirect">
+        <tab-pane id="home" title="Home"><button id="home-button">Home</button></tab-pane>
+        <tab-pane id="form" title="Form"><input id="prompt" autofocus="true" /></tab-pane>
+      </tabbed-content>
+    </ui>'''), actions={"redirect": redirect})
+    async with app.run_test() as pilot:
+        tabs = app.document.get_by_id("tabs")
+        prompt = app.document.get_by_id("prompt")
+        await pilot.pause()
+        tabs.active = "form"
+        await pilot.pause()
+        assert tabs.active == "home"
+        assert app.focused is not prompt
+
+
 MARKUP = '''<ui>
   <radio-set id="choice" on-changed="choose">
     <radio-button id="alpha">Alpha</radio-button>
