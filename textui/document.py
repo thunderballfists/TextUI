@@ -220,7 +220,7 @@ class BoundDocument:
     def _focus_widgets(widgets: Iterable[Widget]) -> None:
         for widget in reversed(tuple(widgets)):
             if widget.is_mounted and widget.display and BoundDocument._in_active_tabs(widget):
-                widget.focus()
+                widget.screen.set_focus(widget)
                 return
 
     @staticmethod
@@ -238,11 +238,12 @@ class BoundDocument:
         return True
 
     def _focus_autofocus_in_tab(self, pane: TabPane) -> None:
-        self._focus_widgets(
+        widgets = tuple(
             widget
             for widget in self._autofocus_widgets
             if any(ancestor is pane for ancestor in widget.ancestors)
         )
+        self.app.call_after_refresh(lambda: self._focus_widgets(widgets))
 
     def toggle_style_preset(self, name: str) -> bool:
         """Toggle a declared style preset and return whether it is now enabled."""
