@@ -131,16 +131,21 @@ class RangeControl(Widget, can_focus=True):
         index = round(position * steps / max(track_width - 1, 1))
         self.value = self.minimum + index * self.step
 
+    def _set_from_event(self, event: Click | MouseDown | MouseMove) -> None:
+        """Map a pointer event from the content box, excluding padding and borders."""
+        offset = event.get_content_offset_capture(self)
+        self._set_from_x(offset.x)
+
     def on_mouse_down(self, event: MouseDown) -> None:
         if event.button == 1:
             self._dragging = True
             self.capture_mouse()
-            self._set_from_x(event.x)
+            self._set_from_event(event)
             event.stop()
 
     def on_mouse_move(self, event: MouseMove) -> None:
         if self._dragging:
-            self._set_from_x(event.x)
+            self._set_from_event(event)
             event.stop()
 
     def on_mouse_up(self, event: MouseUp) -> None:
@@ -150,12 +155,12 @@ class RangeControl(Widget, can_focus=True):
             event.stop()
 
     def on_click(self, event: Click) -> None:
-        self._set_from_x(event.x)
+        self._set_from_event(event)
         event.stop()
 
     @property
     def _track_width(self) -> int:
-        value_width = len(str(self.maximum)) + 1 if self.show_value else 0
+        value_width = max(len(str(self.minimum)), len(str(self.maximum))) + 1 if self.show_value else 0
         return max(1, self.content_size.width - value_width)
 
     def render(self) -> Text:

@@ -109,3 +109,14 @@ async def test_range_renders_a_thumb_track_and_optional_value():
         assert rendered.plain.count("●") == 1
         assert rendered.plain.endswith(" 10")
         assert len(rendered.plain) == control.content_size.width
+
+
+@pytest.mark.asyncio
+async def test_range_reserves_value_space_for_a_negative_minimum():
+    app = TextUI(DocumentLoader().from_string(
+        '<ui><range id="range" min="-100" max="0" value="-100" show-value="true" /></ui>'
+    ))
+    async with app.run_test(size=(10, 4)) as pilot:
+        await pilot.pause()
+        control = app.document.get_by_id("range")
+        assert len(control.render().plain) == control.content_size.width
