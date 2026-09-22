@@ -139,7 +139,8 @@ class SeededDataTable(DataTable):
 
     def _set_column_width(self, column_index: int, width: int) -> None:
         column = self.ordered_columns[column_index]
-        width = max(3, width)
+        minimum_width = 3 if column.auto_width else min(3, column.width)
+        width = max(minimum_width, width)
         if not column.auto_width and column.width == width:
             return
         column.width = width
@@ -150,10 +151,11 @@ class SeededDataTable(DataTable):
         self.refresh()
 
     def _header_right_edge(self, column_index: int) -> int:
+        scroll_offset = 0 if column_index < self.fixed_columns else int(self.scroll_x)
         return self._row_label_column_width + sum(
             column.get_render_width(self)
             for column in self.ordered_columns[: column_index + 1]
-        ) - 1 - int(self.scroll_x)
+        ) - 1 - scroll_offset
 
     def on_mouse_down(self, event: MouseDown) -> None:
         if not self.resizable or self.disabled or event.button != 1:

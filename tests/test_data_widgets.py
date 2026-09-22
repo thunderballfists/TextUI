@@ -114,6 +114,30 @@ async def test_resizable_table_supports_keyboard_and_drag_without_sorting():
         assert [key.value for key in table.rows] == ["zulu", "alpha"]
 
 
+@pytest.mark.asyncio
+async def test_resizing_a_narrow_fixed_width_column_never_enlarges_it():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
+      <column key="id" width="2">ID</column>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.resize_column(0, -1)
+        assert table.columns["id"].width == 2
+
+
+@pytest.mark.asyncio
+async def test_frozen_column_resize_edge_does_not_move_with_horizontal_scroll():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
+      <column key="id" width="8">ID</column><column key="name" width="20">Name</column>
+    </data-table></ui>'''))
+    async with app.run_test():
+        table = app.document.get_by_id("usage")
+        table.fixed_columns = 1
+        expected = table._row_label_column_width + table.ordered_columns[0].get_render_width(table) - 1
+        table.scroll_x = 4
+        assert table._header_right_edge(0) == expected
+
+
 @pytest.mark.parametrize("markup", [
     '<ui><data-table row-key=""><column key="x">X</column></data-table></ui>',
     '<ui><data-table><column key="x" align="decimal">X</column></data-table></ui>',
