@@ -35,6 +35,7 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- Linear-gradient backgrounds for `header` and `status-bar` surfaces, declared with an ID selector in TCSS and rendered beneath native bar controls.
 - `autofocus="true"` for focusable controls, including component instances, newly opened modal controls, and controls in tabs when their pane activates, with default accent focus outlines.
 - Modal dismissal results now expose a `.mounted` awaitable for safely populating widgets after a modal opens.
 - Runtime data tables without `row-key` now use stable positional keys for each replacement batch; declared duplicate keys report their table and markup source.

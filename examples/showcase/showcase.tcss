@@ -1,4 +1,8 @@
 #showcase { height: 100%; }
+#top-bar {
+  background: linear-gradient(90deg, #173b6c, #376996, #12233d);
+  color: white;
+}
 #showcase Button { min-width: 0; }
 #layout { height: 1fr; }
 #content { height: 1fr; }

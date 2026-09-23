@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from textual.containers import Horizontal
+from textual.renderables.gradient import LinearGradient
 
 from ..registry import BuildContext, ComponentRegistry, ComponentSpec
 
@@ -36,12 +37,22 @@ class SlotBar(Horizontal):
     """
 
     def __init__(self, *declared_slots: HeaderSlot) -> None:
+        self._background_gradient: LinearGradient | None = None
         slots = {slot.position: slot for slot in declared_slots}
         self.slots = tuple(
             slots.get(position, HeaderSlot(position))
             for position in ("left", "center", "right")
         )
         super().__init__(*self.slots)
+
+    def set_background_gradient(self, gradient: LinearGradient | None) -> None:
+        """Render a TCSS gradient beneath the bar's child widgets."""
+        self._background_gradient = gradient
+        self.refresh()
+
+    def render(self) -> LinearGradient | str:
+        """Supply the optional bar background to Textual's native renderer."""
+        return self._background_gradient or ""
 
 
 def _slot(position: str):

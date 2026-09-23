@@ -1,16 +1,117 @@
 """The sole adapter between documents and Textual's native TCSS machinery."""
 from __future__ import annotations
 
+from dataclasses import dataclass, replace
 from io import StringIO
+import re
 
 from rich.console import Console
 from textual.app import App
+from textual.color import Color
 from textual.css.stylesheet import Stylesheet, StylesheetParseError
 from textual.css.tokenize import tokenize_declarations
 from textual.widget import Widget
 
 from .errors import DocumentStyleError, SourceLocation
 from .nodes import StyleBlock
+
+
+@dataclass(frozen=True, slots=True)
+class GradientBackground:
+    """A parsed TCSS linear gradient that can be rendered by a bar surface."""
+
+    selector: str
+    angle: float
+    colors: tuple[Color, ...]
+
+    def renderable(self):
+        """Create the native renderable with evenly distributed color stops."""
+        from textual.renderables.gradient import LinearGradient
+
+        step = 1 / (len(self.colors) - 1)
+        return LinearGradient(self.angle, tuple((index * step, color) for index, color in enumerate(self.colors)))
+
+
+_CSS_RULE = re.compile(r"(?P<selectors>[^{}]+)(?P<rule>\{(?P<declarations>[^{}]*)\})", re.DOTALL)
+_LINEAR_GRADIENT = re.compile(
+    r"(?P<property>\bbackground\s*:\s*)"
+    r"linear-gradient\(\s*"
+    r"(?P<angle>[+-]?(?:\d+(?:\.\d*)?|\.\d+))deg\s*,\s*"
+    r"(?P<colors>[^()]+?)\s*\)"
+    r"(?P<terminator>\s*;?)",
+    re.IGNORECASE,
+)
+_LINEAR_GRADIENT_START = re.compile(r"\bbackground\s*:\s*linear-gradient\s*\(", re.IGNORECASE)
+
+
+def _split_selectors(selectors: str) -> tuple[str, ...]:
+    """Split a CSS selector list without treating functional selectors as commas."""
+    result: list[str] = []
+    start = 0
+    depth = 0
+    for index, character in enumerate(selectors):
+        if character in "([":
+            depth += 1
+        elif character in ")]":
+            depth = max(depth - 1, 0)
+        elif character == "," and depth == 0:
+            selector = selectors[start:index].strip()
+            if selector:
+                result.append(selector)
+            start = index + 1
+    selector = selectors[start:].strip()
+    if selector:
+        result.append(selector)
+    return tuple(result)
+
+
+def _gradient_backgrounds(block: StyleBlock) -> tuple[StyleBlock, tuple[GradientBackground, ...]]:
+    """Replace supported gradient declarations before Textual parses the TCSS."""
+    gradients: list[GradientBackground] = []
+
+    def replace_rule(rule_match: re.Match[str]) -> str:
+        selectors = rule_match.group("selectors")
+        declarations = rule_match.group("declarations")
+
+        def replace_gradient(gradient_match: re.Match[str]) -> str:
+            raw_colors = tuple(color.strip() for color in gradient_match.group("colors").split(","))
+            if len(raw_colors) < 2 or any(not color for color in raw_colors):
+                raise DocumentStyleError(
+                    "linear-gradient() requires at least two literal colors",
+                    location=block.location,
+                )
+            try:
+                colors = tuple(Color.parse(color) for color in raw_colors)
+            except Exception as error:
+                raise DocumentStyleError(
+                    "linear-gradient() colors must be literal Textual colors",
+                    location=block.location,
+                ) from error
+            for selector in _split_selectors(selectors):
+                gradients.append(GradientBackground(selector, float(gradient_match.group("angle")), colors))
+            return f"{gradient_match.group('property')}transparent{gradient_match.group('terminator')}"
+
+        cleaned = _LINEAR_GRADIENT.sub(replace_gradient, declarations)
+        if _LINEAR_GRADIENT_START.search(cleaned):
+            raise DocumentStyleError(
+                "linear-gradient() requires an angle in degrees followed by literal colors",
+                location=block.location,
+            )
+        return f"{selectors}{rule_match.group('rule')[0]}{cleaned}}}"
+
+    content = _CSS_RULE.sub(replace_rule, block.content)
+    return replace(block, content=content), tuple(gradients)
+
+
+def prepare_gradient_backgrounds(blocks: tuple[StyleBlock, ...]) -> tuple[tuple[StyleBlock, ...], tuple[GradientBackground, ...]]:
+    """Preprocess bar gradient declarations while leaving ordinary TCSS unchanged."""
+    prepared: list[StyleBlock] = []
+    gradients: list[GradientBackground] = []
+    for block in blocks:
+        cleaned, extracted = _gradient_backgrounds(block)
+        prepared.append(cleaned)
+        gradients.extend(extracted)
+    return tuple(prepared), tuple(gradients)
 
 
 def _style_error(error: Exception, location: SourceLocation, *, inline: bool = False) -> DocumentStyleError:
