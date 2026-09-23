@@ -12,7 +12,7 @@ from .display_controls import register_display_controls
 from .data_widgets import register_data_widgets
 from .transcript import register_transcript
 from .runtime_list import register_runtime_list
-from .bars import register_bars
+from .bars import GradientLabel, register_bars
 from .command_button import register_command_button
 from .modal import register_modal
 
@@ -37,7 +37,7 @@ def build_horizontal(context: BuildContext) -> Horizontal:
 
 
 def build_label(context: BuildContext) -> Label:
-    return Label(Content(context.text or ""), markup=False)
+    return GradientLabel(Content(context.text or ""), markup=False)
 
 
 def build_button(context: BuildContext) -> Button:

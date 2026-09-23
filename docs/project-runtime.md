@@ -143,6 +143,12 @@ The [project example](../examples/project/app.ui) combines a hideable sidebar, d
 
 The [showcase](../examples/showcase/app.ui) places its Help control in the top-right slot and its Quit command below the sidebar navigation.
 
+Bars also accept a TextUI gradient background through an ID selector in a TCSS block. Use an explicit degree angle and two or more literal Textual colors. `0deg` runs horizontally across the bar; `90deg` runs vertically. TextUI renders the gradient beneath the bar's slot widgets; gradients currently apply only to `header` and `status-bar` surfaces.
+
+```tcss
+#top-bar { background: linear-gradient(0deg, #004e92, #00a8e8, #5614b0); }
+```
+
 ## Runtime tables
 
 Use a native table for structured records from a linked controller. Declare the record identity with `row-key`, then give each visible field a `column`. The optional `label`, `align="left|center|right"`, and positive `width` attributes control the native column heading and layout.

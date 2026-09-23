@@ -1,6 +1,7 @@
 import pytest
+from textual.renderables.gradient import LinearGradient
 
-from textui import DocumentLoader, DocumentValidationError, TextUI
+from textui import DocumentLoader, DocumentStyleError, DocumentValidationError, TextUI
 
 
 MARKUP = '''<ui>
@@ -45,3 +46,97 @@ async def test_header_places_center_between_flexible_edges_and_flushes_right_slo
         assert left.region.x == header.region.x
         assert center.region.x > left.region.x
         assert right.region.x + right.region.width == header.region.x + header.region.width
+
+
+@pytest.mark.asyncio
+async def test_header_renders_a_linear_gradient_declared_in_tcss():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>
+        #top { background: linear-gradient(25deg, #173b6c, #376996, #12233d); }
+      </style>
+      <header id="top"><center><label>TextUI</label></center></header>
+    </ui>'''))
+    async with app.run_test():
+        header = app.document.get_by_id("top")
+        assert isinstance(header.render(), LinearGradient)
+        assert all(isinstance(slot.render(), LinearGradient) for slot in header.slots)
+
+
+@pytest.mark.asyncio
+async def test_header_gradient_survives_a_style_preset_refresh():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style preset="compact" />
+      <style>#top { background: linear-gradient(90deg, #173b6c, #12233d); }</style>
+      <header id="top"><center><label>TextUI</label></center></header>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        header = app.document.get_by_id("top")
+        assert header.render().angle == 90
+
+        assert app.document.toggle_style_preset("compact") is False
+        await pilot.pause()
+        assert header.render().angle == 90
+
+
+@pytest.mark.asyncio
+async def test_linear_gradient_rejects_a_non_bar_target():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>#save { background: linear-gradient(90deg, #173b6c, #12233d); }</style>
+      <button id="save">Save</button>
+    </ui>'''))
+    with pytest.raises(DocumentStyleError, match="header or status-bar"):
+        async with app.run_test():
+            pass
+
+
+@pytest.mark.asyncio
+async def test_header_gradient_allows_a_tcss_variable_preamble():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>
+        $accent: red;
+        #top { background: linear-gradient(90deg, #173b6c, #12233d); }
+      </style>
+      <header id="top"><center><label>TextUI</label></center></header>
+    </ui>'''))
+    async with app.run_test():
+        assert isinstance(app.document.get_by_id("top").render(), LinearGradient)
+
+
+@pytest.mark.asyncio
+async def test_solid_background_wins_over_an_earlier_gradient():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>
+        #top { background: linear-gradient(90deg, #173b6c, #12233d); }
+        #top { background: red; }
+      </style>
+      <header id="top"><center><label>TextUI</label></center></header>
+    </ui>'''))
+    async with app.run_test():
+        assert app.document.get_by_id("top").render() == ""
+
+
+@pytest.mark.asyncio
+async def test_header_gradient_mounts_inside_a_modal():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>#modal-top { background: linear-gradient(90deg, #173b6c, #12233d); }</style>
+      <button id="open">Open</button>
+      <modal id="help"><header id="modal-top"><center><label>Help</label></center></header></modal>
+    </ui>'''))
+    async with app.run_test():
+        result = app.document.push_modal("help")
+        await result.mounted
+        assert isinstance(app.document.get_by_id("modal-top").render(), LinearGradient)
+        app.document.dismiss_modal()
+
+
+@pytest.mark.asyncio
+async def test_important_gradient_wins_over_a_later_solid_background():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>
+        #top { background: linear-gradient(90deg, #173b6c, #12233d) !important; }
+        #top { background: red; }
+      </style>
+      <header id="top"><center><label>TextUI</label></center></header>
+    </ui>'''))
+    async with app.run_test():
+        assert isinstance(app.document.get_by_id("top").render(), LinearGradient)
