@@ -143,10 +143,10 @@ The [project example](../examples/project/app.ui) combines a hideable sidebar, d
 
 The [showcase](../examples/showcase/app.ui) places its Help control in the top-right slot and its Quit command below the sidebar navigation.
 
-Bars also accept a TextUI gradient background through an ID selector in a TCSS block. Use an explicit degree angle and two or more literal Textual colors. TextUI renders the gradient beneath the bar's slot widgets; gradients currently apply only to `header` and `status-bar` surfaces.
+Bars also accept a TextUI gradient background through an ID selector in a TCSS block. Use an explicit degree angle and two or more literal Textual colors. `0deg` runs horizontally across the bar; `90deg` runs vertically. TextUI renders the gradient beneath the bar's slot widgets; gradients currently apply only to `header` and `status-bar` surfaces.
 
 ```tcss
-#top-bar { background: linear-gradient(90deg, #173b6c, #376996, #12233d); }
+#top-bar { background: linear-gradient(0deg, #004e92, #00a8e8, #5614b0); }
 ```
 
 ## Runtime tables

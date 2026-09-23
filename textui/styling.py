@@ -2,18 +2,40 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from math import cos, pi, sin
 from io import StringIO
 import re
 
-from rich.console import Console
+from rich.console import Console, ConsoleOptions, RenderResult
+from rich.segment import Segment
+from rich.style import Style
 from textual.app import App
 from textual.color import Color
 from textual.css.stylesheet import Stylesheet, StylesheetParseError
+from textual.renderables.gradient import LinearGradient
 from textual.css.tokenize import tokenize, tokenize_declarations
 from textual.widget import Widget
 
 from .errors import DocumentStyleError, SourceLocation
 from .nodes import StyleBlock
+
+
+class BackgroundGradient(LinearGradient):
+    """A terminal background gradient that keeps child text transparent."""
+
+    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
+        width = options.max_width
+        height = options.height or options.max_height
+        angle = self.angle * pi / 180
+        horizontal, vertical = cos(angle), sin(angle)
+        projections = (0, horizontal * width, vertical * height, horizontal * width + vertical * height)
+        start, end = min(projections), max(projections)
+        span = end - start or 1
+        for y in range(height):
+            for x in range(width):
+                position = ((horizontal * (x + .5) + vertical * (y + .5)) - start) / span
+                yield Segment(" ", Style(bgcolor=self._color_gradient.get_rich_color(position)))
+            yield Segment.line()
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,10 +50,8 @@ class GradientBackground:
 
     def renderable(self):
         """Create the native renderable with evenly distributed color stops."""
-        from textual.renderables.gradient import LinearGradient
-
         step = 1 / (len(self.colors) - 1)
-        return LinearGradient(self.angle, tuple((index * step, color) for index, color in enumerate(self.colors)))
+        return BackgroundGradient(self.angle, tuple((index * step, color) for index, color in enumerate(self.colors)))
 
 
 _CSS_RULE = re.compile(r"(?P<selectors>[^{}]+)(?P<rule>\{(?P<declarations>[^{}]*)\})", re.DOTALL)
