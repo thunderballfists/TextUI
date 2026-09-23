@@ -11,9 +11,19 @@ class HeaderSlot(Horizontal):
     """One flexible region in a header-style bar."""
 
     def __init__(self, position: str, *children) -> None:
+        self._background_gradient: LinearGradient | None = None
         super().__init__(*children)
         self.position = position
         self.add_class(f"-{position}")
+
+    def set_background_gradient(self, gradient: LinearGradient | None) -> None:
+        """Render a bar gradient beneath this slot's child controls."""
+        self._background_gradient = gradient
+        self.refresh()
+
+    def render(self) -> LinearGradient | str:
+        """Supply the optional slot background to Textual's native renderer."""
+        return self._background_gradient or ""
 
 
 class SlotBar(Horizontal):
@@ -27,12 +37,16 @@ class SlotBar(Horizontal):
     SlotBar > HeaderSlot {
         width: 1fr;
         height: auto;
+        background: transparent;
     }
     SlotBar > HeaderSlot.-center {
         width: auto;
     }
     SlotBar > HeaderSlot.-right {
         align: right middle;
+    }
+    SlotBar Label {
+        background: transparent;
     }
     """
 
@@ -48,6 +62,8 @@ class SlotBar(Horizontal):
     def set_background_gradient(self, gradient: LinearGradient | None) -> None:
         """Render a TCSS gradient beneath the bar's child widgets."""
         self._background_gradient = gradient
+        for slot in self.slots:
+            slot.set_background_gradient(gradient)
         self.refresh()
 
     def render(self) -> LinearGradient | str:

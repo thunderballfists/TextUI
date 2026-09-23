@@ -59,6 +59,7 @@ async def test_header_renders_a_linear_gradient_declared_in_tcss():
     async with app.run_test():
         header = app.document.get_by_id("top")
         assert isinstance(header.render(), LinearGradient)
+        assert all(isinstance(slot.render(), LinearGradient) for slot in header.slots)
 
 
 @pytest.mark.asyncio
