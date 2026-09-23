@@ -23,6 +23,7 @@ class GradientBackground:
     selector: str
     angle: float
     colors: tuple[Color, ...]
+    location: SourceLocation
 
     def renderable(self):
         """Create the native renderable with evenly distributed color stops."""
@@ -42,6 +43,7 @@ _LINEAR_GRADIENT = re.compile(
     re.IGNORECASE,
 )
 _LINEAR_GRADIENT_START = re.compile(r"\bbackground\s*:\s*linear-gradient\s*\(", re.IGNORECASE)
+_BAR_GRADIENT_SELECTOR = re.compile(r"#[A-Za-z_][A-Za-z0-9_-]*\Z")
 
 
 def _split_selectors(selectors: str) -> tuple[str, ...]:
@@ -88,7 +90,12 @@ def _gradient_backgrounds(block: StyleBlock) -> tuple[StyleBlock, tuple[Gradient
                     location=block.location,
                 ) from error
             for selector in _split_selectors(selectors):
-                gradients.append(GradientBackground(selector, float(gradient_match.group("angle")), colors))
+                if not _BAR_GRADIENT_SELECTOR.fullmatch(selector):
+                    raise DocumentStyleError(
+                        "linear-gradient() backgrounds require a header or status-bar ID selector",
+                        location=block.location,
+                    )
+                gradients.append(GradientBackground(selector, float(gradient_match.group("angle")), colors, block.location))
             return f"{gradient_match.group('property')}transparent{gradient_match.group('terminator')}"
 
         cleaned = _LINEAR_GRADIENT.sub(replace_gradient, declarations)

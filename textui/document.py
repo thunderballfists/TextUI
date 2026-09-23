@@ -17,7 +17,7 @@ from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Sele
 from .actions import ActionCallback, ActionContext, ActionInvocation
 from .errors import (
     ActionExecutionError, ComponentBuildError, DocumentStateError,
-    DocumentValidationError, ElementNotFoundError,
+    DocumentStyleError, DocumentValidationError, ElementNotFoundError,
 )
 from .nodes import ElementNode, StyleBlock
 from .registry import BuildContext, EventSpec
@@ -210,6 +210,7 @@ class BoundDocument:
             styled_blocks, gradients = prepare_gradient_backgrounds(self.definition.styles)
             staged = prepare_styles(self.app, styled_blocks)
             roots = tuple(self._build_node(node, widgets, bindings) for node in self.definition.nodes if node.spec.factory is not build_modal)
+            self._validate_gradient_backgrounds(gradients, widgets)
             commit_styles(self.app, staged)
         except BaseException:
             self._state = 'failed'
@@ -220,6 +221,19 @@ class BoundDocument:
         self.app.call_later(self._apply_gradient_backgrounds)
         self.app.call_after_refresh(self._focus_autofocus)
         return iter(roots)
+
+    @staticmethod
+    def _validate_gradient_backgrounds(
+        gradients: Iterable[GradientBackground], widgets: Mapping[str, Widget]
+    ) -> None:
+        """Reject an extension declaration that would otherwise alter a non-bar."""
+        for gradient in gradients:
+            target = widgets.get(gradient.selector[1:])
+            if not isinstance(target, SlotBar):
+                raise DocumentStyleError(
+                    "linear-gradient() backgrounds may target only header or status-bar IDs",
+                    location=gradient.location,
+                )
 
     def _apply_gradient_backgrounds(self) -> None:
         """Install the current gradient layer after the bars have mounted."""

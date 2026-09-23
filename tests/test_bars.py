@@ -1,7 +1,7 @@
 import pytest
 from textual.renderables.gradient import LinearGradient
 
-from textui import DocumentLoader, DocumentValidationError, TextUI
+from textui import DocumentLoader, DocumentStyleError, DocumentValidationError, TextUI
 
 
 MARKUP = '''<ui>
@@ -76,3 +76,14 @@ async def test_header_gradient_survives_a_style_preset_refresh():
         assert app.document.toggle_style_preset("compact") is False
         await pilot.pause()
         assert header.render().angle == 90
+
+
+@pytest.mark.asyncio
+async def test_linear_gradient_rejects_a_non_bar_target():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>#save { background: linear-gradient(90deg, #173b6c, #12233d); }</style>
+      <button id="save">Save</button>
+    </ui>'''))
+    with pytest.raises(DocumentStyleError, match="header or status-bar"):
+        async with app.run_test():
+            pass
