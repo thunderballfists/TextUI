@@ -9,7 +9,7 @@ from rich.console import Console
 from textual.app import App
 from textual.color import Color
 from textual.css.stylesheet import Stylesheet, StylesheetParseError
-from textual.css.tokenize import tokenize_declarations
+from textual.css.tokenize import tokenize, tokenize_declarations
 from textual.widget import Widget
 
 from .errors import DocumentStyleError, SourceLocation
@@ -23,6 +23,7 @@ class GradientBackground:
     selector: str
     angle: float
     colors: tuple[Color, ...]
+    marker: Color
     location: SourceLocation
 
     def renderable(self):
@@ -39,6 +40,7 @@ _LINEAR_GRADIENT = re.compile(
     r"linear-gradient\(\s*"
     r"(?P<angle>[+-]?(?:\d+(?:\.\d*)?|\.\d+))deg\s*,\s*"
     r"(?P<colors>[^()]+?)\s*\)"
+    r"(?P<important>\s*!important)?"
     r"(?P<terminator>\s*;?)",
     re.IGNORECASE,
 )
@@ -46,36 +48,37 @@ _LINEAR_GRADIENT_START = re.compile(r"\bbackground\s*:\s*linear-gradient\s*\(", 
 _BAR_GRADIENT_SELECTOR = re.compile(r"#[A-Za-z_][A-Za-z0-9_-]*\Z")
 
 
-def _split_selectors(selectors: str) -> tuple[str, ...]:
-    """Split a CSS selector list without treating functional selectors as commas."""
-    result: list[str] = []
-    start = 0
-    depth = 0
-    for index, character in enumerate(selectors):
-        if character in "([":
-            depth += 1
-        elif character in ")]":
-            depth = max(depth - 1, 0)
-        elif character == "," and depth == 0:
-            selector = selectors[start:index].strip()
-            if selector:
-                result.append(selector)
-            start = index + 1
-    selector = selectors[start:].strip()
-    if selector:
-        result.append(selector)
-    return tuple(result)
+def _bar_gradient_selector(selectors: str, location: SourceLocation) -> str:
+    """Read one ID selector after any native TCSS variable preamble."""
+    tokens = tuple(token for token in tokenize(selectors, (location.source, "gradient selector")) if token.name != "whitespace")
+    last_variable_end = max((index for index, token in enumerate(tokens) if token.name == "variable_value_end"), default=-1)
+    selector_tokens = tokens[last_variable_end + 1:]
+    if len(selector_tokens) == 1 and selector_tokens[0].name == "selector_start_id":
+        selector = selector_tokens[0].value
+        if _BAR_GRADIENT_SELECTOR.fullmatch(selector):
+            return selector
+    raise DocumentStyleError(
+        "linear-gradient() backgrounds require a header or status-bar ID selector",
+        location=location,
+    )
 
 
-def _gradient_backgrounds(block: StyleBlock) -> tuple[StyleBlock, tuple[GradientBackground, ...]]:
+def _gradient_marker(index: int) -> Color:
+    """Provide a transparent native color that identifies one gradient declaration."""
+    return Color((index >> 16) & 255, (index >> 8) & 255, (index & 255) + 1, 0)
+
+
+def _gradient_backgrounds(
+    block: StyleBlock, marker_start: int
+) -> tuple[StyleBlock, tuple[GradientBackground, ...]]:
     """Replace supported gradient declarations before Textual parses the TCSS."""
     gradients: list[GradientBackground] = []
 
     def replace_rule(rule_match: re.Match[str]) -> str:
         selectors = rule_match.group("selectors")
         declarations = rule_match.group("declarations")
-
         def replace_gradient(gradient_match: re.Match[str]) -> str:
+            selector = _bar_gradient_selector(selectors, block.location)
             raw_colors = tuple(color.strip() for color in gradient_match.group("colors").split(","))
             if len(raw_colors) < 2 or any(not color for color in raw_colors):
                 raise DocumentStyleError(
@@ -89,14 +92,16 @@ def _gradient_backgrounds(block: StyleBlock) -> tuple[StyleBlock, tuple[Gradient
                     "linear-gradient() colors must be literal Textual colors",
                     location=block.location,
                 ) from error
-            for selector in _split_selectors(selectors):
-                if not _BAR_GRADIENT_SELECTOR.fullmatch(selector):
-                    raise DocumentStyleError(
-                        "linear-gradient() backgrounds require a header or status-bar ID selector",
-                        location=block.location,
-                    )
-                gradients.append(GradientBackground(selector, float(gradient_match.group("angle")), colors, block.location))
-            return f"{gradient_match.group('property')}transparent{gradient_match.group('terminator')}"
+            marker = _gradient_marker(marker_start + len(gradients))
+            gradients.append(
+                GradientBackground(
+                    selector, float(gradient_match.group("angle")), colors, marker, block.location
+                )
+            )
+            return (
+                f"{gradient_match.group('property')}rgba({marker.r}, {marker.g}, {marker.b}, 0)"
+                f"{gradient_match.group('important') or ''}{gradient_match.group('terminator')}"
+            )
 
         cleaned = _LINEAR_GRADIENT.sub(replace_gradient, declarations)
         if _LINEAR_GRADIENT_START.search(cleaned):
@@ -115,11 +120,10 @@ def prepare_gradient_backgrounds(blocks: tuple[StyleBlock, ...]) -> tuple[tuple[
     prepared: list[StyleBlock] = []
     gradients: list[GradientBackground] = []
     for block in blocks:
-        cleaned, extracted = _gradient_backgrounds(block)
+        cleaned, extracted = _gradient_backgrounds(block, len(gradients))
         prepared.append(cleaned)
         gradients.extend(extracted)
     return tuple(prepared), tuple(gradients)
-
 
 def _style_error(error: Exception, location: SourceLocation, *, inline: bool = False) -> DocumentStyleError:
     """Retain native diagnostics and map CSS lines, never decoded XML columns."""

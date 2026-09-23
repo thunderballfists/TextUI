@@ -122,6 +122,11 @@ class BoundDocument:
         self._command_locations = MappingProxyType(dict(command_locations))
         self._state = 'bound'
         self._declared_ids = {node.common['id']: node.location for node in _walk(definition.nodes) if node.common['id'] is not None and not node.private_id}
+        self._gradient_bar_ids = {
+            node.common['id']
+            for node in _walk(definition.nodes)
+            if node.common['id'] is not None and node.spec.tag in {'header', 'status-bar'}
+        }
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
         self._action_tasks: set[asyncio.Future[object]] = set()
@@ -210,7 +215,7 @@ class BoundDocument:
             styled_blocks, gradients = prepare_gradient_backgrounds(self.definition.styles)
             staged = prepare_styles(self.app, styled_blocks)
             roots = tuple(self._build_node(node, widgets, bindings) for node in self.definition.nodes if node.spec.factory is not build_modal)
-            self._validate_gradient_backgrounds(gradients, widgets)
+            self._validate_gradient_backgrounds(gradients)
             commit_styles(self.app, staged)
         except BaseException:
             self._state = 'failed'
@@ -222,14 +227,10 @@ class BoundDocument:
         self.app.call_after_refresh(self._focus_autofocus)
         return iter(roots)
 
-    @staticmethod
-    def _validate_gradient_backgrounds(
-        gradients: Iterable[GradientBackground], widgets: Mapping[str, Widget]
-    ) -> None:
+    def _validate_gradient_backgrounds(self, gradients: Iterable[GradientBackground]) -> None:
         """Reject an extension declaration that would otherwise alter a non-bar."""
         for gradient in gradients:
-            target = widgets.get(gradient.selector[1:])
-            if not isinstance(target, SlotBar):
+            if gradient.selector[1:] not in self._gradient_bar_ids:
                 raise DocumentStyleError(
                     "linear-gradient() backgrounds may target only header or status-bar IDs",
                     location=gradient.location,
@@ -237,12 +238,12 @@ class BoundDocument:
 
     def _apply_gradient_backgrounds(self) -> None:
         """Install the current gradient layer after the bars have mounted."""
-        bars = tuple(self.app.query(SlotBar))
+        bars = tuple(self.app.screen.query(SlotBar))
         for bar in bars:
             bar.set_background_gradient(None)
         for gradient in self._gradient_backgrounds:
-            for widget in self.app.query(gradient.selector):
-                if isinstance(widget, SlotBar):
+            for widget in self.app.screen.query(gradient.selector):
+                if isinstance(widget, SlotBar) and widget.styles.background == gradient.marker:
                     widget.set_background_gradient(gradient.renderable())
 
     def _focus_autofocus(self) -> None:
@@ -351,9 +352,12 @@ class BoundDocument:
             modal.set_dismissal_value(value)
 
         modal.set_unmount_callback(finalize_dismissal)
-        modal.set_mount_callback(lambda: self._focus_widgets(
-            widget for widget in widgets.values() if getattr(widget, '_textui_autofocus', False)
-        ))
+
+        def mounted() -> None:
+            self._apply_gradient_backgrounds()
+            self._focus_widgets(widget for widget in widgets.values() if getattr(widget, '_textui_autofocus', False))
+
+        modal.set_mount_callback(mounted)
 
         self._widgets.update(widgets)
         for message_type, entries in bindings.items():
