@@ -118,7 +118,6 @@ class SeededDataTable(DataTable):
         self._seeded = False
         self._resize_drag: tuple[int, int, int] | None = None
         self._hover_resize_column: int | None = None
-        self._suppress_header_click = False
 
     def on_mount(self) -> None:
         if self._seeded:
@@ -206,13 +205,19 @@ class SeededDataTable(DataTable):
         column = self.ordered_columns[column_index]
         width = column.content_width if column.auto_width else column.width
         self._resize_drag = (column_index, width, event.x)
-        self._suppress_header_click = True
+        # Pressing a divider is not a heading click. Textual then sends no Click after the
+        # release, whether it lands on the table or outside it (where none would be sent
+        # anyway, so a flag cleared by the Click would stay set and swallow the next real one).
+        self.suppress_click()
         self.capture_mouse()
         event.stop()
 
+    # Textual calls the ``_on_*`` handler of every class in the MRO, so a handler here
+    # must not also call ``super()``: that runs DataTable's own a second time (a header
+    # click would post two ``HeaderSelected`` messages, and the ascending/descending
+    # toggle would always end on descending).
     def _on_mouse_move(self, event: events.MouseMove) -> None:
         if self._resize_drag is None:
-            super()._on_mouse_move(event)
             self._set_resize_hover(self._resize_edge_at(event) if self.column_borders else None)
             return
         column_index, width, start_x = self._resize_drag
@@ -229,13 +234,6 @@ class SeededDataTable(DataTable):
             self.release_mouse()
             self._set_resize_hover(None)
             event.stop()
-
-    async def _on_click(self, event: events.Click) -> None:
-        if self._suppress_header_click:
-            self._suppress_header_click = False
-            event.stop()
-            return
-        await super()._on_click(event)
 
     def _render_cell(self, *args, **kwargs):
         lines = super()._render_cell(*args, **kwargs)
