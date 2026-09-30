@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Focus cues now blend over native and author backgrounds instead of replacing them, so variant buttons retain their colors. Compact inputs, selects, and text areas also preserve their backgrounds; tint strengths remain 15% by default and 25% for compact editable controls.
 - Clicking a data-table column heading now sorts once per click. The table's click and mouse-move handlers also called `super()`, which Textual had already run, so every heading click was delivered twice and the ascending/descending toggle always ended on descending. A column-resize press no longer sorts either, and no longer swallows the next heading click when the drag is released.
 - Controller resize hooks now receive terminal dimensions even when the active screen has padding or a border.
 - Declared autofocus now waits for hidden ancestors to be displayed and runs again when controls are revealed after startup. Disabled controls and background screens do not take focus; anonymous modal autofocus registrations are released on dismissal.

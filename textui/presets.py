@@ -20,15 +20,16 @@ Button:focus, Checkbox:focus, Switch:focus, RadioButton:focus, RadioSet:focus {
 }
 Input:focus, Select:focus, TextArea:focus {
     outline: none;
-    background: $accent 25%;
+    background-tint: $accent 25%;
 }
 """
 
 FOCUS_TCSS = """
+/* Blend over native variant and author backgrounds instead of replacing them. */
 Button:focus, Input:focus, Select:focus, TextArea:focus, Checkbox:focus,
 Switch:focus, RadioButton:focus, RadioSet:focus, DataTable:focus,
 Tree:focus, RuntimeList:focus {
-    background: $accent 15%;
+    background-tint: $accent 15%;
 }
 """
 
