@@ -86,7 +86,9 @@ async def test_anonymous_modal_autofocus_is_focused_and_released_on_dismissal():
     </ui>'''), actions={"open_modal": lambda context: context.push_modal("dialog")})
     async with app.run_test() as pilot:
         for _ in range(2):
-            assert await pilot.click("#open")
+            # Reopening tests modal focus, independent of Button's timed
+            # mouse-click suppression while its active effect is visible.
+            app.document.get_by_id("open").press()
             await pilot.pause()
             await pilot.pause()
             assert app.focused in app.document._autofocus_widgets
