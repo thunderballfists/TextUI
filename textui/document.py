@@ -237,14 +237,14 @@ class BoundDocument:
                 )
 
     def _apply_gradient_backgrounds(self) -> None:
-        """Install the current gradient layer after the bars have mounted."""
-        bars = tuple(self.app.screen.query(SlotBar))
-        for bar in bars:
-            bar.set_background_gradient(None)
-        for gradient in self._gradient_backgrounds:
-            for widget in self.app.screen.query(gradient.selector):
-                if isinstance(widget, SlotBar) and widget.styles.background == gradient.marker:
-                    widget.set_background_gradient(gradient.renderable())
+        """Install candidate gradients on mounted bars; native styles choose one."""
+        for bar in self.app.screen.query(SlotBar):
+            gradients = tuple(
+                (gradient.marker, gradient.renderable())
+                for gradient in self._gradient_backgrounds
+                if gradient.selector[1:] == bar.id
+            )
+            bar.set_background_gradients(gradients)
 
     def _focus_autofocus(self) -> None:
         self._focus_widgets(self._autofocus_widgets)

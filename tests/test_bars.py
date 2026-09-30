@@ -238,3 +238,63 @@ async def test_gradient_label_respects_cell_width_padding_alignment_and_lines(an
             cell = strips[y].crop(5, 6)
             assert cell.text == character
             assert next(iter(cell)).style.bgcolor.triplet.hex == color
+
+
+@pytest.mark.asyncio
+async def test_gradient_follows_live_background_cascade_changes(monkeypatch):
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>
+        #top { background: linear-gradient(0deg, red, blue); }
+        #top.-solid { background: green; }
+      </style>
+      <header id="top"><center><label>Title</label></center></header>
+    </ui>'''))
+    async with app.run_test(size=(40, 5)) as pilot:
+        bar = app.document.get_by_id("top")
+        assert isinstance(bar.render(), BackgroundGradient)
+        bar.add_class("-solid")
+        await pilot.pause()
+        assert bar.styles.background.hex == "#008000"
+        assert bar.render() == ""
+        assert next(iter(app.screen._compositor.render_strips()[0].crop(10, 11))).style.bgcolor.triplet.hex == "#008000"
+        bar.remove_class("-solid")
+        await pilot.pause()
+        assert isinstance(bar.render(), BackgroundGradient)
+        assert next(iter(app.screen._compositor.render_strips()[0].crop(10, 11))).style.bgcolor.triplet.hex != "#008000"
+
+
+@pytest.mark.asyncio
+async def test_opaque_slot_background_covers_gradient_even_behind_labels(monkeypatch):
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>
+        #top { background: linear-gradient(0deg, red, blue); }
+        #top > HeaderSlot.-center { background: green; }
+        #title { padding: 0 1; }
+      </style>
+      <header id="top"><center><label id="title">Title</label></center></header>
+    </ui>'''))
+    async with app.run_test(size=(40, 5)) as pilot:
+        await pilot.pause()
+        title = app.document.get_by_id("title")
+        row = app.screen._compositor.render_strips()[title.region.y]
+        position = row.text.index("Title")
+        assert row.crop(position, position + 1).text == "T"
+        assert next(iter(row.crop(position, position + 1))).style.bgcolor.triplet.hex == "#008000"
+        assert next(iter(row.crop(position - 1, position))).style.bgcolor.triplet.hex == "#008000"
+
+
+@pytest.mark.asyncio
+async def test_initial_solid_override_can_reveal_declared_gradient_later():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>#top { background: linear-gradient(0deg, red, blue); }
+             #top.-solid { background: green; }</style>
+      <header id="top" class="-solid"><center><label>Title</label></center></header>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        bar = app.document.get_by_id("top")
+        assert bar.render() == ""
+        bar.remove_class("-solid")
+        await pilot.pause()
+        assert isinstance(bar.render(), BackgroundGradient)

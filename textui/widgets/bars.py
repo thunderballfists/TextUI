@@ -8,7 +8,7 @@ from textual.geometry import Region
 from textual.strip import Strip
 from textual.containers import Horizontal
 from textual.widgets import Label
-from textual.renderables.gradient import LinearGradient
+from textual.color import Color
 
 from ..styling import BackgroundGradient, GradientSlice
 from ..registry import BuildContext, ComponentRegistry, ComponentSpec
@@ -17,22 +17,17 @@ from ..registry import BuildContext, ComponentRegistry, ComponentSpec
 class GradientLabel(Label):
     """A bar label that paints its glyph cells over the active gradient."""
 
-    def __init__(self, *args, **kwargs) -> None:
-        self._textui_gradient: LinearGradient | None = None
-        super().__init__(*args, **kwargs)
-
-    def set_background_gradient(self, gradient: LinearGradient | None) -> None:
-        self._textui_gradient = gradient
-        self.refresh()
-
     def render_lines(self, crop: Region) -> list[Strip]:
         """Paint native rendered cells, including alignment, wrapping and padding."""
         strips = super().render_lines(crop)
-        gradient = self._textui_gradient
-        if not isinstance(gradient, BackgroundGradient) or self.parent is None:
+        if self.parent is None:
             return strips
-        bar = self.parent.parent
-        if not isinstance(bar, SlotBar) or self.styles.background.a:
+        slot = self.parent
+        bar = slot.parent
+        if not isinstance(bar, SlotBar) or self.styles.background.a or slot.styles.background.a:
+            return strips
+        gradient = bar.active_background_gradient
+        if gradient is None:
             return strips
         width, height = max(bar.content_size.width, 1), max(bar.content_size.height, 1)
         offset_x = self.region.x + crop.x - bar.content_region.x
@@ -61,25 +56,18 @@ class HeaderSlot(Horizontal):
     """One flexible region in a header-style bar."""
 
     def __init__(self, position: str, *children) -> None:
-        self._background_gradient: LinearGradient | None = None
         super().__init__(*children)
         self.position = position
         self.has_content = bool(children)
         self.add_class(f"-{position}")
 
-    def set_background_gradient(self, gradient: LinearGradient | None) -> None:
-        """Pass the bar gradient to labels and preserve its full-bar coordinates."""
-        self._background_gradient = gradient
-        for child in self.children:
-            if isinstance(child, GradientLabel):
-                child.set_background_gradient(gradient)
-        self.refresh()
-
     def render(self) -> GradientSlice | str:
         """Supply this slot's clipped section of the bar background."""
-        gradient = self._background_gradient
         bar = self.parent
-        if not isinstance(gradient, BackgroundGradient) or not isinstance(bar, SlotBar):
+        if not isinstance(bar, SlotBar) or self.styles.background.a:
+            return ""
+        gradient = bar.active_background_gradient
+        if gradient is None:
             return ""
         return GradientSlice(
             gradient,
@@ -121,7 +109,7 @@ class SlotBar(Horizontal):
     """
 
     def __init__(self, *declared_slots: HeaderSlot) -> None:
-        self._background_gradient: LinearGradient | None = None
+        self._background_gradients: tuple[tuple[Color, BackgroundGradient], ...] = ()
         slots = {slot.position: slot for slot in declared_slots}
         self.slots = tuple(
             slots.get(position, HeaderSlot(position))
@@ -131,16 +119,28 @@ class SlotBar(Horizontal):
         if not self.slots[1].has_content:
             self.add_class("-no-center")
 
-    def set_background_gradient(self, gradient: LinearGradient | None) -> None:
-        """Render a TCSS gradient beneath the bar's child widgets."""
-        self._background_gradient = gradient
-        for slot in self.slots:
-            slot.set_background_gradient(gradient)
-        self.refresh()
+    @property
+    def active_background_gradient(self) -> BackgroundGradient | None:
+        """Use the gradient marker currently selected by native TCSS cascade."""
+        background = self.styles.background
+        for marker, gradient in self._background_gradients:
+            if background == marker:
+                return gradient
+        return None
 
-    def render(self) -> LinearGradient | str:
-        """Supply the optional bar background to Textual's native renderer."""
-        return self._background_gradient or ""
+    def set_background_gradients(self, gradients: tuple[tuple[Color, BackgroundGradient], ...]) -> None:
+        """Store candidates so live class and style changes select the winner."""
+        self._background_gradients = gradients
+        self.refresh()
+        for slot in self.slots:
+            slot.refresh()
+            for child in slot.children:
+                if isinstance(child, GradientLabel):
+                    child.refresh()
+
+    def render(self) -> BackgroundGradient | str:
+        """Supply the active bar background to Textual's native renderer."""
+        return self.active_background_gradient or ""
 
 
 def _slot(position: str):
