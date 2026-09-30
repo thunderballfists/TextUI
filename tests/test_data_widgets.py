@@ -498,3 +498,28 @@ async def test_seed_text_is_literal_even_when_it_looks_like_rich_markup():
         assert table.get_cell("one", "name").plain == "[blue]One[/blue]"
         assert tree.root.label.plain == "[red]Files[/red]"
         assert tree.root.children[0].label.plain == "[blue]app.py[/blue]"
+
+
+RESIZABLE_TABLE = """<ui><data-table id="t" {attrs}>
+  <column key="a" width="8">A</column><column key="b" width="8">B</column>
+  <row key="1"><cell>x</cell><cell>y</cell></row>
+</data-table></ui>"""
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "attrs,expected",
+    [
+        ('resizable="true"', True),  # the edge to drag is otherwise invisible
+        ('resizable="true" column-borders="false"', False),  # unless the author says otherwise
+        ('column-borders="true"', True),
+        ("", False),
+    ],
+)
+async def test_resizable_columns_show_where_their_edge_is(attrs, expected):
+    app = TextUI(DocumentLoader().from_string(RESIZABLE_TABLE.format(attrs=attrs)))
+    async with app.run_test(size=(40, 8)) as pilot:
+        await pilot.pause()
+        table = app.document.get_by_id("t")
+        assert table.column_borders is expected
+        assert ("│" in table.render_line(0).text) is expected
