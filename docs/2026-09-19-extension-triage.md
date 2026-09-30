@@ -1,7 +1,9 @@
 # TextUI Extension Triage and Delivery Order
 
 Date: 2026-09-19
-Updated: 2026-09-20
+Updated: 2026-09-30
+
+Current delivery priorities and completion gates are maintained in the [TextUI roadmap](roadmap.md). This document preserves the earlier ecosystem comparisons; external compatibility and license evidence below dates from 2026-09-20 and must be rechecked before adoption.
 
 ## Direction
 
@@ -34,9 +36,11 @@ The historic implementation plans remain as engineering records. Their unchecked
 
 ## Remaining roadmap
 
+The current roadmap places runtime reliability and authoring tools before these extensions. Native `<range>` has shipped; the table below retains the extension grouping, with its completed control removed from the remaining work.
+
 | Order | Deliverable | Scope and rationale |
 | --- | --- | --- |
-| 1 | Focused controls and dashboard widgets | Add native `<range>`, `<date-picker>`, and `<sparkline>` adapters. These have clear markup contracts and fill common form/dashboard gaps without a reactive template language. |
+| 1 | Focused controls and dashboard widgets | Add a native `<sparkline>` adapter and evaluate `<date-picker>`. These have clear markup contracts and fill common form/dashboard gaps without a reactive template language. |
 | 2 | Selection and state presentation | Add a `selection-list` adapter, autocomplete/combobox behavior, and reusable loading, empty, and error presentation patterns. |
 | 3 | Command surfaces | Build menus or a command palette on the existing `@command` metadata when an application needs them. Dynamic enabled predicates and user-configurable shortcuts remain separate design work. |
 | 4 | Reactive navigation | Define observation, refresh, routing, and history only after a project demonstrates the need beyond the existing content switcher, runtime lists, and tables. |

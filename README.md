@@ -4,6 +4,8 @@ TextUI 0.6 turns strict XML documents into native [Textual](https://textual.text
 
 This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
+The [roadmap](docs/roadmap.md) records current priorities, completion gates, and the reliability implementation plan. Historical library comparisons remain in the [extension triage](docs/2026-09-19-extension-triage.md).
+
 ## Install and run
 
 Python `>=3.11,<4` is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
