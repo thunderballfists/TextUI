@@ -1,5 +1,6 @@
 import pytest
 from textual.renderables.gradient import LinearGradient
+from textual.geometry import Region
 
 from textui import DocumentLoader, DocumentStyleError, DocumentValidationError, TextUI
 from textui.styling import BackgroundGradient, GradientSlice
@@ -64,7 +65,8 @@ async def test_header_renders_a_linear_gradient_declared_in_tcss():
 
 
 @pytest.mark.asyncio
-async def test_header_gradient_label_uses_the_background_geometry():
+async def test_header_gradient_label_uses_the_background_geometry(monkeypatch):
+    monkeypatch.delenv("NO_COLOR", raising=False)
     app = TextUI(DocumentLoader().from_string('''<ui>
       <style>
         #top { background: linear-gradient(25deg, #173b6c, #376996, #12233d); }
@@ -77,7 +79,7 @@ async def test_header_gradient_label_uses_the_background_geometry():
         gradient = header.render()
 
         assert isinstance(gradient, BackgroundGradient)
-        assert title.render().spans[0].style.bgcolor == gradient.color_at(
+        assert next(iter(title.render_lines(Region(0, 0, title.region.width, 1))[0])).style.bgcolor == gradient.color_at(
             title.region.x - header.region.x + .5,
             title.region.y - header.region.y + .5,
             header.content_size.width,
@@ -184,3 +186,55 @@ async def test_a_status_bar_with_nothing_in_the_centre_gives_its_controls_the_ro
         for name in ("b1", "b2", "b3", "b4"):
             button = app.document.get_by_id(name)
             assert button.region.x + button.region.width <= 80, (name, button.region)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("css", [
+    "/* #missing { background: linear-gradient(0deg, red, blue); } */ Label { color: red; }",
+    "/* gradients use { braces } */ #top { background: linear-gradient(0deg, red, blue); }",
+    "#top /* bar { example } */ { background: linear-gradient(0deg, red, blue); }",
+    "#top { background: /* tint */ linear-gradient(0deg, red, /* cool */ blue); }",
+])
+async def test_gradient_preprocessor_respects_native_tcss_comments(css):
+    app = TextUI(DocumentLoader().from_string(f'''<ui><style>{css}</style>
+      <header id="top"><center><label id="title">Title</label></center></header></ui>'''))
+    async with app.run_test():
+        header = app.document.get_by_id("top")
+        if css.startswith("/* #missing"):
+            assert header.render() == ""
+            assert app.document.get_by_id("title").styles.color.hex == "#FF0000"
+        else:
+            assert isinstance(header.render(), BackgroundGradient)
+
+
+@pytest.mark.asyncio
+async def test_unterminated_tcss_comment_remains_a_contextual_style_error():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>/* #top { background: linear-gradient(0deg, red, blue); }</style>
+      <header id="top"/>
+    </ui>''', source_name="comment.ui"))
+    with pytest.raises(DocumentStyleError) as error:
+        async with app.run_test():
+            pass
+    assert error.value.location.source == "comment.ui"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("angle, colors", [(0, ("#4f00ae", "#4f00ae")), (90, ("#be003f", "#3f00be"))])
+async def test_gradient_label_respects_cell_width_padding_alignment_and_lines(angle, colors, monkeypatch):
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    app = TextUI(DocumentLoader().from_string(f'''<ui>
+      <style>
+        #top {{ width: 8; height: 2; background: linear-gradient({angle}deg, red, blue); }}
+        #title {{ width: 6; height: 2; padding: 0 1; text-align: right; }}
+      </style>
+      <header id="top"><center><label id="title">Title</label></center></header>
+    </ui>'''))
+    async with app.run_test(size=(12, 4)) as pilot:
+        app.document.get_by_id("title").update("界A\nB")
+        await pilot.pause()
+        strips = app.screen._compositor.render_strips()
+        for y, (character, color) in enumerate(zip(("A", "B"), colors)):
+            cell = strips[y].crop(5, 6)
+            assert cell.text == character
+            assert next(iter(cell)).style.bgcolor.triplet.hex == color

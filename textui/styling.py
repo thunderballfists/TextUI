@@ -13,7 +13,7 @@ from textual.app import App
 from textual.color import Color
 from textual.css.stylesheet import Stylesheet, StylesheetParseError
 from textual.renderables.gradient import LinearGradient
-from textual.css.tokenize import tokenize, tokenize_declarations
+from textual.css.tokenize import COMMENT_LINE, COMMENT_START, STRING, tokenize, tokenize_declarations
 from textual.widget import Widget
 
 from .errors import DocumentStyleError, SourceLocation
@@ -120,17 +120,33 @@ def _gradient_marker(index: int) -> Color:
     return Color((index >> 16) & 255, (index >> 8) & 255, (index & 255) + 1, 0)
 
 
+_CSS_NON_CODE = re.compile(
+    rf"{COMMENT_START}[\s\S]*?(?:\*/|\Z)|{COMMENT_LINE}|{STRING}", re.MULTILINE
+)
+
+
 def _gradient_backgrounds(
     block: StyleBlock, marker_start: int
 ) -> tuple[StyleBlock, tuple[GradientBackground, ...]]:
-    """Replace supported gradient declarations before Textual parses the TCSS."""
+    """Replace gradient values outside native comments and quoted strings."""
     gradients: list[GradientBackground] = []
-
-    def replace_rule(rule_match: re.Match[str]) -> str:
+    replacements: list[tuple[int, int, str]] = []
+    # Preserve offsets and line breaks while hiding non-code from the extension
+    # matcher. The original comments/strings still go through native validation.
+    masked = _CSS_NON_CODE.sub(
+        lambda match: "".join("\n" if character == "\n" else " " for character in match.group()),
+        block.content,
+    )
+    for rule_match in _CSS_RULE.finditer(masked):
         selectors = rule_match.group("selectors")
         declarations = rule_match.group("declarations")
-        def replace_gradient(gradient_match: re.Match[str]) -> str:
-            selector = _bar_gradient_selector(selectors, block.location)
+        for gradient_match in _LINEAR_GRADIENT.finditer(declarations):
+            try:
+                selector = _bar_gradient_selector(selectors, block.location)
+            except DocumentStyleError:
+                raise
+            except Exception as error:
+                raise _style_error(error, block.location) from error
             raw_colors = tuple(color.strip() for color in gradient_match.group("colors").split(","))
             if len(raw_colors) < 2 or any(not color for color in raw_colors):
                 raise DocumentStyleError(
@@ -145,25 +161,26 @@ def _gradient_backgrounds(
                     location=block.location,
                 ) from error
             marker = _gradient_marker(marker_start + len(gradients))
-            gradients.append(
-                GradientBackground(
-                    selector, float(gradient_match.group("angle")), colors, marker, block.location
-                )
-            )
-            return (
+            gradients.append(GradientBackground(
+                selector, float(gradient_match.group("angle")), colors, marker, block.location
+            ))
+            start = rule_match.start("declarations") + gradient_match.start()
+            end = rule_match.start("declarations") + gradient_match.end()
+            replacement = (
                 f"{gradient_match.group('property')}rgba({marker.r}, {marker.g}, {marker.b}, 0)"
                 f"{gradient_match.group('important') or ''}{gradient_match.group('terminator')}"
             )
-
-        cleaned = _LINEAR_GRADIENT.sub(replace_gradient, declarations)
-        if _LINEAR_GRADIENT_START.search(cleaned):
+            # Keep native diagnostics on the original line after multiline values.
+            missing_lines = block.content[start:end].count("\n") - replacement.count("\n")
+            replacements.append((start, end, replacement + "\n" * missing_lines))
+        if _LINEAR_GRADIENT_START.search(_LINEAR_GRADIENT.sub("", declarations)):
             raise DocumentStyleError(
                 "linear-gradient() requires an angle in degrees followed by literal colors",
                 location=block.location,
             )
-        return f"{selectors}{rule_match.group('rule')[0]}{cleaned}}}"
-
-    content = _CSS_RULE.sub(replace_rule, block.content)
+    content = block.content
+    for start, end, replacement in reversed(replacements):
+        content = content[:start] + replacement + content[end:]
     return replace(block, content=content), tuple(gradients)
 
 

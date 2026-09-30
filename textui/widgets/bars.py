@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 from rich.style import Style
-from rich.text import Text
+from rich.cells import split_graphemes
+from rich.segment import Segment
+from textual.geometry import Region
+from textual.strip import Strip
 from textual.containers import Horizontal
 from textual.widgets import Label
 from textual.renderables.gradient import LinearGradient
@@ -22,25 +25,36 @@ class GradientLabel(Label):
         self._textui_gradient = gradient
         self.refresh()
 
-    def render(self):
+    def render_lines(self, crop: Region) -> list[Strip]:
+        """Paint native rendered cells, including alignment, wrapping and padding."""
+        strips = super().render_lines(crop)
         gradient = self._textui_gradient
-        if gradient is None or self.parent is None:
-            return super().render()
-        content = getattr(self.content, "plain", str(self.content))
-        rendered = Text(content)
-        if not isinstance(gradient, BackgroundGradient):
-            return super().render()
+        if not isinstance(gradient, BackgroundGradient) or self.parent is None:
+            return strips
         bar = self.parent.parent
-        if not isinstance(bar, SlotBar):
-            return super().render()
-        width = max(bar.content_size.width, 1)
-        height = max(bar.content_size.height, 1)
-        offset_x = self.region.x - bar.region.x
-        offset_y = self.region.y - bar.region.y
-        for index in range(len(content)):
-            color = gradient.color_at(offset_x + index + .5, offset_y + .5, width, height)
-            rendered.stylize(Style(bgcolor=color), index, index + 1)
-        return rendered
+        if not isinstance(bar, SlotBar) or self.styles.background.a:
+            return strips
+        width, height = max(bar.content_size.width, 1), max(bar.content_size.height, 1)
+        offset_x = self.region.x + crop.x - bar.content_region.x
+        offset_y = self.region.y + crop.y - bar.content_region.y
+        filters = self.get_line_filters()
+        painted = []
+        for row, strip in enumerate(strips):
+            segments = []
+            x = offset_x
+            for segment in strip:
+                spans, _ = split_graphemes(segment.text)
+                for start, end, cells in spans:
+                    color = gradient.color_at(x + .5, offset_y + row + .5, width, height)
+                    swatch = Strip([Segment(" ", Style(bgcolor=color))])
+                    for line_filter in filters:
+                        swatch = swatch.apply_filter(line_filter, self.background_colors[1])
+                    background = next(iter(swatch)).style.bgcolor
+                    style = (segment.style or Style()) + Style(bgcolor=background)
+                    segments.append(Segment(segment.text[start:end], style, segment.control))
+                    x += cells
+            painted.append(Strip(segments, strip.cell_length))
+        return painted
 
 
 class HeaderSlot(Horizontal):
@@ -69,8 +83,8 @@ class HeaderSlot(Horizontal):
             return ""
         return GradientSlice(
             gradient,
-            self.region.x - bar.region.x,
-            self.region.y - bar.region.y,
+            self.content_region.x - bar.content_region.x,
+            self.content_region.y - bar.content_region.y,
             max(bar.content_size.width, 1),
             max(bar.content_size.height, 1),
         )
