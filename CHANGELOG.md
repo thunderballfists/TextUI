@@ -6,6 +6,9 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Transcript mouse selections are cleared when bounded history evicts rows, the log is cleared, or a streamed entry is rewritten. Stable append operations and selections in other widgets are preserved.
+
+
 - Default focus cues now use an accent background tint without covering control content. Compact buttons and radio sets retain their labels, compact text areas retain their first line, and borderless tables retain headings and rows. The optional button-border preset still reserves space for its rounded and double borders.
 - A `header` or `status-bar` with an empty center slot now sizes its right slot to its contents, so controls that need more than half the bar are no longer clipped off the right edge. Bars with center content keep equal flexible edges.
 - Streaming a single transcript line no longer rescans everything already
@@ -38,6 +41,8 @@ All notable changes to TextUI are documented here.
 - Runtime-list `item-label` patterns now require every replacement field to be a direct mapping key, including nested format specifications.
 
 ### Added
+
+- `<log>` transcripts can now be selected with the mouse: the widget reports the selected text and paints the selection, as Textual's own `Log` does, so an application can copy from it.
 
 - `autofocus="true"` for focusable controls, including component instances, newly opened modal controls, and controls in tabs when their pane activates, with default accent focus cues.
 - Modal dismissal results now expose a `.mounted` awaitable for safely populating widgets after a modal opens.

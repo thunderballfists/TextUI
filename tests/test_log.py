@@ -1,6 +1,8 @@
 import pytest
 from rich.cells import cell_len
 from rich.text import Text
+from textual.geometry import Offset
+from textual.selection import Selection
 from textual.widgets import RichLog
 
 from textui import DocumentLoader, DocumentValidationError, TextUI
@@ -231,3 +233,96 @@ async def test_log_keeps_grapheme_clusters_intact_across_deltas(deltas):
         assert log.lines[-1].text.rstrip() == "".join(deltas)
         # The tracked width must still describe the text it belongs to.
         assert log._inline_width == cell_len(log._inline_text)
+
+
+@pytest.mark.asyncio
+async def test_log_text_can_be_selected_and_reported():
+    app = TextUI(DocumentLoader().from_string('<ui><log id="t" /></ui>'))
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        log.append("hello world")
+        log.append("second line")
+        await pilot.pause()
+        assert log.ALLOW_SELECT
+        text, separator = log.get_selection(Selection(Offset(0, 0), Offset(5, 0)))
+        assert (text, separator) == ("hello", "\n")
+        text, _ = log.get_selection(Selection(Offset(6, 0), Offset(11, 1)))
+        assert text == "world\nsecond line"
+        assert log.get_selection(Selection(Offset(0, 40), Offset(3, 41))) == ("", "\n"), "stale selection"
+        assert any(segment.style and segment.style.meta.get("offset") for segment in log.render_line(0))
+
+
+async def _select_first_word(pilot, log):
+    await pilot.mouse_down(log, offset=(0, 0))
+    await pilot.hover(log, offset=(4, 0))
+    await pilot.mouse_up(log, offset=(4, 0))
+    await pilot.pause()
+    assert log.text_selection is not None
+    assert log.get_selection(log.text_selection)[0] == "FIRST"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("mutation", ["evict", "clear", "rewrite"])
+async def test_log_discards_mouse_selection_when_selected_rows_change(mutation):
+    app = TextUI(DocumentLoader().from_string('<ui><log id="t" max-lines="2"/></ui>'))
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        if mutation == "rewrite":
+            log.append_inline("FIRST")
+        else:
+            log.append("FIRST")
+            log.append("SECOND")
+        await pilot.pause()
+        await _select_first_word(pilot, log)
+        if mutation == "evict":
+            log.append("THIRD")
+        elif mutation == "clear":
+            log.clear().append("NEW")
+        else:
+            log.append_inline("\nNEW")
+        await pilot.pause()
+        assert log.text_selection is None
+
+
+@pytest.mark.asyncio
+async def test_log_preserves_selection_on_stable_rows_and_other_widgets():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <label id="label">Other</label>
+      <log id="t" max-lines="2"/>
+    </ui>'''))
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        label = app.document.get_by_id("label")
+        log.append_inline("FIRST")
+        await pilot.pause()
+        await _select_first_word(pilot, log)
+        log.append_inline(" MORE")
+        await pilot.pause()
+        assert log.get_selection(log.text_selection)[0] == "FIRST"
+        log.append("SECOND")
+        await pilot.pause()
+        assert log.get_selection(log.text_selection)[0] == "FIRST"
+        other = Selection(Offset(0, 0), Offset(5, 0))
+        app.screen.selections = {**app.screen.selections, label: other}
+        log.append("THIRD")
+        await pilot.pause()
+        assert log.text_selection is None
+        assert label.text_selection == other
+
+
+@pytest.mark.asyncio
+async def test_log_mouse_selection_uses_scrolled_content_coordinates():
+    app = TextUI(DocumentLoader().from_string('<ui><log id="t" auto-scroll="false"/></ui>'))
+    async with app.run_test(size=(40, 4)) as pilot:
+        log = app.document.get_by_id("t")
+        for number in range(8):
+            log.append(f"ROW-{number}")
+        await pilot.pause()
+        log.scroll_to(y=3, animate=False, immediate=True)
+        await pilot.pause()
+        await pilot.mouse_down(log, offset=(0, 0))
+        await pilot.hover(log, offset=(4, 1))
+        await pilot.mouse_up(log, offset=(4, 1))
+        await pilot.pause()
+        assert log.text_selection is not None
+        assert log.get_selection(log.text_selection)[0].strip() == "ROW-3\nROW-4"

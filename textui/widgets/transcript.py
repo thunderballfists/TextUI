@@ -4,6 +4,7 @@ from __future__ import annotations
 from rich.console import RenderableType
 from rich.cells import cell_len
 from rich.segment import Segment
+from rich.style import Style
 from rich.text import Text
 from textual.geometry import Size
 from textual.reactive import var
@@ -18,8 +19,29 @@ from ..registry import AttributeSpec, BuildContext, ComponentRegistry, Component
 _GRAPHEME_WINDOW = 32
 
 
+def _painted(strip: Strip, span: tuple[int, int], scroll_x: int, style: Style) -> Strip:
+    """`strip` with the columns of `span` (absolute within the line) drawn as selected."""
+    start, end = span
+    width = strip.cell_length
+    end = width + scroll_x if end == -1 else end
+    first, last = max(start - scroll_x, 0), min(end - scroll_x, width)
+    if last <= first:
+        return strip
+    before, middle, after = strip.divide([first, last, width])
+    return Strip.join([before, middle.apply_style(style), after])
+
+
 class TranscriptLog(RichLog):
-    """A RichLog with committed entries and one replaceable streamed entry."""
+    """A RichLog with committed entries and one replaceable streamed entry.
+
+    Mouse selection is supported the way Textual's own `Log` supports it: the widget
+    reports the text under a selection (`get_selection`) and marks each rendered
+    line's position so the screen can turn a pointer position into a character
+    (`render_line`). `RichLog` does neither, so dragging across a transcript
+    highlighted nothing and copied nothing.
+    """
+
+    ALLOW_SELECT = True
 
     is_following: var[bool] = var(True)
 
@@ -53,6 +75,55 @@ class TranscriptLog(RichLog):
     def watch_scroll_y(self, old_value: float, new_value: float) -> None:
         super().watch_scroll_y(old_value, new_value)
         self.is_following = self.is_vertical_scroll_end
+
+    def _invalidate_selection(self) -> None:
+        """Drop stale row coordinates without clearing other widgets' selections."""
+        if not self.is_mounted or self not in self.screen.selections:
+            return
+        screen = self.screen
+        remaining = {widget: selection for widget, selection in screen.selections.items() if widget is not self}
+        # Cancel any active drag too, so later pointer movement cannot resurrect
+        # a selection whose start was measured against the previous history.
+        screen.clear_selection()
+        screen.selections = remaining
+
+    def write(
+        self,
+        content: RenderableType | object,
+        width: int | None = None,
+        expand: bool = False,
+        shrink: bool = True,
+        scroll_end: bool | None = None,
+        animate: bool = False,
+    ) -> TranscriptLog:
+        start_line = self._start_line
+        super().write(content, width, expand, shrink, scroll_end, animate)
+        if self._start_line != start_line:
+            self._invalidate_selection()
+        return self
+
+    def get_selection(self, selection) -> tuple[str, str] | None:
+        text = "\n".join(strip.text for strip in self.lines)
+        try:
+            return selection.extract(text), "\n"
+        except IndexError:  # made when there were more lines than there are now
+            return "", "\n"
+
+    def selection_updated(self, selection) -> None:
+        self.refresh()
+
+    def render_line(self, y: int) -> Strip:
+        strip = super().render_line(y)
+        scroll_x, scroll_y = self.scroll_offset
+        line = scroll_y + y
+        strip = strip.apply_offsets(scroll_x, line)
+        selection = self.text_selection
+        if selection is not None and line < len(self.lines):
+            span = selection.get_span(line)
+            if span is not None:
+                style = self.screen.get_component_rich_style("screen--selection")
+                strip = _painted(strip, span, scroll_x, style)
+        return strip
 
     def append(self, content: RenderableType | object) -> TranscriptLog:
         """Write a complete, optionally Rich, transcript entry."""
@@ -113,6 +184,7 @@ class TranscriptLog(RichLog):
         return self
 
     def clear(self) -> TranscriptLog:
+        self._invalidate_selection()
         super().clear()
         self._inline_text = ""
         self._inline_line_count = 0
@@ -127,6 +199,7 @@ class TranscriptLog(RichLog):
         if not self._inline_open:
             return
         if self._inline_line_count:
+            self._invalidate_selection()
             del self.lines[-self._inline_line_count:]
         self._line_cache.clear()
         self.virtual_size = Size(self._widest_line_width, len(self.lines))
