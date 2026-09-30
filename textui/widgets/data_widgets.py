@@ -363,6 +363,11 @@ class SeededDataTable(DataTable):
         return super()._should_highlight(cursor, target_cell, type_of_cursor)
 
 
+def _bordered(context: BuildContext) -> bool:
+    stated = context.attributes.get("column-borders")
+    return context.attributes["resizable"] if stated is None else stated
+
+
 def build_data_table(context: BuildContext) -> SeededDataTable:
     columns = tuple(child for child in context.children if isinstance(child, TableColumn))
     rows = tuple(child for child in context.children if isinstance(child, TableRow))
@@ -372,7 +377,9 @@ def build_data_table(context: BuildContext) -> SeededDataTable:
         cursor_type=context.attributes["cursor-type"],
         row_key=context.attributes.get("row-key"),
         striped=context.attributes["striped"],
-        column_borders=context.attributes["column-borders"],
+        # A resizable column is dragged by its right edge, and nothing marks that edge
+        # unless the separators are drawn, so they follow ``resizable`` unless stated.
+        column_borders=_bordered(context),
         resizable=context.attributes["resizable"],
         location=context.location,
     )
@@ -444,7 +451,7 @@ def register_data_widgets(registry: ComponentRegistry) -> None:
             "cursor-type": AttributeSpec(enum("cell", "row", "column", "none"), default="row"),
             "row-key": AttributeSpec(nonempty_key),
             "striped": AttributeSpec(boolean, default=False),
-            "column-borders": AttributeSpec(boolean, default=False),
+            "column-borders": AttributeSpec(boolean),
             "resizable": AttributeSpec(boolean, default=False),
         },
         events={
