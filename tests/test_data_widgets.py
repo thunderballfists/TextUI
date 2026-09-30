@@ -186,26 +186,34 @@ async def test_clicking_a_header_sorts_ascending_then_descending_once_per_click(
 
 
 @pytest.mark.asyncio
-async def test_the_click_that_ends_a_resize_press_does_not_sort():
-    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true" row-key="id">
-      <column key="name" width="8">Name</column><column key="requests" width="8">Requests</column>
-    </data-table></ui>'''))
-    async with app.run_test(size=(40, 8)) as pilot:
+@pytest.mark.parametrize("release", ["on the table", "outside the table"])
+async def test_releasing_a_divider_drag_does_not_sort_and_leaves_the_next_click_alone(release):
+    app = TextUI(DocumentLoader().from_string('''<ui><vertical>
+      <data-table id="usage" resizable="true" row-key="id">
+        <column key="name" width="8">Name</column><column key="requests" width="8">Requests</column>
+      </data-table><label id="below">below</label></vertical></ui>'''))
+    async with app.run_test(size=(40, 10)) as pilot:
         table = app.document.get_by_id("usage")
         table.set_rows([
             {"id": "zulu", "name": "Zulu", "requests": 1},
             {"id": "alpha", "name": "Alpha", "requests": 2},
         ])
-        table._suppress_header_click = True  # what pressing a column divider does
-
-        await pilot.click(table, offset=(3, 0))  # inside the "Name" heading, away from its edge
         await pilot.pause()
-        assert [key.value for key in table.rows] == ["zulu", "alpha"]
+        edge = table.columns["name"].get_render_width(table) - 1
+        await pilot.mouse_down(table, offset=(edge, 0))
+        await pilot.hover(table, offset=(edge + 2, 0))
+        if release == "on the table":
+            await pilot.mouse_up(table, offset=(edge + 2, 0))
+        else:
+            await pilot.mouse_up(app.document.get_by_id("below"), offset=(1, 0))
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["zulu", "alpha"], "a divider drag never sorts"
         assert table.columns["name"].label.plain == "Name"
 
         await pilot.click(table, offset=(3, 0))  # the next, ordinary click sorts
         await pilot.pause()
         assert [key.value for key in table.rows] == ["alpha", "zulu"]
+        assert table.columns["name"].label.plain == "Name ↑"
 
 
 @pytest.mark.asyncio
