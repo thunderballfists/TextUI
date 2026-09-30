@@ -126,12 +126,18 @@ def _command_metadata(name: str, options: _CommandOptions, location: SourceLocat
 class ProjectWindow:
     """A controller's App-scoped host facade."""
 
-    def __init__(self, app: Any, registry: ComponentRegistry) -> None:
+    def __init__(self, app: Any, registry: ComponentRegistry, context: Any = None) -> None:
         self.app = app
         self.registry = registry
+        self._context = context
         self._document: BoundDocument | None = None
         self.phase = "created"
         self.timers = RuntimeTimers(app, self)
+
+    @property
+    def context(self) -> Any:
+        """Host-supplied value shared with this App's linked controllers."""
+        return self._context
 
     @property
     def document(self) -> BoundDocument:
@@ -209,22 +215,22 @@ class ControllerSet:
                 if not isinstance(options.supersede, bool):
                     raise DocumentValidationError("action supersede must be a boolean", location=location)
                 self.action_metadata[name] = options
-            if name in {"on_setup", "on_ready", "on_close"} and callable(value) and getattr(value, "__module__", None) == module.__name__:
+            if name in {"on_setup", "on_ready", "on_resize", "on_close"} and callable(value) and getattr(value, "__module__", None) == module.__name__:
                 if name in self.hooks:
                     raise DocumentValidationError(f"duplicate hook {name!r}", location=location)
-                _arity(value, {0}, location)
+                _arity(value, {2} if name == "on_resize" else {0}, location)
                 self.hooks[name] = (value, location)
             if callable(value) and getattr(value, "__textui_every__", None) is not None and getattr(value, "__module__", None) == module.__name__:
                 _arity(value, {0}, location)
                 seconds, thread = value.__textui_every__
                 self.periodic.append((seconds, value, thread))
 
-    async def hook(self, name: str) -> None:
+    async def hook(self, name: str, *args: Any) -> None:
         if name not in self.hooks:
             return
         callback, location = self.hooks[name]
         try:
-            result = callback()
+            result = callback(*args)
             if isawaitable(result):
                 await result
         except Exception as error:

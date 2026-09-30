@@ -2,6 +2,8 @@ import asyncio
 from pathlib import Path
 
 import pytest
+from textual.events import Resize
+from textual.geometry import Size
 from textual.widgets import Button
 
 from textui import DocumentStateError, DocumentValidationError
@@ -528,4 +530,114 @@ def on_close():
     with pytest.raises(Exception, match="on_close.*close broke") as caught:
         async with app.run_test():
             pass
+    assert "controller.py" in str(caught.value)
+
+
+@pytest.mark.asyncio
+async def test_host_context_is_available_at_script_load_and_read_only_on_window(tmp_path: Path):
+    source = project(tmp_path, '<label>Hi</label>', '''
+window.app.events.append(("load", window.context))
+
+def on_setup():
+    window.app.events.append(("setup", window.context))
+    try:
+        window.context = object()
+    except AttributeError:
+        window.app.events.append(("read-only", window.context))
+''')
+    host_context = {"account": "demo"}
+    app = ProjectApp(source, context=host_context)
+    app.events = []
+
+    async with app.run_test():
+        assert app.events == [
+            ("load", host_context),
+            ("setup", host_context),
+            ("read-only", host_context),
+        ]
+        assert app.window.context is host_context
+
+
+@pytest.mark.asyncio
+async def test_resize_hook_sees_settled_screen_and_widget_size(tmp_path: Path):
+    source = project(tmp_path, '<label id="status" style="width: 100%;">Hi</label>', '''
+async def on_resize(width, height):
+    status = window.document.get_by_id("status")
+    window.app.resizes.append((width, height, window.app.screen.size.width, status.size.width))
+''')
+    app = ProjectApp(source)
+    app.resizes = []
+
+    async with app.run_test() as pilot:
+        await pilot.pause()
+        assert len(app.resizes) <= 1
+        await pilot.resize_terminal(60, 20)
+        await pilot.pause()
+        assert app.resizes[-1] == (60, 20, 60, 60)
+        count = len(app.resizes)
+        await pilot.resize_terminal(78, 25)
+        await pilot.pause()
+        assert app.resizes[-1] == (78, 25, 78, 78)
+        assert len(app.resizes) == count + 1
+        assert all(width == screen_width == widget_width for width, _, screen_width, widget_width in app.resizes)
+
+
+@pytest.mark.asyncio
+async def test_resize_hook_rejects_wrong_signature_with_source_context(tmp_path: Path):
+    source = project(tmp_path, '<label>Hi</label>', '''
+def on_resize(width):
+    pass
+''')
+    app = ProjectApp(source)
+    with pytest.raises(DocumentValidationError, match="unsupported signature for on_resize") as caught:
+        async with app.run_test():
+            pass
+    assert "controller.py" in str(caught.value)
+
+
+@pytest.mark.asyncio
+async def test_queued_resize_hook_skips_stale_dimensions(tmp_path: Path):
+    source = project(tmp_path, '<label id="status" style="width: 100%;">Hi</label>', '''
+def on_resize(width, height):
+    status = window.document.get_by_id("status")
+    window.app.resizes.append((width, height, window.app.screen.size.width, status.size.width))
+''')
+    app = ProjectApp(source)
+    app.resizes = []
+
+    async with app.run_test(size=(80, 24)) as pilot:
+        app.post_message(Resize(Size(60, 20), Size(60, 20)))
+        app.post_message(Resize(Size(70, 22), Size(70, 22)))
+        await pilot.pause()
+        assert app.resizes[-1] == (70, 22, 70, 70)
+        assert all(width == screen_width == widget_width for width, _, screen_width, widget_width in app.resizes)
+
+
+@pytest.mark.asyncio
+async def test_resize_hook_stops_after_exit(tmp_path: Path):
+    source = project(tmp_path, '<label>Hi</label>', '''
+def on_resize(width, height):
+    window.app.resizes.append((width, height))
+''')
+    app = ProjectApp(source)
+    app.resizes = []
+
+    async with app.run_test() as pilot:
+        await pilot.resize_terminal(60, 20)
+        assert app.resizes[-1] == (60, 20)
+        app.exit()
+        await pilot.resize_terminal(70, 22)
+    assert (70, 22) not in app.resizes
+
+
+@pytest.mark.asyncio
+async def test_resize_hook_error_preserves_script_source(tmp_path: Path):
+    source = project(tmp_path, '<label>Hi</label>', '''
+def on_resize(width, height):
+    raise ValueError("cannot repaint")
+''')
+    app = ProjectApp(source)
+    with pytest.raises(Exception, match="on_resize.*cannot repaint") as caught:
+        async with app.run_test() as pilot:
+            await pilot.resize_terminal(60, 20)
     assert "controller.py" in str(caught.value)

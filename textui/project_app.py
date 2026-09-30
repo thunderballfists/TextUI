@@ -24,15 +24,17 @@ from .presets import FOCUS_TCSS
 
 class ProjectApp(App):
     CSS = FOCUS_TCSS
-    def __init__(self, source: ProjectSource, *, actions: Mapping[str, ActionCallback] | None = None, **app_options: Any) -> None:
+    def __init__(self, source: ProjectSource, *, actions: Mapping[str, ActionCallback] | None = None, context: Any = None, **app_options: Any) -> None:
         super().__init__(**app_options)
         self.source = source
-        self.window = ProjectWindow(self, default_component_registry())
+        self.window = ProjectWindow(self, default_component_registry(), context)
         self.controllers = ControllerSet(self.window)
         self._host_actions = dict(actions or {})
         self.document: BoundDocument | None = None
         self._setup_completed = False
         self._closed = False
+        self._resize_generation = 0
+        self._last_controller_resize: tuple[int, int] | None = None
 
     async def on_load(self) -> None:
         try:
@@ -107,6 +109,37 @@ class ProjectApp(App):
 
     async def on_unmount(self) -> None:
         await self._close_once()
+
+    def _check_resize(self) -> None:
+        """Queue the hook after Textual forwards its debounced resize to the screen."""
+        resize = self._resize_event
+        super()._check_resize()
+        if resize is not None and self._resize_event is None and "on_resize" in self.controllers.hooks:
+            self._resize_generation += 1
+            screen = self.screen
+            # Textual has posted Resize to this screen. Its after-refresh queue
+            # runs after the screen processes that event and computes layout.
+            screen.call_after_refresh(
+                self._run_resize_hook,
+                screen,
+                self._resize_generation,
+                resize.size.width,
+                resize.size.height,
+            )
+
+    async def _run_resize_hook(self, screen: Any, generation: int, width: int, height: int) -> None:
+        if self.window.phase != "ready" or not self.is_running:
+            return
+        size = (width, height)
+        if (
+            generation != self._resize_generation
+            or self.screen is not screen
+            or (screen.size.width, screen.size.height) != size
+            or self._last_controller_resize == size
+        ):
+            return
+        self._last_controller_resize = size
+        await self.controllers.hook("on_resize", width, height)
 
     def exit(self, result: Any = None, return_code: int = 0, message: Any = None) -> None:
         """Stop project-owned timers before Textual starts application teardown."""
