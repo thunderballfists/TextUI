@@ -2,7 +2,7 @@
   <style src="data.tcss"/>
   <script src="controller.py"/>
   <vertical id="demo">
-    <label>Runtime table, seeded table, and tree</label>
+    <label>Usage: click headings to sort; drag edges or use Ctrl+Left/Right to resize</label>
     <horizontal id="data-panels">
       <data-table id="usage" row-key="record_id" cursor-type="row" striped="true" column-borders="true" resizable="true" on-row-selected="usage_selected">
         <column key="date" label="Date" />

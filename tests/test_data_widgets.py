@@ -90,6 +90,40 @@ async def test_column_borders_render_between_headers_and_cells():
 
 
 @pytest.mark.asyncio
+async def test_resizable_table_marks_last_handle_and_highlights_hovered_separator():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
+      <column key="name" width="8">Name</column><column key="state" width="8">State</column>
+      <row key="today"><cell>Alpha</cell><cell>Ready</cell></row>
+    </data-table></ui>'''))
+    async with app.run_test(size=(40, 8)) as pilot:
+        table = app.document.get_by_id("usage")
+        await pilot.pause()
+        assert table.render_line(0).text.count("│") == 2
+        assert table.render_line(1).text.count("│") == 2
+
+        edge = table._header_right_edge(1)
+        before = next(iter(table.render_line(0).crop(edge, edge + 1))).style
+        await pilot.hover(offset=(table.region.x + edge, table.region.y))
+        await pilot.pause()
+        hovered = next(iter(table.render_line(0).crop(edge, edge + 1))).style
+        assert hovered != before
+        assert hovered.color == table.get_component_rich_style("table--column-resize-hover").color
+
+        await pilot.hover(offset=(table.region.x + edge, table.region.y + 2))
+        await pilot.pause()
+        assert next(iter(table.render_line(0).crop(edge, edge + 1))).style == before
+
+        last = table.ordered_columns[1]
+        width = last.width
+        await pilot.mouse_down(table, offset=(edge, 0))
+        end = (table.region.x + edge - 3, table.region.y)
+        await pilot.hover(offset=end)
+        await pilot.mouse_up(offset=end)
+        await pilot.pause()
+        assert last.width == width - 3
+
+
+@pytest.mark.asyncio
 async def test_resizable_table_supports_keyboard_and_drag_without_sorting():
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
       <column key="name" width="8">Name</column><column key="state" width="8">State</column>
@@ -136,6 +170,24 @@ async def test_frozen_column_resize_edge_does_not_move_with_horizontal_scroll():
         expected = table._row_label_column_width + table.ordered_columns[0].get_render_width(table) - 1
         table.scroll_x = 4
         assert table._header_right_edge(0) == expected
+
+
+@pytest.mark.asyncio
+async def test_hidden_scrolled_resize_edge_cannot_capture_frozen_heading():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
+      <column key="a" width="8">A</column>
+      <column key="b" width="20">B</column>
+      <column key="c" width="20">C</column>
+    </data-table></ui>'''))
+    async with app.run_test(size=(20, 8)) as pilot:
+        table = app.document.get_by_id("usage")
+        table.fixed_columns = 1
+        table.scroll_x = 28
+        await pilot.pause()
+        hidden_edge = table._header_right_edge(1)
+        assert hidden_edge < table._header_right_edge(0) - 1
+        await pilot.mouse_down(table, offset=(hidden_edge, 0))
+        assert table._resize_drag is None
 
 
 @pytest.mark.parametrize("markup", [

@@ -58,10 +58,10 @@ class TreeSeedNode(Widget):
 
 class SeededDataTable(DataTable):
     BINDINGS = DataTable.BINDINGS + [
-        Binding("ctrl+left", "resize_column_smaller", "Shrink column", show=False),
-        Binding("ctrl+right", "resize_column_larger", "Grow column", show=False),
+        Binding("ctrl+left", "resize_column_smaller", "Shrink column", show=True),
+        Binding("ctrl+right", "resize_column_larger", "Grow column", show=True),
     ]
-    COMPONENT_CLASSES = DataTable.COMPONENT_CLASSES | {"table--column-border"}
+    COMPONENT_CLASSES = DataTable.COMPONENT_CLASSES | {"table--column-border", "table--column-resize-hover"}
     DEFAULT_CSS = """
     SeededDataTable:focus > .datatable--header {
         background: $panel;
@@ -84,6 +84,11 @@ class SeededDataTable(DataTable):
     }
     SeededDataTable > .table--column-border {
         color: $primary 45%;
+    }
+    SeededDataTable > .table--column-resize-hover {
+        color: $accent;
+        background: $primary 30%;
+        text-style: bold;
     }
     """
 
@@ -112,6 +117,7 @@ class SeededDataTable(DataTable):
         self._header_labels: dict[str, Text] = {}
         self._seeded = False
         self._resize_drag: tuple[int, int, int] | None = None
+        self._hover_resize_column: int | None = None
         self._suppress_header_click = False
 
     def on_mount(self) -> None:
@@ -131,6 +137,11 @@ class SeededDataTable(DataTable):
 
     def action_resize_column_larger(self) -> None:
         self.resize_column(self.cursor_column, 1)
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        if action in {"resize_column_smaller", "resize_column_larger"}:
+            return self.resizable and not self.disabled and bool(self.columns)
+        return super().check_action(action, parameters)
 
     def resize_column(self, column_index: int, delta: int) -> None:
         if not self.resizable or not 0 <= column_index < len(self.columns):
@@ -159,28 +170,38 @@ class SeededDataTable(DataTable):
             for column in self.ordered_columns[: column_index + 1]
         ) - 1 - scroll_offset
 
+    def _resize_edge_at(self, event: MouseDown | events.MouseMove) -> int | None:
+        if not self.resizable or self.disabled or not self.columns:
+            return None
+        metadata = event.style.meta
+        if metadata:
+            if metadata.get("row") != -1:
+                return None
+        elif event.y != 0:
+            return None
+        frozen_width = self._row_label_column_width + sum(
+            column.get_render_width(self)
+            for column in self.ordered_columns[: self.fixed_columns]
+        )
+        for index in range(len(self.columns)):
+            edge = self._header_right_edge(index)
+            visible_left = self._row_label_column_width if index < self.fixed_columns else frozen_width
+            if visible_left <= edge < self.size.width and event.x >= visible_left and abs(event.x - edge) <= 1:
+                return index
+        return None
+
+    def _set_resize_hover(self, column_index: int | None) -> None:
+        if column_index == self._hover_resize_column:
+            return
+        self._hover_resize_column = column_index
+        self._update_count += 1
+        self.refresh()
+
     def on_mouse_down(self, event: MouseDown) -> None:
         if not self.resizable or self.disabled or event.button != 1:
             return
-        metadata = event.style.meta
-        column_index = metadata.get("column")
-        if metadata:
-            if metadata.get("row") != -1 or not isinstance(column_index, int):
-                return
-        else:
-            if event.y != 0:
-                return
-            column_index = next(
-                (
-                    index
-                    for index in range(len(self.columns))
-                    if abs(event.x - self._header_right_edge(index)) <= 1
-                ),
-                None,
-            )
-            if column_index is None:
-                return
-        if abs(event.x - self._header_right_edge(column_index)) > 1:
+        column_index = self._resize_edge_at(event)
+        if column_index is None:
             return
         column = self.ordered_columns[column_index]
         width = column.content_width if column.auto_width else column.width
@@ -192,15 +213,21 @@ class SeededDataTable(DataTable):
     def _on_mouse_move(self, event: events.MouseMove) -> None:
         if self._resize_drag is None:
             super()._on_mouse_move(event)
+            self._set_resize_hover(self._resize_edge_at(event) if self.column_borders else None)
             return
         column_index, width, start_x = self._resize_drag
         self._set_column_width(column_index, width + event.x - start_x)
         event.stop()
 
+    def _on_leave(self, event: events.Leave) -> None:
+        super()._on_leave(event)
+        self._set_resize_hover(None)
+
     def on_mouse_up(self, event: MouseUp) -> None:
         if self._resize_drag is not None:
             self._resize_drag = None
             self.release_mouse()
+            self._set_resize_hover(None)
             event.stop()
 
     async def _on_click(self, event: events.Click) -> None:
@@ -212,10 +239,12 @@ class SeededDataTable(DataTable):
 
     def _render_cell(self, *args, **kwargs):
         lines = super()._render_cell(*args, **kwargs)
+        row_index = args[0]
         column_index = args[1]
-        if not self.column_borders or column_index < 0 or column_index == len(self.columns) - 1:
+        if not self.column_borders or column_index < 0 or (column_index == len(self.columns) - 1 and not self.resizable):
             return lines
-        border_style = self.get_component_rich_style("table--column-border")
+        component = "table--column-resize-hover" if row_index == -1 and column_index == self._hover_resize_column else "table--column-border"
+        border_style = self.get_component_rich_style(component)
         return [self._with_column_border(line, border_style) for line in lines]
 
     @staticmethod

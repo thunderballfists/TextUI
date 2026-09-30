@@ -34,6 +34,7 @@ All notable changes to TextUI are documented here.
 
 ### Changed
 
+- Resizable data tables now draw and highlight a visible handle on the last column, tint the heading separator under the pointer, and show their keyboard resize bindings in a native Footer when focused. Explicit `column-borders="false"` still hides separators.
 - `tabbed-content`, its content switcher and each `tab-pane` now fill their parent's remaining height by default, as `split` already does. A vertical shell of header, tabs and status bar keeps the status bar on screen, and a `1fr` widget inside a pane no longer collapses. An application that wants content-sized tabs overrides the height in its own TCSS.
 - `column-borders` on a `data-table` now defaults to the value of `resizable`, so a resizable table draws the separator at each heading's right edge, which is the spot to drag. Set `column-borders="false"` to hide it.
 - Splits now consume the remaining height in structural application shells, leaving header and status-bar space without custom height rules.
