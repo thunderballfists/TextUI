@@ -42,6 +42,9 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- Linear-gradient backgrounds for `header` and `status-bar` surfaces, declared with an ID selector in TCSS and rendered beneath native bar controls. Live class changes respect the current background winner and opaque slot overrides.
+
+
 - `<log>` transcripts can now be selected with the mouse: the widget reports the selected text and paints the selection, as Textual's own `Log` does, so an application can copy from it.
 
 - `autofocus="true"` for focusable controls, including component instances, newly opened modal controls, and controls in tabs when their pane activates, with default accent focus cues.
