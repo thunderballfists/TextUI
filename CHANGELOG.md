@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Controller resize hooks now receive terminal dimensions even when the active screen has padding or a border.
 - Transcript mouse selections are cleared when bounded history evicts rows, the log is cleared, or a streamed entry is rewritten. Stable append operations and selections in other widgets are preserved.
 
 

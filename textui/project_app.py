@@ -134,7 +134,7 @@ class ProjectApp(App):
         if (
             generation != self._resize_generation
             or self.screen is not screen
-            or (screen.size.width, screen.size.height) != size
+            or (self.size.width, self.size.height) != size
             or self._last_controller_resize == size
         ):
             return
