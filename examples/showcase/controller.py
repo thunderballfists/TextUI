@@ -17,6 +17,12 @@ async def on_ready() -> None:
     await window.document.get_by_id("agents").set_items(AGENTS)
 
 
+@action
+async def copy_selection(context) -> None:
+    backend = await window.copy(context.event.text)
+    _feedback("Selection sent via OSC 52" if backend == "osc52" else f"Selection copied with {backend}")
+
+
 @every(1)
 def update_clock() -> None:
     window.document.get_by_id("clock").update(datetime.now().strftime("%H:%M:%S"))

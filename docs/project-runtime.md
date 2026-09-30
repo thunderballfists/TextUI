@@ -204,6 +204,18 @@ def select_agent(context):
 
 The [runtime list example](../examples/list/app.ui) uses this pattern for a master-detail rail.
 
-Transcript mouse selections survive appends that keep selected rows in place. Eviction, clearing, and streamed-entry rewrites clear the affected log selection so copying cannot return unrelated replacement text. Selection-ended events and framework clipboard APIs remain future work.
+Transcript mouse selections survive appends that keep selected rows in place. Eviction, clearing, and streamed-entry rewrites clear the affected log selection so copying cannot return unrelated replacement text.
+
+## Selection and clipboard
+
+Copying on selection is opt-in. `<log on-selection-ended="copy_selection"/>` emits a completed nonempty pointer selection, including release outside the log. Its event exposes `.log`, `.text`, and native `.selection` coordinates; content updates do not emit selection completion.
+
+```python
+@action
+async def copy_selection(context):
+    backend = await window.copy(context.event.text)
+```
+
+`window.copy(text)` is available while ready. Normal Textual hosts can instead import `copy_to_clipboard` from `textui` and call `await copy_to_clipboard(app, text)`. The helper asynchronously tries `pbcopy` on macOS, `clip` on Windows, or Wayland/X11 tools on Linux, with Unicode stdin and a two-second timeout per candidate. It also sends Textual's OSC 52 transport for the terminal's clipboard. The return value names the successful native tool, or `osc52` if only the terminal transport was sent; it does not confirm terminal acceptance. Clipboard text never becomes a shell command. Textual's own copy shortcuts remain unchanged. The showcase demonstrates this opt-in action.
 
 Document tab layout defaults apply in normal Textual Apps through `Document.bind()` as well as `TextUI` and `ProjectApp`. Host-owned native tab widgets are unaffected; author TCSS can override document tab and pane heights.

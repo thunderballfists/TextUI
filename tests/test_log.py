@@ -262,6 +262,111 @@ async def _select_first_word(pilot, log):
 
 
 @pytest.mark.asyncio
+async def test_log_selection_ended_reports_each_gesture_without_content_update_loops():
+    seen = []
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <log id="t" on-selection-ended="selected" />
+    </ui>'''), actions={"selected": lambda context: seen.append((context.widget, context.event.text, context.event.selection))})
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        log.append("FIRST word")
+        await pilot.pause()
+        await pilot.mouse_down(log, offset=(0, 0))
+        await pilot.hover(log, offset=(4, 0))
+        assert seen == []
+        await pilot.mouse_up(log, offset=(4, 0))
+        await pilot.pause()
+        assert len(seen) == 1
+        assert seen[0] == (log, "FIRST", log.text_selection)
+
+        log.append("SECOND line")
+        await pilot.pause()
+        assert len(seen) == 1
+        await _select_first_word(pilot, log)
+        assert len(seen) == 2
+        await pilot.click(log, offset=(12, 0))
+        await pilot.pause()
+        assert len(seen) == 2
+
+
+@pytest.mark.asyncio
+async def test_log_selection_ended_handles_release_outside_the_log():
+    seen = []
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <log id="t" style="height: 3;" on-selection-ended="selected" />
+      <label id="outside">Outside</label>
+    </ui>'''), actions={"selected": lambda context: seen.append(context.event.text)})
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        log.append("FIRST")
+        await pilot.pause()
+        await pilot.mouse_down(log, offset=(0, 0))
+        await pilot.hover("#outside", offset=(4, 0))
+        await pilot.mouse_up("#outside", offset=(4, 0))
+        await pilot.pause()
+        assert len(seen) == 1
+        assert seen[0].strip() == "FIRST"
+
+
+@pytest.mark.asyncio
+async def test_log_scrollbar_navigation_does_not_complete_a_retained_selection():
+    seen = []
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <log id="t" auto-scroll="false" on-selection-ended="selected"/>
+    </ui>'''), actions={"selected": lambda context: seen.append(context.event.text)})
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        log.append("FIRST word")
+        for number in range(20):
+            log.append(f"Row {number}")
+        await pilot.pause()
+        await _select_first_word(pilot, log)
+        assert seen == ["FIRST"]
+        assert await pilot.click(log.vertical_scrollbar, offset=(0, 0))
+        await pilot.pause()
+        assert seen == ["FIRST"]
+
+
+@pytest.mark.asyncio
+async def test_repeated_cross_widget_drag_reports_a_fully_selected_log():
+    seen = []
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <label id="top">TOP</label>
+      <log id="t" style="height: 3;" on-selection-ended="selected"/>
+      <label id="bottom">BOTTOM</label>
+    </ui>'''), actions={"selected": lambda context: seen.append(context.event.text)})
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        log.append("FIRST word")
+        await pilot.pause()
+        for _ in range(2):
+            await pilot.mouse_down("#top", offset=(0, 0))
+            await pilot.hover("#bottom", offset=(4, 0))
+            await pilot.mouse_up("#bottom", offset=(4, 0))
+            await pilot.pause()
+        assert seen == ["FIRST word", "FIRST word"]
+
+
+@pytest.mark.asyncio
+async def test_dragging_a_nonselectable_control_does_not_complete_old_log_selection():
+    seen = []
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <log id="t" style="height: 3;" on-selection-ended="selected"/>
+      <button id="b">Button</button>
+    </ui>'''), actions={"selected": lambda context: seen.append(context.event.text)})
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        log.append("FIRST word")
+        await pilot.pause()
+        await _select_first_word(pilot, log)
+        await pilot.mouse_down("#b", offset=(2, 1))
+        await pilot.hover("#b", offset=(8, 1))
+        await pilot.mouse_up("#b", offset=(8, 1))
+        await pilot.pause()
+        assert seen == ["FIRST"]
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("mutation", ["evict", "clear", "rewrite"])
 async def test_log_discards_mouse_selection_when_selected_rows_change(mutation):
     app = TextUI(DocumentLoader().from_string('<ui><log id="t" max-lines="2"/></ui>'))

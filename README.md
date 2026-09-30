@@ -79,7 +79,7 @@ Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is p
 | `range` | None | Integer `min`, `max`, positive `step`, optional aligned `value`, boolean `show-value` | `changed` |
 | `rule` | None | `orientation`, `line-style` | None |
 | `header`, `status-bar` | Optional `left`, `center`, and `right` slots | None | None |
-| `log` | None | Optional `max-lines`, boolean `auto-scroll`, `wrap`, and `highlight` | None |
+| `log` | None | Optional `max-lines`, boolean `auto-scroll`, `wrap`, and `highlight` | `on-selection-ended` |
 | `list` | None | Required `item-label` with direct mapping-key fields | `selected` |
 | `modal` | Widgets; document root only | Required `id`, boolean `dismissable` | None |
 | `data-table` | `column` children, then `row` children | `cursor-type`: row, cell, column, none; optional `row-key`; boolean `striped`, `column-borders`, `resizable` | `row-selected`, `cell-selected` |

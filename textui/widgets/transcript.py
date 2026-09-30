@@ -7,11 +7,15 @@ from rich.segment import Segment
 from rich.style import Style
 from rich.text import Text
 from textual.geometry import Size
+from textual.events import MouseDown, TextSelected
+from textual.message import Message
 from textual.reactive import var
+from textual.screen import Screen
+from textual.selection import Selection
 from textual.strip import Strip
 from textual.widgets import RichLog
 
-from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, boolean, integer
+from ..registry import AttributeSpec, BuildContext, ComponentRegistry, ComponentSpec, EventSpec, boolean, integer
 
 # Characters of already-streamed text to re-measure when checking that a delta's
 # width adds cleanly onto the active line. A grapheme cluster (emoji ZWJ
@@ -45,6 +49,19 @@ class TranscriptLog(RichLog):
 
     is_following: var[bool] = var(True)
 
+    class SelectionEnded(Message):
+        """A completed pointer selection in this transcript."""
+
+        def __init__(self, log: TranscriptLog, text: str, selection: Selection) -> None:
+            super().__init__()
+            self.log = log
+            self.text = text
+            self.selection = selection
+
+        @property
+        def control(self) -> TranscriptLog:
+            return self.log
+
     def __init__(
         self,
         *,
@@ -71,6 +88,53 @@ class TranscriptLog(RichLog):
         # rescanning everything accumulated so far.
         self._inline_width = 0
         self._inline_printable = True
+        self._selection_screen: Screen | None = None
+        self._last_completed_selection: Selection | None = None
+
+    def on_mount(self) -> None:
+        self._selection_screen = self.screen
+        self.screen.message_signal.subscribe(self, self._screen_message, immediate=True)
+
+    def on_unmount(self) -> None:
+        if self._selection_screen is not None:
+            self._selection_screen.message_signal.unsubscribe(self)
+            self._selection_screen = None
+        self._last_completed_selection = None
+
+    def _screen_message(self, message: Message) -> None:
+        if isinstance(message, MouseDown):
+            # A new gesture may reuse Textual's shared SELECT_ALL object.
+            # Match native selection eligibility; dragging a button or scrollbar
+            # can retain the old selection without starting a new one.
+            screen = self._selection_screen
+            if screen is None or self.app.mouse_captured:
+                return
+            widget, _ = screen.get_widget_and_offset_at(message.screen_x, message.screen_y)
+            if (
+                widget is not None and widget.allow_select
+                and screen.allow_select and self.app.ALLOW_SELECT
+                and not widget.has_class("-textual-system")
+            ):
+                self._last_completed_selection = None
+        elif isinstance(message, TextSelected):
+            # Construct our message in the log's pump so it bubbles past the
+            # screen. Filtering here avoids scheduling unrelated screen events.
+            self.call_next(self._selection_completed)
+
+    def _selection_completed(self) -> None:
+        if not self.is_mounted:
+            return
+        selection = self.text_selection
+        if selection is self._last_completed_selection:
+            return
+        # Scrollbar releases retain the previous object. A new MouseDown
+        # resets this guard, including for shared SELECT_ALL selections.
+        self._last_completed_selection = selection
+        if selection is None:
+            return
+        selected = self.get_selection(selection)
+        if selected is not None and selected[0]:
+            self.post_message(self.SelectionEnded(self, selected[0], selection))
 
     def watch_scroll_y(self, old_value: float, new_value: float) -> None:
         super().watch_scroll_y(old_value, new_value)
@@ -279,4 +343,5 @@ def register_transcript(registry: ComponentRegistry) -> None:
             "markup": AttributeSpec(boolean, default=False),
             "auto-scroll": AttributeSpec(boolean, default=True),
         },
+        events={"selection-ended": EventSpec(TranscriptLog.SelectionEnded, lambda event: event.log)},
     ))
