@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- A `header` or `status-bar` with an empty center slot now sizes its right slot to its contents, so controls that need more than half the bar are no longer clipped off the right edge. Bars with center content keep equal flexible edges.
 - Streaming a single transcript line no longer rescans everything already
   accumulated on each delta: `TranscriptLog` tracks the active line's width and
   printability incrementally, so per-delta work is proportional to the delta.
