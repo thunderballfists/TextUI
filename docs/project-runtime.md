@@ -2,7 +2,7 @@
 
 Run a local project with `textui run path/to/app.ui` or `python -m textui run path/to/app.ui`. The entry file has one attribute-free `<ui>` root. Its direct children may contain inline `<style>`, `<style src="shell.tcss"/>`, and `<script src="controller.py"/>` alongside widgets. A `<script>` has only `src`, no embedded code. A sourced style also has no body.
 
-Use `<style preset="compact"/>` when an application needs denser native controls without maintaining a global stylesheet. It reduces horizontal padding and uses Textual's native compact state for buttons, text inputs, selects, text areas, and choice controls. Native compact controls remove their borders, so single-line inputs and selects use one terminal row. The preset participates in normal source order, so a later inline or sourced TCSS block can override any rule:
+Use `<style preset="compact"/>` when an application needs denser native controls without maintaining a global stylesheet. It reduces horizontal padding and uses Textual's native compact state for buttons, text inputs, selects, text areas, and choice controls. Native compact controls remove their borders, so single-line inputs and selects use one terminal row. The default focus cue uses an accent background tint rather than an outline that could cover content. Compact buttons and choice controls keep Textual's own focus style; inputs, selects, and text areas receive a stronger tint. The preset participates in normal source order, so a later inline or sourced TCSS block can override any rule:
 
 ```xml
 <ui>
@@ -25,7 +25,7 @@ def toggle_compact():
 
 The preset must be declared in the entry document before it can be toggled. Inline styles and later document TCSS continue to override it after each switch.
 
-Use `<style preset="borders"/>` for rounded Unicode button outlines. It is independent of `compact`; declare it after `compact` when both are active, so its explicit outline overrides the borderless native compact button state. `window.document.toggle_style_preset("borders")` switches the outlines at runtime. Idle buttons use `round` borders, hover keeps the rounded outline, and focused buttons use a `double` border.
+Use `<style preset="borders"/>` for rounded Unicode button outlines. It is independent of `compact`; declare it after `compact` when both are active, so its real borders override the borderless native compact button state and reserve enough rows for the label. `window.document.toggle_style_preset("borders")` switches the outlines at runtime. Idle buttons use `round` borders, hover keeps the rounded outline, and focused buttons use a `double` border.
 
 Use `<include src="views/workspace.ui"/>` wherever a widget child is allowed. Included files have their own `<ui>` root and may include other files, but may not declare scripts or styles. Relative paths are resolved from the file containing each directive, not from the shell's current directory. Cycles, missing resources, duplicate IDs, and invalid markup fail with source context. Includes are static; there is no network loading or reload.
 
@@ -117,7 +117,7 @@ Each declared modal can be active once. Calling `push_modal("pick")` again befor
 
 Use `<split direction="horizontal">` with exactly two `<pane>` children. A pane can set `size` for its initial width (or height in a vertical split) and `min-size` for its lower bound. Drag the divider with the mouse or focus it and press arrow keys. Setting a pane's Textual `display` property to `False` hides it; setting it back to `True` restores the stored size. The split publishes `resized` and `toggled` events to `on-resized` and `on-toggled` actions.
 
-A split fills the remaining height of its structural parent by default, so a `<vertical>` shell can place a `<header>`, split body, and `<status-bar>` without hand-written height rules. Set an explicit height only when the body is intentionally fixed.
+A split fills the remaining height of its structural parent by default, so a `<vertical>` shell can place a `<header>`, split body, and `<status-bar>` without hand-written height rules. Set an explicit height only when the body is intentionally fixed. A `<tabbed-content>`, its content switcher and each `<tab-pane>` fill the remaining height the same way, so a `1fr` widget inside a pane is as tall as the pane; override the height in TCSS for content-sized tabs.
 
 Use `<nav on-selected="show_page">` with `<nav-item target="home">Home</nav-item>` children. Each target must name a direct child of a `<content-switcher>`. The selected event carries `context.event.target`; an action can switch the native content area:
 
@@ -189,3 +189,5 @@ def select_agent(context):
 The [runtime list example](../examples/list/app.ui) uses this pattern for a master-detail rail.
 
 Transcript mouse selections survive appends that keep selected rows in place. Eviction, clearing, and streamed-entry rewrites clear the affected log selection so copying cannot return unrelated replacement text. Selection-ended events and framework clipboard APIs remain future work.
+
+Document tab layout defaults apply in normal Textual Apps through `Document.bind()` as well as `TextUI` and `ProjectApp`. Host-owned native tab widgets are unaffected; author TCSS can override document tab and pane heights.
