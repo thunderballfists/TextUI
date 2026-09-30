@@ -20,6 +20,39 @@ def project(tmp_path: Path, markup: str, script: str) -> ProjectSource:
 
 
 @pytest.mark.asyncio
+async def test_window_copy_requires_ready_and_selection_action_uses_clipboard(tmp_path, monkeypatch):
+    from unittest.mock import AsyncMock
+    import textui.clipboard as clipboard_module
+
+    copy = AsyncMock(return_value="pbcopy")
+    monkeypatch.setattr(clipboard_module, "copy_to_clipboard", copy)
+    source = project(tmp_path, '<log id="transcript" on-selection-ended="copy_selection"/>', '''
+from textui import action
+
+def on_ready():
+    window.document.get_by_id("transcript").append("FIRST word")
+
+@action
+async def copy_selection(context):
+    window.app.backend = await window.copy(context.event.text)
+''')
+    app = ProjectApp(source)
+    with pytest.raises(DocumentStateError, match="ready"):
+        await app.window.copy("not ready")
+    async with app.run_test() as pilot:
+        log = app.document.get_by_id("transcript")
+        await pilot.mouse_down(log, offset=(0, 0))
+        await pilot.hover(log, offset=(4, 0))
+        await pilot.mouse_up(log, offset=(4, 0))
+        await pilot.pause()
+        await app.workers.wait_for_complete()
+        copy.assert_awaited_once_with(app, "FIRST")
+        assert app.backend == "pbcopy"
+    with pytest.raises(DocumentStateError, match="ready"):
+        await app.window.copy("closed")
+
+
+@pytest.mark.asyncio
 async def test_project_setup_registers_component_before_lowering_and_ready_can_look_up_widget(tmp_path: Path):
     source = project(tmp_path, '<status id="status"/>', '''
 from textui import ComponentSpec

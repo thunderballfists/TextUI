@@ -11,6 +11,7 @@ from .widgets.split import Split
 from .widgets.navigation import Nav
 from .widgets.runtime_list import RuntimeList
 from .widgets.range_control import RangeControl
+from .widgets.transcript import TranscriptLog
 from .accelerators import activate_tab, install_tab_accelerators
 
 from .actions import ActionCallback
@@ -51,5 +52,6 @@ class TextUI(App):
     @on(Tree.NodeSelected)
     @on(RuntimeList.ItemSelected)
     @on(RangeControl.Changed)
-    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded | DataTable.RowSelected | DataTable.CellSelected | Tree.NodeSelected | RuntimeList.ItemSelected | RangeControl.Changed) -> None:
+    @on(TranscriptLog.SelectionEnded)
+    async def forward_document_message(self, event: Button.Pressed | Input.Changed | Input.Submitted | Checkbox.Changed | Split.Resized | Split.Toggled | Nav.Selected | Select.Changed | Switch.Changed | TextArea.Changed | TabbedContent.TabActivated | RadioButton.Changed | RadioSet.Changed | Collapsible.Collapsed | Collapsible.Expanded | DataTable.RowSelected | DataTable.CellSelected | Tree.NodeSelected | RuntimeList.ItemSelected | RangeControl.Changed | TranscriptLog.SelectionEnded) -> None:
         await self.document.dispatch(event)

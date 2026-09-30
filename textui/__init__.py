@@ -1,6 +1,7 @@
 """The strict, typed TextUI document definition API."""
 
 from .actions import ActionCallback, ActionContext
+from .clipboard import copy_to_clipboard
 from .document import BoundDocument, Document, ModalResult
 from .textui import TextUI
 from .controllers import Command, action, command
@@ -68,6 +69,7 @@ __all__ = [
     "action",
     "command",
     "every",
+    "copy_to_clipboard",
     "ProjectSource",
     "ProjectApp",
 ]

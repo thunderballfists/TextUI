@@ -64,7 +64,7 @@
             <list id="agents" item-label="{name}" on-selected="select_agent" />
             <label id="agent-detail">Select an agent</label>
             <horizontal><button id="append-log" on-pressed="append_log">Append log</button></horizontal>
-            <log id="transcript" max-lines="100" wrap="true" />
+            <log id="transcript" max-lines="100" wrap="true" on-selection-ended="copy_selection" />
           </vertical>
         </content-switcher>
       </pane>

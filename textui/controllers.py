@@ -156,6 +156,14 @@ class ProjectWindow:
             raise DocumentStateError("window.call_ui is available only while ready")
         return self.app.call_from_thread(callback, *args, **kwargs)
 
+    async def copy(self, text: str) -> str:
+        """Copy text while ready; return the native backend or `osc52`."""
+        if self.phase != "ready" or not self.app.is_running:
+            raise DocumentStateError("window.copy is available only while ready")
+        from .clipboard import copy_to_clipboard
+
+        return await copy_to_clipboard(self.app, text)
+
 
 class ControllerSet:
     def __init__(self, window: ProjectWindow) -> None:

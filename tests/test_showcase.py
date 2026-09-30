@@ -6,12 +6,16 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_showcase_mounts_components_runtime_data_and_modal():
+async def test_showcase_mounts_components_runtime_data_and_modal(monkeypatch):
+    from unittest.mock import AsyncMock
+    import textui.clipboard as clipboard_module
     from textui import ProjectApp, ProjectSource
     from textual.widgets import Button, DataTable
 
     entry = Path(__file__).parents[1] / "examples" / "showcase" / "app.ui"
     app = ProjectApp(ProjectSource.discover(entry))
+    copy = AsyncMock(return_value="osc52")
+    monkeypatch.setattr(clipboard_module, "copy_to_clipboard", copy)
     async with app.run_test(size=(120, 50)) as pilot:
         assert app.document.get_by_id("showcase").id == "showcase"
         header = app.document.get_by_id("top-bar")
@@ -80,6 +84,14 @@ async def test_showcase_mounts_components_runtime_data_and_modal():
         app.document.get_by_id("append-log").press()
         await pilot.pause()
         assert str(app.document.get_by_id("feedback").render()) == "Log appended"
+        log = app.document.get_by_id("transcript")
+        await pilot.mouse_down(log, offset=(0, 0))
+        await pilot.hover(log, offset=(4, 0))
+        await pilot.mouse_up(log, offset=(4, 0))
+        await pilot.pause()
+        await app.workers.wait_for_complete()
+        copy.assert_awaited_once_with(app, "A nat")
+        assert str(app.document.get_by_id("feedback").render()) == "Selection sent via OSC 52"
         assert await pilot.click("#open-modal")
         await pilot.pause()
         assert app.screen.id == "help"
