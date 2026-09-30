@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Clicking a data-table column heading now sorts once per click. The table's click and mouse-move handlers also called `super()`, which Textual had already run, so every heading click was delivered twice and the ascending/descending toggle always ended on descending. The click that ends a column-resize press no longer sorts either.
 - Controller resize hooks now receive terminal dimensions even when the active screen has padding or a border.
 - Declared autofocus now waits for hidden ancestors to be displayed and runs again when controls are revealed after startup. Disabled controls and background screens do not take focus; anonymous modal autofocus registrations are released on dismissal.
 - Transcript mouse selections are cleared when bounded history evicts rows, the log is cleared, or a streamed entry is rewritten. Stable append operations and selections in other widgets are preserved.

@@ -210,9 +210,12 @@ class SeededDataTable(DataTable):
         self.capture_mouse()
         event.stop()
 
+    # Textual calls the ``_on_*`` handler of every class in the MRO, so the two
+    # handlers below must not also call ``super()``: that runs DataTable's own a
+    # second time (a header click would post two ``HeaderSelected`` messages, and
+    # the ascending/descending toggle would always end on descending).
     def _on_mouse_move(self, event: events.MouseMove) -> None:
         if self._resize_drag is None:
-            super()._on_mouse_move(event)
             self._set_resize_hover(self._resize_edge_at(event) if self.column_borders else None)
             return
         column_index, width, start_x = self._resize_drag
@@ -232,10 +235,11 @@ class SeededDataTable(DataTable):
 
     async def _on_click(self, event: events.Click) -> None:
         if self._suppress_header_click:
+            # The click that ends a resize press is not a header selection.
+            # ``prevent_default`` is what keeps DataTable's handler from running.
             self._suppress_header_click = False
+            event.prevent_default()
             event.stop()
-            return
-        await super()._on_click(event)
 
     def _render_cell(self, *args, **kwargs):
         lines = super()._render_cell(*args, **kwargs)

@@ -149,6 +149,66 @@ async def test_resizable_table_supports_keyboard_and_drag_without_sorting():
 
 
 @pytest.mark.asyncio
+async def test_clicking_a_header_sorts_ascending_then_descending_once_per_click():
+    """A click reaches the header handler once. Textual runs the ``_on_click`` of every
+    class in the MRO, so a subclass handler that also calls ``super()`` delivers the
+    message twice, and a two-step ascending/descending toggle always lands on descending."""
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" row-key="id">
+      <column key="name" width="10">Name</column><column key="requests" width="10">Requests</column>
+    </data-table></ui>'''))
+    async with app.run_test(size=(40, 10)) as pilot:
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"id": "high", "name": "High", "requests": 42},
+            {"id": "low", "name": "Low", "requests": 7},
+            {"id": "middle", "name": "Middle", "requests": 12},
+        ])
+        selected = []
+        table.post_message = lambda message, _post=table.post_message: (
+            selected.append(message.column_index) if isinstance(message, DataTable.HeaderSelected) else None,
+            _post(message),
+        )[1]
+
+        await pilot.click(table, offset=(13, 0))  # inside the "Requests" heading
+        await pilot.pause()
+        assert selected == [1], "one click, one message"
+        assert [key.value for key in table.rows] == ["low", "middle", "high"]
+        assert table.columns["requests"].label.plain == "Requests ↑"
+
+        await pilot.click(table, offset=(13, 0))
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["high", "middle", "low"]
+        assert table.columns["requests"].label.plain == "Requests ↓"
+
+        await pilot.click(table, offset=(13, 0))
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["low", "middle", "high"]
+
+
+@pytest.mark.asyncio
+async def test_the_click_that_ends_a_resize_press_does_not_sort():
+    app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true" row-key="id">
+      <column key="name" width="8">Name</column><column key="requests" width="8">Requests</column>
+    </data-table></ui>'''))
+    async with app.run_test(size=(40, 8)) as pilot:
+        table = app.document.get_by_id("usage")
+        table.set_rows([
+            {"id": "zulu", "name": "Zulu", "requests": 1},
+            {"id": "alpha", "name": "Alpha", "requests": 2},
+        ])
+        table._suppress_header_click = True  # what pressing a column divider does
+
+        await pilot.click(table, offset=(3, 0))  # inside the "Name" heading, away from its edge
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["zulu", "alpha"]
+        assert table.columns["name"].label.plain == "Name"
+
+        await pilot.click(table, offset=(3, 0))  # the next, ordinary click sorts
+        await pilot.pause()
+        assert [key.value for key in table.rows] == ["alpha", "zulu"]
+
+
+@pytest.mark.asyncio
 async def test_resizing_a_narrow_fixed_width_column_never_enlarges_it():
     app = TextUI(DocumentLoader().from_string('''<ui><data-table id="usage" resizable="true">
       <column key="id" width="2">ID</column>
