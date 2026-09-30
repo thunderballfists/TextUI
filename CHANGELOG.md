@@ -43,7 +43,6 @@ All notable changes to TextUI are documented here.
 ### Added
 
 - `<log>` transcripts can now be selected with the mouse: the widget reports the selected text and paints the selection, as Textual's own `Log` does, so an application can copy from it.
-- `autofocus="true"` for focusable controls, including component instances, newly opened modal controls, and controls in tabs when their pane activates, with default accent focus outlines.
 
 - `autofocus="true"` for focusable controls, including component instances, newly opened modal controls, and controls in tabs when their pane activates, with default accent focus cues.
 - Modal dismissal results now expose a `.mounted` awaitable for safely populating widgets after a modal opens.
