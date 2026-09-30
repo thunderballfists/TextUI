@@ -27,7 +27,7 @@ Static tab views use native `TabbedContent`:
 </tabbed-content>
 ```
 
-Each pane needs an ID and title. `initial` must name one of those panes; without it, Textual selects the first. The `tab-activated` event provides `context.event.pane`. Tabs respond to native mouse and keyboard input. Add `autofocus="true"` to a focusable mounted control when it should receive keyboard input after the document or a modal opens. In an inactive tab, autofocus waits for that tab to activate and does not override `initial`. TextUI gives focused native controls an accent outline by default; application TCSS may override it. The [controls example](../examples/controls/app.ui) shows all four controls in a runnable project.
+Each pane needs an ID and title. `initial` must name one of those panes; without it, Textual selects the first. The `tab-activated` event provides `context.event.pane`. Tabs respond to native mouse and keyboard input. Add `autofocus="true"` to a focusable control when it should receive keyboard input after the document or a modal opens, or after a hidden control or its parent is shown with `display=True`. Focus waits for layout, skips disabled and hidden controls, and applies only to the active screen. In an inactive tab, autofocus waits for that tab to activate and does not override `initial`. TextUI gives focused native controls an accent background tint by default; application TCSS may override it. The [controls example](../examples/controls/app.ui) shows all four controls in a runnable project.
 
 ## Choices, disclosure, and indicators
 

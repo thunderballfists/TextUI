@@ -16,6 +16,54 @@ async def test_autofocus_moves_keyboard_focus_to_a_declared_control_after_mount(
 
 
 @pytest.mark.asyncio
+async def test_autofocus_waits_for_a_hidden_parent_and_reacts_to_each_reveal():
+    selected = []
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <button id="open">Open accounts</button>
+      <vertical id="overlay" style="display: none;">
+        <list id="accounts" item-label="{label}" autofocus="true" on-selected="select_account" />
+      </vertical>
+    </ui>'''), actions={"select_account": lambda context: selected.append(context.event.item)})
+    async with app.run_test() as pilot:
+        overlay = app.document.get_by_id("overlay")
+        accounts = app.document.get_by_id("accounts")
+        button = app.document.get_by_id("open")
+        await accounts.set_items([{"label": "Alpha"}, {"label": "Bravo"}])
+        await pilot.pause()
+        assert app.focused is not accounts
+
+        overlay.display = True
+        await pilot.pause()
+        await pilot.pause()
+        assert app.focused is accounts
+        await pilot.press("down", "enter")
+        assert selected == [{"label": "Bravo"}]
+
+        overlay.display = False
+        button.focus()
+        await pilot.wait_for_scheduled_animations()
+        assert not accounts.is_on_screen
+        overlay.display = True
+        await pilot.pause()
+        await pilot.pause()
+        assert app.focused is accounts
+
+
+@pytest.mark.asyncio
+async def test_revealed_disabled_autofocus_does_not_displace_keyboard_focus():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <button id="open">Open</button>
+      <input id="prompt" autofocus="true" disabled="true" style="display: none;" />
+    </ui>'''))
+    async with app.run_test() as pilot:
+        button = app.document.get_by_id("open")
+        button.focus()
+        app.document.get_by_id("prompt").display = True
+        await pilot.pause()
+        assert app.focused is button
+
+
+@pytest.mark.asyncio
 async def test_modal_autofocus_moves_focus_when_the_modal_is_revealed():
     app = TextUI(DocumentLoader().from_string('''<ui>
       <button id="open" on-pressed="open_modal">Open</button>
@@ -28,6 +76,42 @@ async def test_modal_autofocus_moves_focus_when_the_modal_is_revealed():
         app.document.dismiss_modal()
         await pilot.pause()
         assert app.document._autofocus_widgets == []
+
+
+@pytest.mark.asyncio
+async def test_anonymous_modal_autofocus_is_focused_and_released_on_dismissal():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <button id="open" on-pressed="open_modal">Open</button>
+      <modal id="dialog"><input autofocus="true" /></modal>
+    </ui>'''), actions={"open_modal": lambda context: context.push_modal("dialog")})
+    async with app.run_test() as pilot:
+        for _ in range(2):
+            # Reopening tests modal focus, independent of Button's timed
+            # mouse-click suppression while its active effect is visible.
+            app.document.get_by_id("open").press()
+            await pilot.pause()
+            await pilot.pause()
+            assert app.focused in app.document._autofocus_widgets
+            app.document.dismiss_modal()
+            await pilot.pause()
+            assert app.document._autofocus_widgets == []
+
+
+@pytest.mark.asyncio
+async def test_background_reveal_does_not_displace_modal_focus():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <vertical id="overlay" style="display: none;"><input id="background" autofocus="true" /></vertical>
+      <modal id="dialog"><input id="foreground" autofocus="true" /></modal>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        modal = app.document.push_modal("dialog")
+        await modal.mounted
+        await pilot.pause()
+        await pilot.pause()
+        app.document.get_by_id("overlay").display = True
+        await pilot.pause()
+        await pilot.pause()
+        assert app.focused is app.document.get_by_id("foreground")
 
 
 @pytest.mark.asyncio
