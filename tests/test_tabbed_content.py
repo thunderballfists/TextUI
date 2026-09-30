@@ -68,3 +68,29 @@ async def test_shell_split_leaves_room_for_a_status_bar_without_custom_heights()
 def test_tabbed_content_rejects_invalid_structure(markup: str):
     with pytest.raises(DocumentValidationError):
         DocumentLoader().from_string(markup)
+
+
+SHELL_WITH_TABS = """<ui>
+  <vertical id="shell">
+    <label id="top">Top</label>
+    <tabbed-content id="tabs" initial="one">
+      <tab-pane id="one" title="One">
+        <vertical id="body">
+          <input id="prompt" />
+          <log id="transcript" />
+        </vertical>
+      </tab-pane>
+    </tabbed-content>
+    <status-bar id="footer"><left><label>ready</label></left></status-bar>
+  </vertical>
+</ui>"""
+
+
+@pytest.mark.asyncio
+async def test_a_vertical_shell_with_tabs_keeps_its_status_bar_on_screen():
+    app = TextUI(DocumentLoader().from_string(SHELL_WITH_TABS))
+    async with app.run_test(size=(80, 30)) as pilot:
+        await pilot.pause()
+        footer = app.document.get_by_id("footer")
+        assert footer.region.y + footer.region.height <= 30, footer.region
+        assert app.document.get_by_id("transcript").size.height >= 15

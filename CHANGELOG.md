@@ -29,6 +29,7 @@ All notable changes to TextUI are documented here.
 
 ### Changed
 
+- `tabbed-content`, its content switcher and each `tab-pane` now fill their parent's remaining height by default, as `split` already does. A vertical shell of header, tabs and status bar keeps the status bar on screen, and a `1fr` widget inside a pane no longer collapses. An application that wants content-sized tabs overrides the height in its own TCSS.
 - Splits now consume the remaining height in structural application shells, leaving header and status-bar space without custom height rules.
 - Compound-control validation now rejects unreachable nested radio-button events while preserving custom registry components that reuse built-in tag names.
 - Runtime-list `item-label` patterns now require every replacement field to be a direct mapping key, including nested format specifications.
