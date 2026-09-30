@@ -583,6 +583,26 @@ async def on_resize(width, height):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("screen_style", ["padding: 1;", "border: solid red;", "padding: 1; border: solid red;"])
+async def test_resize_hook_uses_terminal_dimensions_with_screen_gutters(tmp_path: Path, screen_style: str):
+    source = project(tmp_path, f'''<style>Screen {{ {screen_style} }}</style>
+      <label id="status" style="width: 100%;">Hi</label>''', '''
+def on_resize(width, height):
+    status = window.document.get_by_id("status")
+    window.app.resizes.append((width, height, status.size.width))
+''')
+    app = ProjectApp(source)
+    app.resizes = []
+
+    async with app.run_test() as pilot:
+        await pilot.resize_terminal(60, 20)
+        await pilot.pause()
+        assert app.resizes
+        assert app.resizes[-1][:2] == (60, 20)
+        assert app.resizes[-1][2] == app.document.get_by_id("status").size.width < 60
+
+
+@pytest.mark.asyncio
 async def test_resize_hook_rejects_wrong_signature_with_source_context(tmp_path: Path):
     source = project(tmp_path, '<label>Hi</label>', '''
 def on_resize(width):
