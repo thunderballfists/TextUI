@@ -214,3 +214,31 @@ async def test_native_fractional_widths_and_inline_priority_over_important():
         assert first.size.width == 20
         assert second.size.width == 40
         assert first.styles.color == Color.parse('blue')
+
+
+COMPACT_FOCUS = """<ui>
+  <style preset="compact" />
+  <vertical><button id="save">Save</button><checkbox id="agree">Agree</checkbox><input id="name" /></vertical>
+</ui>"""
+
+
+def _screen_rows(app):
+    return [strip.text for strip in app.screen._compositor.render_strips()]
+
+
+@pytest.mark.asyncio
+async def test_a_focused_compact_control_still_shows_its_label():
+    app = textui.TextUI(textui.DocumentLoader().from_string(COMPACT_FOCUS))
+    async with app.run_test(size=(40, 8)) as pilot:
+        await pilot.pause()
+        for name, label in (("save", "Save"), ("agree", "Agree")):
+            widget = app.document.get_by_id(name)
+            assert widget.size.height == 1
+            app.set_focus(widget)
+            await pilot.pause()
+            assert label in _screen_rows(app)[widget.region.y], _screen_rows(app)[widget.region.y]
+        field = app.document.get_by_id("name")
+        app.set_focus(field)
+        await pilot.pause()
+        row = _screen_rows(app)[field.region.y]
+        assert "─" not in row and "┌" not in row, row

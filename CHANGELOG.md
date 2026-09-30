@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- The `compact` preset no longer draws the default focus outline on one-row controls. The outline replaced the control's only row, so a focused button, checkbox or switch lost its label; they now keep their own focus style and inputs and selects get an accent tint.
 - Streaming a single transcript line no longer rescans everything already
   accumulated on each delta: `TranscriptLog` tracks the active line's width and
   printability incrementally, so per-delta work is proportional to the delta.

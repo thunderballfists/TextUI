@@ -2,7 +2,7 @@
 
 Run a local project with `textui run path/to/app.ui` or `python -m textui run path/to/app.ui`. The entry file has one attribute-free `<ui>` root. Its direct children may contain inline `<style>`, `<style src="shell.tcss"/>`, and `<script src="controller.py"/>` alongside widgets. A `<script>` has only `src`, no embedded code. A sourced style also has no body.
 
-Use `<style preset="compact"/>` when an application needs denser native controls without maintaining a global stylesheet. It reduces horizontal padding and uses Textual's native compact state for buttons, text inputs, selects, text areas, and choice controls. Native compact controls remove their borders, so single-line inputs and selects use one terminal row. The preset participates in normal source order, so a later inline or sourced TCSS block can override any rule:
+Use `<style preset="compact"/>` when an application needs denser native controls without maintaining a global stylesheet. It reduces horizontal padding and uses Textual's native compact state for buttons, text inputs, selects, text areas, and choice controls. Native compact controls remove their borders, so single-line inputs and selects use one terminal row. Because an outline would replace that only row, the preset also turns off the default focus outline for them: buttons, checkboxes and switches keep Textual's own focus style, and inputs and selects are tinted. The preset participates in normal source order, so a later inline or sourced TCSS block can override any rule:
 
 ```xml
 <ui>
