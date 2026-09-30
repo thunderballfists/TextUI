@@ -76,6 +76,32 @@ class TranscriptLog(RichLog):
         super().watch_scroll_y(old_value, new_value)
         self.is_following = self.is_vertical_scroll_end
 
+    def _invalidate_selection(self) -> None:
+        """Drop stale row coordinates without clearing other widgets' selections."""
+        if not self.is_mounted or self not in self.screen.selections:
+            return
+        screen = self.screen
+        remaining = {widget: selection for widget, selection in screen.selections.items() if widget is not self}
+        # Cancel any active drag too, so later pointer movement cannot resurrect
+        # a selection whose start was measured against the previous history.
+        screen.clear_selection()
+        screen.selections = remaining
+
+    def write(
+        self,
+        content: RenderableType | object,
+        width: int | None = None,
+        expand: bool = False,
+        shrink: bool = True,
+        scroll_end: bool | None = None,
+        animate: bool = False,
+    ) -> TranscriptLog:
+        start_line = self._start_line
+        super().write(content, width, expand, shrink, scroll_end, animate)
+        if self._start_line != start_line:
+            self._invalidate_selection()
+        return self
+
     def get_selection(self, selection) -> tuple[str, str] | None:
         text = "\n".join(strip.text for strip in self.lines)
         try:
@@ -158,6 +184,7 @@ class TranscriptLog(RichLog):
         return self
 
     def clear(self) -> TranscriptLog:
+        self._invalidate_selection()
         super().clear()
         self._inline_text = ""
         self._inline_line_count = 0
@@ -172,6 +199,7 @@ class TranscriptLog(RichLog):
         if not self._inline_open:
             return
         if self._inline_line_count:
+            self._invalidate_selection()
             del self.lines[-self._inline_line_count:]
         self._line_cache.clear()
         self.virtual_size = Size(self._widest_line_width, len(self.lines))

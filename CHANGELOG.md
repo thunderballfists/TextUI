@@ -6,6 +6,8 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Transcript mouse selections are cleared when bounded history evicts rows, the log is cleared, or a streamed entry is rewritten. Stable append operations and selections in other widgets are preserved.
+
 - A `header` or `status-bar` with an empty center slot now sizes its right slot to its contents, so controls that need more than half the bar are no longer clipped off the right edge. Bars with center content keep equal flexible edges.
 - Streaming a single transcript line no longer rescans everything already
   accumulated on each delta: `TranscriptLog` tracks the active line's width and
