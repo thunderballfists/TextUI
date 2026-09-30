@@ -29,18 +29,6 @@ Tree:focus, RuntimeList:focus {
 # ``1fr`` widget inside a pane collapsed because Textual sizes TabbedContent,
 # its ContentSwitcher and each TabPane to their content. Any of these can still be
 # overridden by an application's own TCSS.
-LAYOUT_TCSS = """
-TabbedContent {
-    height: 1fr;
-}
-TabbedContent > ContentSwitcher {
-    height: 1fr;
-}
-TabbedContent TabPane {
-    height: 1fr;
-}
-"""
-
 BUTTON_BORDERS_TCSS = """
 Button {
     border: round $primary !important;

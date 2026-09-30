@@ -187,3 +187,5 @@ def select_agent(context):
 ```
 
 The [runtime list example](../examples/list/app.ui) uses this pattern for a master-detail rail.
+
+Document tab layout defaults apply in normal Textual Apps through `Document.bind()` as well as `TextUI` and `ProjectApp`. Host-owned native tab widgets are unaffected; author TCSS can override document tab and pane heights.

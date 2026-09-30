@@ -1,4 +1,5 @@
 import pytest
+from textual.app import App
 from textual.widgets import TabbedContent, TabPane
 
 from textui import DocumentLoader, DocumentValidationError, TextUI
@@ -87,10 +88,29 @@ SHELL_WITH_TABS = """<ui>
 
 
 @pytest.mark.asyncio
-async def test_a_vertical_shell_with_tabs_keeps_its_status_bar_on_screen():
-    app = TextUI(DocumentLoader().from_string(SHELL_WITH_TABS))
+@pytest.mark.parametrize("normal_host", [False, True])
+async def test_a_vertical_shell_with_tabs_keeps_its_status_bar_on_screen(normal_host):
+    document = DocumentLoader().from_string(SHELL_WITH_TABS)
+    class Host(App):
+        def __init__(self):
+            super().__init__()
+            self.document = document.bind(self, actions={})
+        def compose(self):
+            yield from self.document.compose()
+    app = Host() if normal_host else TextUI(document)
     async with app.run_test(size=(80, 30)) as pilot:
         await pilot.pause()
         footer = app.document.get_by_id("footer")
         assert footer.region.y + footer.region.height <= 30, footer.region
         assert app.document.get_by_id("transcript").size.height >= 15
+
+
+@pytest.mark.asyncio
+async def test_tab_layout_defaults_allow_author_height_overrides():
+    document = DocumentLoader().from_string(SHELL_WITH_TABS.replace(
+        '<vertical id="shell">', '<style>#tabs { height: 8; } #one { height: auto; }</style><vertical id="shell">'
+    ))
+    app = TextUI(document)
+    async with app.run_test(size=(80, 30)):
+        assert app.document.get_by_id("tabs").region.height == 8
+        assert app.document.get_by_id("one").styles.height.is_auto
