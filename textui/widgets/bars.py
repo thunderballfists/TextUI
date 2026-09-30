@@ -7,6 +7,7 @@ from textual.containers import Horizontal
 from textual.widgets import Label
 from textual.renderables.gradient import LinearGradient
 
+from ..styling import BackgroundGradient, GradientSlice
 from ..registry import BuildContext, ComponentRegistry, ComponentSpec
 
 
@@ -27,10 +28,17 @@ class GradientLabel(Label):
             return super().render()
         content = getattr(self.content, "plain", str(self.content))
         rendered = Text(content)
-        width = max(self.parent.content_size.width, 1)
-        offset = self.region.x - self.parent.region.x
+        if not isinstance(gradient, BackgroundGradient):
+            return super().render()
+        bar = self.parent.parent
+        if not isinstance(bar, SlotBar):
+            return super().render()
+        width = max(bar.content_size.width, 1)
+        height = max(bar.content_size.height, 1)
+        offset_x = self.region.x - bar.region.x
+        offset_y = self.region.y - bar.region.y
         for index in range(len(content)):
-            color = gradient._color_gradient.get_rich_color((offset + index + .5) / width)
+            color = gradient.color_at(offset_x + index + .5, offset_y + .5, width, height)
             rendered.stylize(Style(bgcolor=color), index, index + 1)
         return rendered
 
@@ -45,16 +53,26 @@ class HeaderSlot(Horizontal):
         self.add_class(f"-{position}")
 
     def set_background_gradient(self, gradient: LinearGradient | None) -> None:
-        """Render a bar gradient beneath this slot's child controls."""
+        """Pass the bar gradient to labels and preserve its full-bar coordinates."""
         self._background_gradient = gradient
         for child in self.children:
             if isinstance(child, GradientLabel):
                 child.set_background_gradient(gradient)
         self.refresh()
 
-    def render(self) -> LinearGradient | str:
-        """Supply the optional slot background to Textual's native renderer."""
-        return self._background_gradient or ""
+    def render(self) -> GradientSlice | str:
+        """Supply this slot's clipped section of the bar background."""
+        gradient = self._background_gradient
+        bar = self.parent
+        if not isinstance(gradient, BackgroundGradient) or not isinstance(bar, SlotBar):
+            return ""
+        return GradientSlice(
+            gradient,
+            self.region.x - bar.region.x,
+            self.region.y - bar.region.y,
+            max(bar.content_size.width, 1),
+            max(bar.content_size.height, 1),
+        )
 
 
 class SlotBar(Horizontal):

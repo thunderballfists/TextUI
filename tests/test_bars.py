@@ -2,6 +2,7 @@ import pytest
 from textual.renderables.gradient import LinearGradient
 
 from textui import DocumentLoader, DocumentStyleError, DocumentValidationError, TextUI
+from textui.styling import BackgroundGradient, GradientSlice
 
 
 MARKUP = '''<ui>
@@ -59,7 +60,29 @@ async def test_header_renders_a_linear_gradient_declared_in_tcss():
     async with app.run_test():
         header = app.document.get_by_id("top")
         assert isinstance(header.render(), LinearGradient)
-        assert all(isinstance(slot.render(), LinearGradient) for slot in header.slots)
+        assert all(isinstance(slot.render(), GradientSlice) for slot in header.slots)
+
+
+@pytest.mark.asyncio
+async def test_header_gradient_label_uses_the_background_geometry():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <style>
+        #top { background: linear-gradient(25deg, #173b6c, #376996, #12233d); }
+      </style>
+      <header id="top"><center><label id="title">TextUI</label></center></header>
+    </ui>'''))
+    async with app.run_test(size=(60, 5)):
+        header = app.document.get_by_id("top")
+        title = app.document.get_by_id("title")
+        gradient = header.render()
+
+        assert isinstance(gradient, BackgroundGradient)
+        assert title.render().spans[0].style.bgcolor == gradient.color_at(
+            title.region.x - header.region.x + .5,
+            title.region.y - header.region.y + .5,
+            header.content_size.width,
+            header.content_size.height,
+        )
 
 
 @pytest.mark.asyncio

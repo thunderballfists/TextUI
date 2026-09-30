@@ -23,18 +23,50 @@ from .nodes import StyleBlock
 class BackgroundGradient(LinearGradient):
     """A terminal background gradient that keeps child text transparent."""
 
-    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
-        width = options.max_width
-        height = options.height or options.max_height
+    def color_at(self, x: float, y: float, width: int, height: int):
+        """Return the color at a cell coordinate using this gradient's geometry."""
         angle = self.angle * pi / 180
         horizontal, vertical = cos(angle), sin(angle)
         projections = (0, horizontal * width, vertical * height, horizontal * width + vertical * height)
         start, end = min(projections), max(projections)
-        span = end - start or 1
+        position = ((horizontal * x + vertical * y) - start) / (end - start or 1)
+        return self._color_gradient.get_rich_color(position)
+
+    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
+        width = options.max_width
+        height = options.height or options.max_height
         for y in range(height):
             for x in range(width):
-                position = ((horizontal * (x + .5) + vertical * (y + .5)) - start) / span
-                yield Segment(" ", Style(bgcolor=self._color_gradient.get_rich_color(position)))
+                yield Segment(" ", Style(bgcolor=self.color_at(x + .5, y + .5, width, height)))
+            yield Segment.line()
+
+
+@dataclass(frozen=True, slots=True)
+class GradientSlice:
+    """The section of a background gradient visible inside a child surface."""
+
+    gradient: BackgroundGradient
+    origin_x: int
+    origin_y: int
+    full_width: int
+    full_height: int
+
+    def __rich_console__(self, console: Console, options: ConsoleOptions) -> RenderResult:
+        width = options.max_width
+        height = options.height or options.max_height
+        for y in range(height):
+            for x in range(width):
+                yield Segment(
+                    " ",
+                    Style(
+                        bgcolor=self.gradient.color_at(
+                            self.origin_x + x + .5,
+                            self.origin_y + y + .5,
+                            self.full_width,
+                            self.full_height,
+                        )
+                    ),
+                )
             yield Segment.line()
 
 
