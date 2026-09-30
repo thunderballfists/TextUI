@@ -32,6 +32,12 @@ Tree:focus, RuntimeList:focus {
 }
 """
 
+# Structural defaults for an application shell. ``split`` already fills its parent;
+# ``tabbed-content`` did not, so a vertical shell of header / tabbed-content / status-bar
+# gave the tabs the whole screen and pushed the status bar off the bottom, and a
+# ``1fr`` widget inside a pane collapsed because Textual sizes TabbedContent,
+# its ContentSwitcher and each TabPane to their content. Any of these can still be
+# overridden by an application's own TCSS.
 BUTTON_BORDERS_TCSS = """
 Button {
     border: round $primary !important;
