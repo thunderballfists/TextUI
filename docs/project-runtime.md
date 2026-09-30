@@ -131,7 +131,7 @@ The [project example](../examples/project/app.ui) combines a hideable sidebar, d
 
 ## Header and status-bar controls
 
-`header` and `status-bar` accept optional `left`, `center`, and `right` slots. Each slot accepts ordinary widgets, including buttons and labels. The edge slots share the available width, the center stays centered, and the right slot right-justifies its contents.
+`header` and `status-bar` accept optional `left`, `center`, and `right` slots. Each slot accepts ordinary widgets, including buttons and labels. The edge slots share the available width, the center stays centered, and the right slot right-justifies its contents. When the center slot is empty there is nothing to keep centered, so the right slot takes the width its contents need and the left slot keeps the rest.
 
 ```xml
 <header>
