@@ -163,3 +163,24 @@ async def test_important_gradient_wins_over_a_later_solid_background():
     </ui>'''))
     async with app.run_test():
         assert isinstance(app.document.get_by_id("top").render(), LinearGradient)
+
+
+STATUS_BAR_WITH_BUTTONS = """<ui>
+  <status-bar id="footer">
+    <left><label>ready</label></left>
+    <right>
+      <button id="b1">Settings</button><button id="b2">Account</button>
+      <button id="b3">Env</button><button id="b4">Quit</button>
+    </right>
+  </status-bar>
+</ui>"""
+
+
+@pytest.mark.asyncio
+async def test_a_status_bar_with_nothing_in_the_centre_gives_its_controls_the_room_they_need():
+    app = TextUI(DocumentLoader().from_string(STATUS_BAR_WITH_BUTTONS))
+    async with app.run_test(size=(80, 8)) as pilot:
+        await pilot.pause()
+        for name in ("b1", "b2", "b3", "b4"):
+            button = app.document.get_by_id(name)
+            assert button.region.x + button.region.width <= 80, (name, button.region)

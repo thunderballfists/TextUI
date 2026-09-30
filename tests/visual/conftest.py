@@ -11,3 +11,12 @@ def pytest_addoption(parser):
         default=False,
         help="replace approved TextUI SVG visual baselines",
     )
+
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def snapshot_color_environment(monkeypatch):
+    # Screenshots verify the chosen theme, independent of the invoking shell.
+    monkeypatch.delenv("NO_COLOR", raising=False)

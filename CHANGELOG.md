@@ -6,6 +6,8 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Default focus cues now use an accent background tint without covering control content. Compact buttons and radio sets retain their labels, compact text areas retain their first line, and borderless tables retain headings and rows. The optional button-border preset still reserves space for its rounded and double borders.
+- A `header` or `status-bar` with an empty center slot now sizes its right slot to its contents, so controls that need more than half the bar are no longer clipped off the right edge. Bars with center content keep equal flexible edges.
 - Streaming a single transcript line no longer rescans everything already
   accumulated on each delta: `TranscriptLog` tracks the active line's width and
   printability incrementally, so per-delta work is proportional to the delta.
@@ -29,6 +31,7 @@ All notable changes to TextUI are documented here.
 
 ### Changed
 
+- `column-borders` on a `data-table` now defaults to the value of `resizable`, so a resizable table draws the separator at each heading's right edge, which is the spot to drag. Set `column-borders="false"` to hide it.
 - Splits now consume the remaining height in structural application shells, leaving header and status-bar space without custom height rules.
 - Compound-control validation now rejects unreachable nested radio-button events while preserving custom registry components that reuse built-in tag names.
 - Runtime-list `item-label` patterns now require every replacement field to be a direct mapping key, including nested format specifications.
@@ -36,7 +39,9 @@ All notable changes to TextUI are documented here.
 ### Added
 
 - Linear-gradient backgrounds for `header` and `status-bar` surfaces, declared with an ID selector in TCSS and rendered beneath native bar controls.
-- `autofocus="true"` for focusable controls, including component instances, newly opened modal controls, and controls in tabs when their pane activates, with default accent focus outlines.
+
+
+- `autofocus="true"` for focusable controls, including component instances, newly opened modal controls, and controls in tabs when their pane activates, with default accent focus cues.
 - Modal dismissal results now expose a `.mounted` awaitable for safely populating widgets after a modal opens.
 - Runtime data tables without `row-key` now use stable positional keys for each replacement batch; declared duplicate keys report their table and markup source.
 - Opt-in data-table striping, vertical column borders, and keyboard or drag resizing, with headers and seeded cells honoring each column's alignment.

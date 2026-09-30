@@ -214,3 +214,93 @@ async def test_native_fractional_widths_and_inline_priority_over_important():
         assert first.size.width == 20
         assert second.size.width == 40
         assert first.styles.color == Color.parse('blue')
+
+
+COMPACT_FOCUS = """<ui>
+  <style preset="compact" />
+  <vertical><button id="save">Save</button><checkbox id="agree">Agree</checkbox><input id="name" /></vertical>
+</ui>"""
+
+
+def _screen_rows(app):
+    return [strip.text for strip in app.screen._compositor.render_strips()]
+
+
+@pytest.mark.asyncio
+async def test_a_focused_compact_control_still_shows_its_label():
+    app = textui.TextUI(textui.DocumentLoader().from_string(COMPACT_FOCUS))
+    async with app.run_test(size=(40, 8)) as pilot:
+        await pilot.pause()
+        for name, label in (("save", "Save"), ("agree", "Agree")):
+            widget = app.document.get_by_id(name)
+            assert widget.size.height == 1
+            app.set_focus(widget)
+            await pilot.pause()
+            assert label in _screen_rows(app)[widget.region.y], _screen_rows(app)[widget.region.y]
+        field = app.document.get_by_id("name")
+        app.set_focus(field)
+        await pilot.pause()
+        row = _screen_rows(app)[field.region.y]
+        assert "─" not in row and "┌" not in row, row
+
+
+@pytest.mark.asyncio
+async def test_focused_compact_text_area_keeps_every_content_line():
+    app = textui.TextUI(textui.DocumentLoader().from_string('''<ui>
+      <style preset="compact"/>
+      <text-area id="editor" style="height: 4;">FIRST
+MIDDLE
+LAST</text-area>
+    </ui>'''))
+    async with app.run_test(size=(40, 8)) as pilot:
+        editor = app.document.get_by_id("editor")
+        editor.focus()
+        await pilot.pause()
+        rows = _screen_rows(app)
+        assert "FIRST" in rows[editor.region.y]
+        assert "MIDDLE" in rows[editor.region.y + 1]
+        assert "LAST" in rows[editor.region.y + 2]
+
+
+@pytest.mark.asyncio
+async def test_focused_borderless_table_keeps_header_and_first_row():
+    app = textui.TextUI(textui.DocumentLoader().from_string('''<ui>
+      <data-table id="table" style="height: 2;">
+        <column key="name">Heading</column>
+        <row key="first"><cell>DATA</cell></row>
+      </data-table>
+    </ui>'''))
+    async with app.run_test(size=(40, 8)) as pilot:
+        table = app.document.get_by_id("table")
+        table.focus()
+        await pilot.pause()
+        rows = _screen_rows(app)
+        assert "Heading" in rows[table.region.y]
+        assert "DATA" in rows[table.region.y + 1]
+
+
+@pytest.mark.asyncio
+async def test_focused_compact_controls_keep_content_across_preset_switches():
+    app = textui.TextUI(textui.DocumentLoader().from_string('''<ui>
+      <style preset="compact"/><style preset="borders"/>
+      <button id="button">Save</button>
+      <radio-set id="choices"><radio-button>First</radio-button><radio-button>Last</radio-button></radio-set>
+    </ui>'''))
+    async with app.run_test(size=(40, 12)) as pilot:
+        button = app.document.get_by_id("button")
+        choices = app.document.get_by_id("choices")
+        enabled = {"borders": True, "compact": True}
+        for borders, compact in ((True, True), (False, True), (False, False), (True, False), (True, True)):
+            for name, desired in (("borders", borders), ("compact", compact)):
+                if enabled[name] != desired:
+                    enabled[name] = app.document.toggle_style_preset(name)
+            button.focus()
+            await pilot.pause()
+            assert "Save" in "\n".join(_screen_rows(app)[button.region.y:button.region.bottom])
+            if borders:
+                assert button.region.height >= 3
+                assert button.styles.border.top[0] == "double"
+            choices.focus()
+            await pilot.pause()
+            rendered = "\n".join(_screen_rows(app)[choices.region.y:choices.region.bottom])
+            assert "First" in rendered and "Last" in rendered
