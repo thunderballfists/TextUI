@@ -1,6 +1,8 @@
 import pytest
 from rich.cells import cell_len
 from rich.text import Text
+from textual.geometry import Offset
+from textual.selection import Selection
 from textual.widgets import RichLog
 
 from textui import DocumentLoader, DocumentValidationError, TextUI
@@ -231,3 +233,20 @@ async def test_log_keeps_grapheme_clusters_intact_across_deltas(deltas):
         assert log.lines[-1].text.rstrip() == "".join(deltas)
         # The tracked width must still describe the text it belongs to.
         assert log._inline_width == cell_len(log._inline_text)
+
+
+@pytest.mark.asyncio
+async def test_log_text_can_be_selected_and_reported():
+    app = TextUI(DocumentLoader().from_string('<ui><log id="t" /></ui>'))
+    async with app.run_test(size=(40, 8)) as pilot:
+        log = app.document.get_by_id("t")
+        log.append("hello world")
+        log.append("second line")
+        await pilot.pause()
+        assert log.ALLOW_SELECT
+        text, separator = log.get_selection(Selection(Offset(0, 0), Offset(5, 0)))
+        assert (text, separator) == ("hello", "\n")
+        text, _ = log.get_selection(Selection(Offset(6, 0), Offset(11, 1)))
+        assert text == "world\nsecond line"
+        assert log.get_selection(Selection(Offset(0, 40), Offset(3, 41))) == ("", "\n"), "stale selection"
+        assert any(segment.style and segment.style.meta.get("offset") for segment in log.render_line(0))
