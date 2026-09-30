@@ -13,14 +13,12 @@ Input, Select, TextArea {
 Checkbox, Switch, RadioButton {
     padding: 0;
 }
-/* The default focus outline (FOCUS_TCSS) is drawn on the widget's outermost rows. A
-   compact control is one row tall, so the outline replaces its only row and the
-   label disappears while focused. Buttons, checkboxes and switches already invert
-   themselves when focused; inputs get a tint instead. */
-Button:focus, Checkbox:focus, Switch:focus, RadioButton:focus {
+/* Compact controls have no border rows to spare for an outline. Keep native
+   focus styles and tint editable controls without covering their content. */
+Button:focus, Checkbox:focus, Switch:focus, RadioButton:focus, RadioSet:focus {
     outline: none;
 }
-Input:focus, Select:focus {
+Input:focus, Select:focus, TextArea:focus {
     outline: none;
     background: $accent 25%;
 }
@@ -30,7 +28,7 @@ FOCUS_TCSS = """
 Button:focus, Input:focus, Select:focus, TextArea:focus, Checkbox:focus,
 Switch:focus, RadioButton:focus, RadioSet:focus, DataTable:focus,
 Tree:focus, RuntimeList:focus {
-    outline: solid $accent;
+    background: $accent 15%;
 }
 """
 
