@@ -304,3 +304,55 @@ async def test_focused_compact_controls_keep_content_across_preset_switches():
             await pilot.pause()
             rendered = "\n".join(_screen_rows(app)[choices.region.y:choices.region.bottom])
             assert "First" in rendered and "Last" in rendered
+
+
+@pytest.mark.asyncio
+async def test_focus_preserves_button_variant_colors_when_compact_is_toggled():
+    app = textui.TextUI(textui.DocumentLoader().from_string('''<ui>
+      <style preset="compact"/>
+      <button id="go" variant="primary">Go</button>
+      <button id="stop" variant="error">Stop</button>
+    </ui>'''))
+    app.theme = "textual-dark"
+    async with app.run_test(size=(40, 10)) as pilot:
+        enabled = True
+        for compact in (True, False, True):
+            if compact != enabled:
+                enabled = app.document.toggle_style_preset("compact")
+            for name, dominant in (("go", "b"), ("stop", "r")):
+                button = app.document.get_by_id(name)
+                button.focus()
+                await pilot.pause()
+                focused = button.background_colors[1]
+                others = [getattr(focused, channel) for channel in "rgb" if channel != dominant]
+                assert getattr(focused, dominant) > max(others), (name, compact, focused)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("markup", [
+    '<input id="control" value="Ready"/>',
+    '<select id="control" value="ready"><option value="ready">Ready</option></select>',
+    '<text-area id="control" style="height: 4;">Ready</text-area>',
+])
+async def test_focus_tints_author_backgrounds_without_replacing_them(markup):
+    app = textui.TextUI(textui.DocumentLoader().from_string(f'''<ui>
+      <style preset="compact"/>
+      <style>Input, Select, TextArea {{ background: #0178d4; }}</style>
+      {markup}
+      <button id="other">Other</button>
+    </ui>'''))
+    app.theme = "textual-dark"
+    async with app.run_test(size=(40, 12)) as pilot:
+        control = app.document.get_by_id("control")
+        enabled = True
+        for compact in (True, False, True):
+            if compact != enabled:
+                enabled = app.document.toggle_style_preset("compact")
+            app.document.get_by_id("other").focus()
+            await pilot.pause()
+            resting = control.background_colors[1]
+            control.focus()
+            await pilot.pause()
+            focused = control.background_colors[1]
+            assert focused.b > max(focused.r, focused.g), (markup, compact, focused)
+            assert focused != resting

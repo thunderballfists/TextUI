@@ -12,7 +12,20 @@ Use `<style preset="compact"/>` when an application needs denser native controls
 </ui>
 ```
 
-`compact` is opt-in; documents without it retain Textual's normal control density. Presets have no body and only accept the `preset` attribute. A linked controller can switch any declared preset while the application runs. The method returns its new enabled state and reapplies the host stylesheet plus all active document blocks in their original order:
+`compact` is opt-in; documents without it retain Textual's normal control density. Presets have no body and only accept the `preset` attribute.
+
+Focus uses native `background-tint`, preserving button variants and author backgrounds. The default accent tint is 15%; compact inputs, selects, and text areas use 25%. Adjust it in application TCSS, after presets, with a focused selector:
+
+```css
+Button:focus, Input:focus, Select:focus, TextArea:focus,
+DataTable:focus, Tree:focus, RuntimeList:focus {
+    background-tint: $accent 6%;
+}
+```
+
+Use `background-tint: transparent` to disable TextUI's tint for selected controls while retaining their other native focus styling. Changing only `background` does not disable the tint.
+
+A linked controller can switch any declared preset while the application runs. The method returns its new enabled state and reapplies the host stylesheet plus all active document blocks in their original order:
 
 ```python
 @command(label="Compact", shortcut="ctrl+d")
