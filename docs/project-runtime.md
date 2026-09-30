@@ -194,4 +194,6 @@ def select_agent(context):
 
 The [runtime list example](../examples/list/app.ui) uses this pattern for a master-detail rail.
 
+Transcript mouse selections survive appends that keep selected rows in place. Eviction, clearing, and streamed-entry rewrites clear the affected log selection so copying cannot return unrelated replacement text. Selection-ended events and framework clipboard APIs remain future work.
+
 Document tab layout defaults apply in normal Textual Apps through `Document.bind()` as well as `TextUI` and `ProjectApp`. Host-owned native tab widgets are unaffected; author TCSS can override document tab and pane heights.
