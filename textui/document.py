@@ -10,6 +10,7 @@ from weakref import WeakSet
 
 from textual.app import App
 from textual.content import Content
+from textual.events import Show
 from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TabPane, TextArea
@@ -141,6 +142,10 @@ class BoundDocument:
         self._preset_enabled = {block.preset: True for block in definition.styles if block.preset is not None}
         self._compact_widgets: list[Widget] = []
         self._autofocus_widgets: list[Widget] = []
+        self._autofocus_watched: WeakSet[Widget] = WeakSet()
+        self._autofocus_pending: set[Widget] = set()
+        self._autofocus_refresh_pending = False
+        self._autofocus_closed = False
         self._gradient_backgrounds: tuple[GradientBackground, ...] = ()
 
     def _apply_compact_preset(self, widget: Widget) -> None:
@@ -247,12 +252,43 @@ class BoundDocument:
             bar.set_background_gradients(gradients)
 
     def _focus_autofocus(self) -> None:
+        self._watch_autofocus(self._autofocus_widgets)
         self._focus_widgets(self._autofocus_widgets)
 
-    @staticmethod
-    def _focus_widgets(widgets: Iterable[Widget]) -> None:
+    def _watch_autofocus(self, widgets: Iterable[Widget]) -> None:
+        if self._autofocus_closed or not self.app.is_running:
+            return
+        for widget in widgets:
+            if widget in self._autofocus_watched:
+                continue
+            widget.message_signal.subscribe(
+                self.app,
+                lambda message, widget=widget: self._autofocus_message(widget, message),
+                immediate=True,
+            )
+            self._autofocus_watched.add(widget)
+
+    def _autofocus_message(self, widget: Widget, message: Message) -> None:
+        if not isinstance(message, Show) or self._autofocus_closed or widget not in self._autofocus_widgets:
+            return
+        self._autofocus_pending.add(widget)
+        if not self._autofocus_refresh_pending:
+            self._autofocus_refresh_pending = self.app.call_after_refresh(self._focus_shown_autofocus)
+
+    def _focus_shown_autofocus(self) -> None:
+        pending = self._autofocus_pending
+        self._autofocus_pending = set()
+        self._autofocus_refresh_pending = False
+        self._focus_widgets(widget for widget in self._autofocus_widgets if widget in pending)
+
+    def _focus_widgets(self, widgets: Iterable[Widget]) -> None:
+        if self._autofocus_closed or not self.app.is_running:
+            return
         for widget in reversed(tuple(widgets)):
-            if widget.is_mounted and widget.display and BoundDocument._in_active_tabs(widget):
+            if (
+                widget.is_mounted and widget.is_on_screen and widget.focusable
+                and widget.screen is self.app.screen and self._in_active_tabs(widget)
+            ):
                 widget.screen.set_focus(widget)
                 return
 
@@ -313,14 +349,18 @@ class BoundDocument:
         widgets: dict[str, Widget] = {}
         bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
         compact_start = len(self._compact_widgets)
+        autofocus_start = len(self._autofocus_widgets)
         try:
             modal = self._build_node(node, widgets, bindings)
         except BaseException:
             del self._compact_widgets[compact_start:]
+            del self._autofocus_widgets[autofocus_start:]
             raise
         compact_widgets = tuple(self._compact_widgets[compact_start:])
+        autofocus_widgets = tuple(self._autofocus_widgets[autofocus_start:])
         if not isinstance(modal, MarkupModal):
             del self._compact_widgets[compact_start:]
+            del self._autofocus_widgets[autofocus_start:]
             raise DocumentStateError(f'Element {modal_id!r} is not a modal')
         future = ModalResult()
         owned_entries = {id(entry) for entries in bindings.values() for entry in entries}
@@ -338,9 +378,11 @@ class BoundDocument:
             for widget in compact_widgets:
                 if widget in self._compact_widgets:
                     self._compact_widgets.remove(widget)
-            for widget in widgets.values():
+            for widget in autofocus_widgets:
                 if widget in self._autofocus_widgets:
                     self._autofocus_widgets.remove(widget)
+                self._autofocus_pending.discard(widget)
+                self._autofocus_watched.discard(widget)
 
         def finalize_dismissal(value: object | None) -> None:
             remove_registrations()
@@ -355,7 +397,8 @@ class BoundDocument:
 
         def mounted() -> None:
             self._apply_gradient_backgrounds()
-            self._focus_widgets(widget for widget in widgets.values() if getattr(widget, '_textui_autofocus', False))
+            self._watch_autofocus(autofocus_widgets)
+            self.app.call_after_refresh(lambda: self._focus_widgets(autofocus_widgets))
 
         modal.set_mount_callback(mounted)
 
@@ -380,6 +423,8 @@ class BoundDocument:
 
     def close(self) -> None:
         """Cancel lifecycle work and clear loading state during application shutdown."""
+        self._autofocus_closed = True
+        self._autofocus_pending.clear()
         for (_name, target_id), tasks in tuple(self._lifecycle_tasks.items()):
             for task in tasks:
                 if not task.done():
