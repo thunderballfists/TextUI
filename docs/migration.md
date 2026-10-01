@@ -2,7 +2,7 @@
 
 ## Distribution name in 0.7
 
-The distribution is now `textui-markup` (version 0.7.0); `import textui`, the `textui` command, `.ui` files, and the MIT license are unchanged. Replace Git-based requirements named `textui` with `textui-markup==0.7.0` after the first PyPI release. Until then, `textui-markup @ git+https://github.com/thunderballfists/TextUI.git@COMMIT` can pin a commit containing the rename.
+The distribution is now `textui-markup` (version 0.7.0); `import textui`, the `textui` command, `.ui` files, and the MIT license are unchanged. Replace Git-based requirements named `textui` with `textui-markup==0.7.0`. For development from Git, `textui-markup @ git+https://github.com/thunderballfists/TextUI.git@COMMIT` can pin a commit containing the rename.
 
 Use a fresh virtual environment when migrating an existing installation. Alternatively, uninstall the old distribution **before** installing the new one: `python -m pip uninstall textui`, then `python -m pip install textui-markup==0.7.0`. Installing both and subsequently uninstalling either can remove shared import files. The unrelated PyPI project named `textui` is not this framework.
 
