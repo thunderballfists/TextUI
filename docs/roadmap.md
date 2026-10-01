@@ -1,6 +1,6 @@
 # TextUI Roadmap
 
-Updated: 2026-10-01. Status: Phase 0 and Phase 1A/1B complete; publishing preparation precedes Phase 1C. Initial review baseline: `f8e472c` (TextUI 0.6.0).
+Updated: 2026-10-01. Status: Phase 0, Phase 1A/1B and publishing preparation complete; maintainer publication pending; registry metadata for Phase 1C next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
 
 This is the current delivery order. The [extension triage](2026-09-19-extension-triage.md) retains the historical library comparisons and adoption rationale. Its external compatibility claims are dated evidence and must be checked again before adding a dependency.
 
@@ -26,7 +26,7 @@ The initial review ran 389 committed headless tests successfully, but separate b
 
 Delivered 0A, 0B and 0C as separate logical commits in one reviewed reliability PR. All completion gates above are met. Independent review found no actionable issues; the Python 3.11/3.12/3.14 test, build and clean-wheel matrix, lint and Linux visual checks passed. Local visual comparison passed all six checks without baseline changes. GitHub feedback was checked before and after merge; no comments or unresolved threads were present.
 
-Next: publishing preparation, followed by registry metadata and generated authoring artifacts for 1C, in the order below.
+Next: maintainer publication and registry metadata, followed by generated authoring artifacts for 1C, in the order below.
 
 Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-reliability-design.md) and [implementation plan](superpowers/plans/2026-09-30-runtime-reliability.md).
 
@@ -51,11 +51,13 @@ Verification: 464 full headless tests, including 28 new cases; 30 CLI checks on 
 
 [Issue #96](https://github.com/thunderballfists/TextUI/issues/96) defines three separate PRs:
 
-1. Prepare `textui-markup` 0.7.0: distribution metadata, markup wording, migration guidance and a tested tag-driven trusted-publishing workflow. Actual publication requires the maintainer's [publisher/environment setup and release tag](releases.md).
+1. Publishing preparation (completed): `textui-markup` 0.7.0 distribution metadata, markup wording, migration guidance and a tested tag-driven trusted-publishing workflow. Actual publication requires the maintainer's [publisher/environment setup and release tag](releases.md).
 2. Declare inspectable attribute types and simple containment rules as registry metadata, preserving existing behavior, error messages and callable custom converters. Compound rules retain named explicit checks.
 3. Deliver 1C: generated markup reference, editor completion data, an XSD with documented limits, LLM guidance, and a non-executing `textui check --static` with structured diagnostics. Keep the existing trusted `check` behavior unchanged; verify artifact drift and schema/loader agreement.
 
-1D can proceed alongside 1C. The trusted-controller validation boundary is established; registry metadata must precede generators. The schema is now scoped in issue #96, with rules it cannot express recorded explicitly. These authoring deliverables remain pending.
+Delivered publishing preparation in [PR #97](https://github.com/thunderballfists/TextUI/pull/97), merged at `e0c69e3`. Imports and CLI remain `textui`; markup and runtime behavior are unchanged. Verification: 464 headless tests, six unchanged visual checks, lint, lock validation, build and Twine checks, clean wheel and source-archive installs, release-tag rejection probes, and workflow validation. The full Python 3.11/3.12/3.14 CI matrix passed. Independent review found no actionable issues; the GitHub bot's PyPI README link finding was fixed, verified in built metadata and resolved before merge. No publication, release tag, environment or credential was created.
+
+1D can proceed alongside 1C. The trusted-controller validation boundary is established; registry metadata must precede generators. The schema is now scoped in issue #96, with rules it cannot express recorded explicitly. Registry metadata and generated authoring deliverables remain pending; issue #96 stays open.
 
 ## Phase 2 — Compatibility and maintenance
 
