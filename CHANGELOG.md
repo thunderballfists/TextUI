@@ -148,7 +148,8 @@ TextUI 0.2 is a breaking pre-1.0 reboot of the experimental 0.1 API.
 - Embedded scripts, expression evaluation, browser-style DOM helpers, HTML aliases, custom CSS filtering, and core image widgets.
 - Mandatory Pillow and `textual-imageview` dependencies.
 
-[Unreleased]: https://github.com/thunderballfists/TextUI/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/thunderballfists/TextUI/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/thunderballfists/TextUI/compare/d90608654be3787e4616170c5f1476acaccca42e...v0.7.0
 [0.6.0]: https://github.com/thunderballfists/TextUI/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/thunderballfists/TextUI/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/thunderballfists/TextUI/compare/v0.3.0...v0.4.0
