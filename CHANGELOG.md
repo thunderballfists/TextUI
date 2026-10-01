@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Project timers release finished async and threaded workers, including failed or cancelled work. Repeated close clears timer and worker ownership without suppressing native worker errors or changing overlap prevention.
 - Actions and commands now share lifecycle ownership: synchronous completion releases loading, shared targets stay loading until all work finishes, and older failures cannot overwrite newer target state. Shutdown cancels untargeted work and queued command wrappers as well as targeted work, and closed documents reject new invocations.
 - Focus cues now blend over native and author backgrounds instead of replacing them, so variant buttons retain their colors. Compact inputs, selects, and text areas also preserve their backgrounds; tint strengths remain 15% by default and 25% for compact editable controls.
 - Clicking a data-table column heading now sorts once per click. The table's click and mouse-move handlers also called `super()`, which Textual had already run, so every heading click was delivered twice and the ascending/descending toggle always ended on descending. A column-resize press no longer sorts either, and no longer swallows the next heading click when the drag is released.

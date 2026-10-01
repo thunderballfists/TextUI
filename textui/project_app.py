@@ -6,6 +6,7 @@ from typing import Any
 
 from textual import on
 from textual.app import App, ComposeResult
+from textual.worker import Worker
 from textual.widgets import Button, Checkbox, Collapsible, DataTable, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TextArea, Tree
 from .widgets.split import Split
 from .widgets.navigation import Nav
@@ -110,6 +111,10 @@ class ProjectApp(App):
 
     async def on_unmount(self) -> None:
         await self._close_once()
+
+    @on(Worker.StateChanged)
+    def forward_timer_worker_state(self, event: Worker.StateChanged) -> None:
+        self.window.timers.handle_worker_state(event)
 
     def _check_resize(self) -> None:
         """Queue the hook after Textual forwards its debounced resize to the screen."""
