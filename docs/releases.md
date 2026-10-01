@@ -39,4 +39,4 @@ git push origin v0.7.0
 
 The release workflow checks the name/tag, calls the full reusable test workflow, builds fresh wheel and source archives, and runs a wheel-only smoke check outside the checkout. It then waits for the `pypi` environment approval and publishes those artifacts. The publisher action also supplies PyPI attestations by default. Review the run and approve the protected deployment when ready.
 
-After a successful upload, verify `python -m pip install textui-markup==0.7.0` and `python -c "import textui"` in a fresh environment. Update the README's first-release wording. Investigate any failed release before retrying; published versions cannot be overwritten.
+After a successful upload, verify `python -m pip install textui-markup==0.7.0` and `python -c "import textui"` in a fresh environment. Confirm the published artifact hashes and README links, then record the release and verification in the roadmap. Investigate any failed release before retrying; published versions cannot be overwritten.
