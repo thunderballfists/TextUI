@@ -32,6 +32,13 @@ class TextUI(App):
     def action_textui_activate_tab(self, pane_id: str) -> None:
         activate_tab(self.document, pane_id)
 
+    def exit(self, result: Any = None, return_code: int = 0, message: Any = None) -> None:
+        self.document.close()
+        super().exit(result=result, return_code=return_code, message=message)
+
+    def on_unmount(self) -> None:
+        self.document.close()
+
     @on(Button.Pressed)
     @on(Input.Changed)
     @on(Input.Submitted)

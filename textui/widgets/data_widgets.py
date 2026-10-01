@@ -295,11 +295,19 @@ class SeededDataTable(DataTable):
 
         self._replace_rows(validated)
 
-    def _replace_rows(self, validated: list[tuple[str, Mapping[str, object], tuple[Text, ...]]]) -> None:
-        if self._sort_column is not None:
+    def _replace_rows(
+        self,
+        validated: list[tuple[str, Mapping[str, object], tuple[Text, ...]]],
+        *,
+        sort_column: str | None = None,
+        reverse: bool | None = None,
+    ) -> None:
+        column = self._sort_column if sort_column is None else sort_column
+        direction = self._sort_reverse if reverse is None else reverse
+        if column is not None:
             validated.sort(
-                key=lambda row: self._sort_value(row[1][self._sort_column]),
-                reverse=self._sort_reverse,
+                key=lambda row: self._sort_value(row[1][column]),
+                reverse=direction,
             )
         previous_key: str | None = None
         previous_column: int | None = None
@@ -326,39 +334,35 @@ class SeededDataTable(DataTable):
             return
         reverse = column_key == self._sort_column and not self._sort_reverse
         if self._runtime_records:
-            self._sort_column = column_key
-            self._sort_reverse = reverse
-            if self.row_key_field is None:
-                self._replace_rows([
-                    (
-                        key,
-                        record,
-                        tuple(
-                            Text("" if record[column.key] is None else str(record[column.key]), justify=column.align)
-                            for column in self._seed_columns
-                        ),
-                    )
-                    for key, record in self._runtime_records.items()
-                ])
-            else:
-                self.set_rows(self._runtime_records.values())
+            self._replace_rows([
+                (
+                    key,
+                    record,
+                    tuple(
+                        Text("" if record[column.key] is None else str(record[column.key]), justify=column.align)
+                        for column in self._seed_columns
+                    ),
+                )
+                for key, record in self._runtime_records.items()
+            ], sort_column=column_key, reverse=reverse)
         else:
             self.sort(
                 event.column_key,
                 key=lambda value: self._sort_value(value.plain if isinstance(value, Text) else value),
                 reverse=reverse,
             )
-            self._sort_column = column_key
-            self._sort_reverse = reverse
+        self._sort_column = column_key
+        self._sort_reverse = reverse
         self._set_sort_indicator(column_key, reverse)
         event.stop()
 
     @staticmethod
-    def _sort_value(value: object) -> tuple[int, float | str]:
+    def _sort_value(value: object) -> tuple[int, Real | str]:
         if isinstance(value, bool):
-            return (0, float(value))
-        if isinstance(value, Real):
-            return (1, float(value))
+            return (0, value)
+        # Self-comparison recognizes NaN without overflowing arbitrarily large ints.
+        if isinstance(value, Real) and value == value:
+            return (1, value)
         return (2, str(value).casefold())
 
     def _set_sort_indicator(self, column_key: str, reverse: bool) -> None:

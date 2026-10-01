@@ -7,6 +7,7 @@ from textual.geometry import Size
 from textual.widgets import Button
 
 from textui import DocumentStateError, DocumentValidationError
+from textui.errors import ActionExecutionError
 from textui.project import ProjectSource
 from textui.project_app import ProjectApp
 
@@ -17,6 +18,216 @@ def project(tmp_path: Path, markup: str, script: str) -> ProjectSource:
     )
     (tmp_path / "controller.py").write_text(script, encoding="utf-8")
     return ProjectSource.discover(tmp_path / "app.ui")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("entry", ["command", "event"])
+@pytest.mark.parametrize("fails", [False, True])
+async def test_sync_target_command_finishes_state_and_preserves_error_source(tmp_path, entry, fails):
+    source = project(tmp_path, '<button id="button" on-pressed="refresh"/><label id="status"/>', '''
+from textui import command
+@command(target="status")
+def refresh():
+    window.app.was_loading = window.document.get_by_id("status").has_class("-loading")
+    if window.app.fails:
+        raise window.app.original_error
+''')
+    app = ProjectApp(source)
+    app.fails = fails
+    app.original_error = ValueError("refresh failed")
+    async with app.run_test():
+        status = app.document.get_by_id("status")
+        status.add_class("-error")
+        status.textui_error = "old error"
+        invoke = app.document.invoke_command("refresh") if entry == "command" else app.document.dispatch(
+            Button.Pressed(app.document.get_by_id("button")))
+        if fails:
+            with pytest.raises(ActionExecutionError) as caught:
+                await invoke
+            assert caught.value.__cause__ is app.original_error
+            expected_source = "controller.py" if entry == "command" else "app.ui"
+            assert caught.value.location.source.endswith(expected_source)
+            assert status.has_class("-error")
+            assert status.textui_error == "refresh failed"
+        else:
+            assert await invoke
+            assert not status.has_class("-error")
+            assert status.textui_error is None
+        assert app.was_loading
+        assert not status.has_class("-loading")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["action", "command"])
+async def test_project_shutdown_cancels_untargeted_action_and_command(tmp_path, kind):
+    signature = "context" if kind == "action" else ""
+    source = project(tmp_path, '<button id="button" on-pressed="wait"/>', f'''
+import asyncio
+from textui import {kind}
+@{kind}()
+async def wait({signature}):
+    window.app.started.set()
+    try:
+        await window.app.release.wait()
+        window.app.effects.append(window.phase)
+    except asyncio.CancelledError:
+        window.app.cancelled.set()
+        raise
+    finally:
+        window.app.finished.set()
+''')
+    app = ProjectApp(source)
+    app.started, app.release, app.cancelled, app.finished = (asyncio.Event() for _ in range(4))
+    app.effects = []
+    try:
+        async with app.run_test():
+            if kind == "action":
+                await app.document.dispatch(Button.Pressed(app.document.get_by_id("button")))
+            else:
+                app.document.start_command("wait")
+            await app.started.wait()
+        assert app.window.phase == "closed"
+        assert app.cancelled.is_set()
+        app.release.set()
+        await asyncio.wait_for(app.finished.wait(), timeout=1)
+        assert app.effects == []
+    finally:
+        app.release.set()
+        await asyncio.wait_for(app.finished.wait(), timeout=1)
+
+
+@pytest.mark.asyncio
+async def test_close_before_shortcut_wrapper_starts_and_closed_document_rejects_new_work(tmp_path):
+    source = project(tmp_path, '<button id="button" on-pressed="refresh"/>', '''
+from textui import command
+@command(shortcut="ctrl+r")
+def refresh():
+    window.app.calls.append("called")
+''')
+    app = ProjectApp(source)
+    app.calls = []
+    async with app.run_test() as pilot:
+        button = app.document.get_by_id("button")
+        app.document.start_command("refresh")
+        app.document.close()
+        app.document.close()
+        await pilot.pause()
+        assert app.calls == []
+        assert await app.document.dispatch(Button.Pressed(button)) is False
+        with pytest.raises(DocumentStateError, match="closed"):
+            await app.document.invoke_command("refresh")
+        tasks = asyncio.all_tasks()
+        app.document.start_command("refresh")
+        assert asyncio.all_tasks() == tasks
+        await pilot.pause()
+        assert app.calls == []
+
+
+@pytest.mark.asyncio
+async def test_project_exit_ignores_queued_events_before_unmount(tmp_path):
+    source = project(tmp_path, '<button id="button" on-pressed="refresh"/>', '''
+from textui import action
+@action
+def refresh(context):
+    window.app.calls.append("called")
+''')
+    app = ProjectApp(source)
+    app.calls = []
+    async with app.run_test():
+        event = Button.Pressed(app.document.get_by_id("button"))
+        app.exit()
+        assert app.window.phase == "closing"
+        assert await app.document.dispatch(event) is False
+    assert app.calls == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("first_to_finish", [0, 1])
+async def test_action_and_command_share_target_loading_in_both_completion_orders(tmp_path, first_to_finish):
+    source = project(tmp_path, '<button id="button" on-pressed="first"/><label id="status"/>', '''
+from textui import action, command
+@action(target="status", supersede=True)
+async def first(context):
+    window.app.started[0].set()
+    await window.app.releases[0].wait()
+@command(target="status", supersede=True)
+async def second():
+    window.app.started[1].set()
+    await window.app.releases[1].wait()
+''')
+    app = ProjectApp(source)
+    app.started = [asyncio.Event(), asyncio.Event()]
+    app.releases = [asyncio.Event(), asyncio.Event()]
+    async with app.run_test() as pilot:
+        await app.document.dispatch(Button.Pressed(app.document.get_by_id("button")))
+        command_task = asyncio.create_task(app.document.invoke_command("second"))
+        try:
+            await asyncio.gather(*(event.wait() for event in app.started))
+            status = app.document.get_by_id("status")
+            app.releases[first_to_finish].set()
+            if first_to_finish == 1:
+                assert await command_task
+            await pilot.pause()
+            assert status.has_class("-loading")
+            app.releases[1 - first_to_finish].set()
+            assert await command_task
+            await pilot.pause()
+            assert not status.has_class("-loading")
+            assert not status.has_class("-error")
+        finally:
+            for release in app.releases:
+                release.set()
+            await asyncio.gather(command_task, return_exceptions=True)
+            await pilot.pause()
+
+
+@pytest.mark.asyncio
+async def test_superseded_command_failure_does_not_publish_stale_target_error(tmp_path):
+    source = project(tmp_path, '<label id="status"/>', '''
+import asyncio
+from textui import command
+@command(target="status", supersede=True)
+async def refresh():
+    index = window.app.calls
+    window.app.calls += 1
+    window.app.started[index].set()
+    if index == 0:
+        try:
+            await window.app.releases[0].wait()
+        except asyncio.CancelledError:
+            window.app.cancelled.set()
+            await window.app.releases[0].wait()
+        raise window.app.original_error
+    await window.app.releases[1].wait()
+''')
+    app = ProjectApp(source)
+    app.calls = 0
+    app.started = [asyncio.Event(), asyncio.Event()]
+    app.releases = [asyncio.Event(), asyncio.Event()]
+    app.cancelled = asyncio.Event()
+    app.original_error = ValueError("stale failure")
+    async with app.run_test():
+        first = asyncio.create_task(app.document.invoke_command("refresh"))
+        await app.started[0].wait()
+        second = asyncio.create_task(app.document.invoke_command("refresh"))
+        try:
+            await app.started[1].wait()
+            await app.cancelled.wait()
+            app.releases[1].set()
+            assert await second
+            app.releases[0].set()
+            with pytest.raises(ActionExecutionError) as caught:
+                await first
+            assert caught.value.__cause__ is app.original_error
+            assert caught.value.location.source.endswith("controller.py")
+            status = app.document.get_by_id("status")
+            assert not status.has_class("-loading")
+            assert not status.has_class("-error")
+            assert status.textui_error is None
+        finally:
+            for release in app.releases:
+                release.set()
+            await asyncio.gather(first, second, return_exceptions=True)
 
 
 @pytest.mark.asyncio

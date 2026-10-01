@@ -6,6 +6,7 @@ from typing import Any
 
 from textual import on
 from textual.app import App, ComposeResult
+from textual.worker import Worker
 from textual.widgets import Button, Checkbox, Collapsible, DataTable, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TextArea, Tree
 from .widgets.split import Split
 from .widgets.navigation import Nav
@@ -111,6 +112,10 @@ class ProjectApp(App):
     async def on_unmount(self) -> None:
         await self._close_once()
 
+    @on(Worker.StateChanged)
+    def forward_timer_worker_state(self, event: Worker.StateChanged) -> None:
+        self.window.timers.handle_worker_state(event)
+
     def _check_resize(self) -> None:
         """Queue the hook after Textual forwards its debounced resize to the screen."""
         resize = self._resize_event
@@ -143,10 +148,12 @@ class ProjectApp(App):
         await self.controllers.hook("on_resize", width, height)
 
     def exit(self, result: Any = None, return_code: int = 0, message: Any = None) -> None:
-        """Stop project-owned timers before Textual starts application teardown."""
-        if self.window.phase == "ready":
+        """Stop project-owned work before Textual starts application teardown."""
+        if self.window.phase != "closed":
             self.window.phase = "closing"
             self.window.timers.close()
+            if self.document is not None:
+                self.document.close()
         super().exit(result=result, return_code=return_code, message=message)
 
     async def _close_once(self) -> None:

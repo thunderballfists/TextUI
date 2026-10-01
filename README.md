@@ -4,6 +4,8 @@ TextUI 0.6 turns strict XML documents into native [Textual](https://textual.text
 
 This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
+The [roadmap](docs/roadmap.md) records current priorities, completion gates, and the reliability implementation plan. Historical library comparisons remain in the [extension triage](docs/2026-09-19-extension-triage.md).
+
 ## Install and run
 
 Python `>=3.11,<4` is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
@@ -139,6 +141,8 @@ Host(DocumentLoader().from_string("<ui><label>Hello</label></ui>")).run()
 ```
 
 `TextUI` supplies these built-in handlers for convenience. Add decorators for any other component messages used by your document. `get_by_id` returns only widgets with declared document IDs and requires them to be mounted. Use native `app.query()` / `app.query_one()` for general selectors. A `Document` can be reused in independent Apps; each binding constructs fresh widgets. There is one binding per App and a single composition attempt per binding. Recomposition, remounting, document replacement, and transparent attachment to a running App are unsupported.
+
+Normal hosts must call `self.document.close()` when shutdown begins and on unmount to cancel owned actions and commands; the convenience Apps do this automatically. Closing is idempotent and ignores later queued document events. See the [runtime lifecycle guide](docs/project-runtime.md) for shared loading targets, supersession, and cooperative cancellation.
 
 ## Add components and events
 

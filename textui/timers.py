@@ -7,6 +7,8 @@ from math import isfinite
 from pathlib import Path
 from typing import Any
 
+from textual.worker import Worker, WorkerState
+
 from .errors import DocumentStateError, SourceLocation, TextUIError
 
 
@@ -36,7 +38,7 @@ class RuntimeTimers:
         self.app = app
         self.window = window
         self.handles: list[Any] = []
-        self.workers: set[Any] = set()
+        self.workers: set[Worker[Any]] = set()
 
     def schedule(self, seconds: float, callback: Callable[[], Any], *, repeat: bool, thread: bool = False):
         if self.window.phase != "ready":
@@ -73,7 +75,7 @@ class RuntimeTimers:
 
             if thread:
                 worker = self.app.run_worker(invoke, name=f"textui:{name}", thread=True)
-                self.workers.add(worker)
+                self._own_worker(worker)
                 return
             try:
                 result = invoke()
@@ -90,7 +92,7 @@ class RuntimeTimers:
                     finally:
                         busy = False
                 worker = self.app.run_worker(await_result(), name=f"textui:{name}")
-                self.workers.add(worker)
+                self._own_worker(worker)
                 return
             busy = False
 
@@ -98,8 +100,22 @@ class RuntimeTimers:
         self.handles.append(handle)
         return handle
 
+    def _own_worker(self, worker: Worker[Any]) -> None:
+        self.workers.add(worker)
+        # Terminal messages may precede registration for immediately finished work.
+        if worker.is_finished:
+            self.workers.discard(worker)
+
+    def handle_worker_state(self, event: Worker.StateChanged) -> None:
+        if event.worker in self.workers and event.state in {
+            WorkerState.SUCCESS, WorkerState.ERROR, WorkerState.CANCELLED,
+        }:
+            self.workers.discard(event.worker)
+
     def close(self) -> None:
-        for handle in self.handles:
+        for handle in tuple(self.handles):
             handle.stop()
-        for worker in self.workers:
+        self.handles.clear()
+        for worker in tuple(self.workers):
             worker.cancel()
+        self.workers.clear()

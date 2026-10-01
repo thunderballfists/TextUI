@@ -15,7 +15,8 @@ from textual.message import Message
 from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TabPane, TextArea
 
-from .actions import ActionCallback, ActionContext, ActionInvocation
+from .actions import ActionCallback, ActionContext
+from .invocations import InvocationOwner
 from .errors import (
     ActionExecutionError, ComponentBuildError, DocumentStateError,
     DocumentStyleError, DocumentValidationError, ElementNotFoundError,
@@ -130,9 +131,8 @@ class BoundDocument:
         }
         self._widgets: dict[str, Widget] = {}
         self._bindings: dict[type, list[tuple[Widget, EventSpec, str, ElementNode]]] = {}
-        self._action_tasks: set[asyncio.Future[object]] = set()
-        self._lifecycle_tasks: dict[tuple[str, str], set[asyncio.Future[object]]] = {}
-        self._lifecycle_invocations: dict[asyncio.Future[object], ActionInvocation] = {}
+        self._invocations = InvocationOwner()
+        self._command_tasks: set[asyncio.Future[object]] = set()
         self._modal_nodes = {
             node.common["id"]: node
             for node in definition.nodes
@@ -422,20 +422,14 @@ class BoundDocument:
         screen.dismiss(value)
 
     def close(self) -> None:
-        """Cancel lifecycle work and clear loading state during application shutdown."""
+        """Reject new work, cancel owned tasks, and clear loading during shutdown."""
+        self._invocations.close()
         self._autofocus_closed = True
         self._autofocus_pending.clear()
-        for (_name, target_id), tasks in tuple(self._lifecycle_tasks.items()):
-            for task in tasks:
-                if not task.done():
-                    task.cancel()
-                invocation = self._lifecycle_invocations.pop(task, None)
-                if invocation is not None:
-                    invocation.cancelled = True
-            target = self._widgets.get(target_id)
-            if target is not None:
-                target.remove_class("-loading")
-        self._lifecycle_tasks.clear()
+        for task in tuple(self._command_tasks):
+            if not task.done():
+                task.cancel()
+        self._command_tasks.clear()
 
     def get_by_id(self, element_id: str) -> Widget:
         """Look up declared IDs only, and only while the widget is mounted."""
@@ -448,68 +442,32 @@ class BoundDocument:
 
     async def invoke_command(self, name: str) -> bool:
         """Run an enabled declared command, returning whether it ran."""
+        if self._invocations.closed:
+            raise DocumentStateError("Document is closed")
         command = self.commands.get(name)
         if command is None:
             raise DocumentStateError(f"No declared command {name!r}")
         if not command.enabled:
             return False
+        invocation = None
         try:
+            options = self.action_metadata.get(name)
+            target_id = getattr(options, "target", None)
+            target = self.get_by_id(target_id) if target_id is not None else None
+            invocation = self._invocations.begin(name, target, supersede=getattr(options, "supersede", False))
             result = self._command_callbacks[name]()
             if isawaitable(result):
-                options = self.action_metadata.get(name)
-                target_id = getattr(options, "target", None)
-                target = self.get_by_id(target_id) if target_id is not None else None
-                key = (name, target_id) if target_id is not None else None
-                if target is not None:
-                    target.add_class("-loading")
-                    target.remove_class("-error")
-                    target.textui_error = None
-
-                if key is not None and getattr(options, "supersede", False):
-                    for previous in tuple(self._lifecycle_tasks.get(key, ())):
-                        if previous.done():
-                            continue
-                        previous_invocation = self._lifecycle_invocations.get(previous)
-                        if previous_invocation is not None:
-                            previous_invocation.cancelled = True
-                        previous.cancel()
-
                 task = asyncio.ensure_future(result)
-                if key is not None:
-                    self._lifecycle_tasks.setdefault(key, set()).add(task)
-                    self._lifecycle_invocations[task] = ActionInvocation(target)
-
-                def finish_lifecycle(error: Exception | None = None) -> None:
-                    if key is None:
-                        return
-                    tasks = self._lifecycle_tasks.get(key)
-                    if tasks is None:
-                        return
-                    tasks.discard(task)
-                    self._lifecycle_invocations.pop(task, None)
-                    if target is not None:
-                        if error is not None:
-                            target.textui_error = str(error)
-                            target.add_class("-error")
-                        if not tasks:
-                            target.remove_class("-loading")
-                    if not tasks:
-                        self._lifecycle_tasks.pop(key, None)
-
-                try:
-                    await task
-                except asyncio.CancelledError:
-                    finish_lifecycle()
-                    raise
-                except Exception as error:
-                    finish_lifecycle(error)
-                    raise ActionExecutionError(
-                        f"Command {name!r} failed: {error}",
-                        location=self._command_locations.get(name),
-                        value=name,
-                    ) from error
-                finish_lifecycle()
+                self._invocations.track(invocation, task)
+                await task
+        except asyncio.CancelledError:
+            if invocation is not None:
+                invocation.state.cancelled = True
+                self._invocations.finish(invocation)
+            raise
         except Exception as error:
+            if invocation is not None:
+                self._invocations.finish(invocation, error)
             if isinstance(error, ActionExecutionError):
                 raise
             raise ActionExecutionError(
@@ -517,15 +475,18 @@ class BoundDocument:
                 location=self._command_locations.get(name),
                 value=name,
             ) from error
+        self._invocations.finish(invocation)
         return True
 
     def start_command(self, name: str) -> None:
         """Schedule a command without holding up Textual's input dispatcher."""
+        if self._invocations.closed:
+            return
         task = asyncio.ensure_future(self.invoke_command(name))
-        self._action_tasks.add(task)
+        self._command_tasks.add(task)
 
         def report_command_result(completed: asyncio.Future[object]) -> None:
-            self._action_tasks.discard(completed)
+            self._command_tasks.discard(completed)
             if completed.cancelled():
                 return
             try:
@@ -537,6 +498,8 @@ class BoundDocument:
 
     async def dispatch(self, message: Message) -> bool:
         """Await one exact-type/identity action without altering native bubbling."""
+        if self._invocations.closed:
+            return False
         if isinstance(message, TabbedContent.TabActivated):
             self._focus_autofocus_in_tab(message.pane)
         for widget, event, name, node in self._bindings.get(type(message), ()):
@@ -544,72 +507,23 @@ class BoundDocument:
                 continue
             if name in self.commands and not self.commands[name].enabled:
                 return True
+            invocation = None
             try:
                 options = self.action_metadata.get(name)
                 target_id = getattr(options, "target", None)
                 target = self.get_by_id(target_id) if target_id is not None else None
-                key = (name, target_id) if target_id is not None else None
-                if target is not None:
-                    target.add_class("-loading")
-                    target.remove_class("-error")
-                    target.textui_error = None
-                invocation = ActionInvocation(target) if target is not None else None
-                result = self.actions[name](ActionContext(message, widget, self.app, self, invocation))
+                invocation = self._invocations.begin(name, target, supersede=getattr(options, "supersede", False))
+                result = self.actions[name](ActionContext(message, widget, self.app, self, invocation.state))
                 if isawaitable(result):
-                    if key is not None and getattr(options, "supersede", False):
-                        for previous in tuple(self._lifecycle_tasks.get(key, ())):
-                            if previous.done():
-                                continue
-                            previous_invocation = self._lifecycle_invocations.get(previous)
-                            if previous_invocation is not None:
-                                previous_invocation.cancelled = True
-                            previous.cancel()
                     task = asyncio.ensure_future(result)
-                    if key is not None:
-                        self._lifecycle_tasks.setdefault(key, set()).add(task)
-                        if invocation is not None:
-                            self._lifecycle_invocations[task] = invocation
-
-                    def finish_lifecycle(completed: asyncio.Future[object], error: Exception | None = None) -> None:
-                        if key is None:
-                            return
-                        tasks = self._lifecycle_tasks.get(key)
-                        if tasks is None:
-                            return
-                        tasks.discard(completed)
-                        self._lifecycle_invocations.pop(completed, None)
-                        if target is not None:
-                            if error is not None:
-                                target.textui_error = str(error)
-                                target.add_class("-error")
-                            if not tasks:
-                                target.remove_class("-loading")
-                        if not tasks:
-                            self._lifecycle_tasks.pop(key, None)
-
-                    await asyncio.sleep(0)
-                    if task.done():
-                        try:
-                            await task
-                        except asyncio.CancelledError:
-                            finish_lifecycle(task)
-                            raise
-                        except Exception as error:
-                            finish_lifecycle(task, error)
-                            raise
-                        finish_lifecycle(task)
-                        return True
-                    self._action_tasks.add(task)
+                    self._invocations.track(invocation, task)
 
                     def report_action_result(completed: asyncio.Future[object]) -> None:
-                        self._action_tasks.discard(completed)
                         if completed.cancelled():
-                            finish_lifecycle(completed)
                             return
                         try:
                             completed.result()
                         except Exception as error:
-                            finish_lifecycle(completed, error)
                             action_error = ActionExecutionError(
                                 f'Action {name!r} failed: {error}',
                                 location=node.location,
@@ -617,11 +531,27 @@ class BoundDocument:
                             )
                             action_error.__cause__ = error
                             self.app._handle_exception(action_error)
-                        else:
-                            finish_lifecycle(completed)
 
-                    task.add_done_callback(report_action_result)
+                    try:
+                        await asyncio.sleep(0)
+                    except asyncio.CancelledError:
+                        task.add_done_callback(report_action_result)
+                        raise
+                    if not task.done():
+                        task.add_done_callback(report_action_result)
+                        return True
+                    await task
+            except asyncio.CancelledError:
+                if invocation is not None:
+                    invocation.state.cancelled = True
+                    # Pending work still owns its target until it actually finishes.
+                    if invocation.task is None or invocation.task.done():
+                        self._invocations.finish(invocation)
+                raise
             except Exception as error:
+                if invocation is not None:
+                    self._invocations.finish(invocation, error)
                 raise ActionExecutionError(f'Action {name!r} failed: {error}', location=node.location, value=name) from error
+            self._invocations.finish(invocation)
             return True
         return False

@@ -190,3 +190,228 @@ async def test_convenience_host_propagates_callback_failure_through_native_error
         async with app.run_test() as pilot:
             await pilot.click('#button')
     assert isinstance(error.value.__cause__, RuntimeError)
+
+
+class _LifecycleHost(App):
+    def __init__(self, markup, actions, metadata):
+        super().__init__()
+        definition = textui.DocumentLoader().from_string(markup, source_name="lifecycle.xml")
+        self.document = definition.bind(self, actions=actions, action_metadata=metadata)
+        self.errors = []
+
+    def compose(self):
+        yield from self.document.compose()
+
+    def _handle_exception(self, error):
+        self.errors.append(error)
+
+    def on_unmount(self):
+        self.document.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fails", [False, True])
+async def test_sync_target_action_finishes_state_and_preserves_error_source(fails):
+    original = ValueError("refresh failed")
+
+    def refresh(context):
+        assert context.target.has_class("-loading")
+        if fails:
+            raise original
+
+    app = _LifecycleHost(
+        '<ui><button id="button" on-pressed="refresh"/><label id="status"/></ui>',
+        {"refresh": refresh}, {"refresh": ActionOptions("status")},
+    )
+    async with app.run_test():
+        status = app.document.get_by_id("status")
+        event = Button.Pressed(app.document.get_by_id("button"))
+        if fails:
+            with pytest.raises(textui.ActionExecutionError) as caught:
+                await app.document.dispatch(event)
+            assert caught.value.__cause__ is original
+            assert caught.value.location.source == "lifecycle.xml"
+            assert status.has_class("-error")
+            assert status.textui_error == "refresh failed"
+        else:
+            status.add_class("-error")
+            status.textui_error = "previous error"
+            assert await app.document.dispatch(event)
+            assert not status.has_class("-error")
+            assert status.textui_error is None
+        assert not status.has_class("-loading")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("first_to_finish", [0, 1])
+async def test_different_actions_keep_shared_target_loading_until_both_finish(first_to_finish):
+    releases = [asyncio.Event(), asyncio.Event()]
+    started = [asyncio.Event(), asyncio.Event()]
+
+    async def first(context):
+        started[0].set()
+        await releases[0].wait()
+
+    async def second(context):
+        started[1].set()
+        await releases[1].wait()
+
+    app = _LifecycleHost('''<ui><button id="first" on-pressed="first"/>
+        <button id="second" on-pressed="second"/><button id="sync" on-pressed="sync"/>
+        <label id="status"/></ui>''',
+        {"first": first, "second": second, "sync": lambda context: None},
+        {name: ActionOptions("status", True) for name in ("first", "second", "sync")},
+    )
+    async with app.run_test() as pilot:
+        try:
+            for name in ("first", "second"):
+                await app.document.dispatch(Button.Pressed(app.document.get_by_id(name)))
+            await asyncio.gather(*(event.wait() for event in started))
+            status = app.document.get_by_id("status")
+            await app.document.dispatch(Button.Pressed(app.document.get_by_id("sync")))
+            assert status.has_class("-loading")
+            releases[first_to_finish].set()
+            await pilot.pause()
+            assert status.has_class("-loading")
+            releases[1 - first_to_finish].set()
+            await pilot.pause()
+            assert not status.has_class("-loading")
+            assert not status.has_class("-error")
+        finally:
+            for release in releases:
+                release.set()
+            await pilot.pause()
+    assert app.errors == []
+
+
+@pytest.mark.asyncio
+async def test_textui_shutdown_cancels_untargeted_actions_and_marks_context():
+    started, release, cancelled, finished = (asyncio.Event() for _ in range(4))
+    contexts, effects = [], []
+
+    async def wait(context):
+        contexts.append(context)
+        started.set()
+        try:
+            await release.wait()
+            effects.append("resumed")
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+        finally:
+            finished.set()
+
+    app = textui.TextUI(textui.DocumentLoader().from_string(
+        '<ui><button id="button" on-pressed="wait"/></ui>'), actions={"wait": wait})
+    try:
+        async with app.run_test():
+            await app.document.dispatch(Button.Pressed(app.document.get_by_id("button")))
+            await started.wait()
+        assert cancelled.is_set()
+        assert contexts[0].cancelled
+        release.set()
+        await asyncio.wait_for(finished.wait(), timeout=1)
+        assert effects == []
+    finally:
+        release.set()
+        await asyncio.wait_for(finished.wait(), timeout=1)
+
+
+@pytest.mark.asyncio
+async def test_textui_exit_ignores_queued_action_messages_immediately():
+    calls = []
+    app = textui.TextUI(textui.DocumentLoader().from_string(
+        '<ui><button id="button" on-pressed="go"/></ui>'), actions={"go": calls.append})
+    async with app.run_test():
+        event = Button.Pressed(app.document.get_by_id("button"))
+        app.exit()
+        assert await app.document.dispatch(event) is False
+        app.document.close()
+        assert await app.document.dispatch(event) is False
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_superseded_failure_reports_source_without_overwriting_new_target_state():
+    calls = 0
+    cancelled, old_release, new_release = (asyncio.Event() for _ in range(3))
+    contexts = []
+    original = ValueError("stale failure")
+
+    async def refresh(context):
+        nonlocal calls
+        calls += 1
+        contexts.append(context)
+        if calls == 1:
+            try:
+                await old_release.wait()
+            except asyncio.CancelledError:
+                cancelled.set()
+                await old_release.wait()
+            raise original
+        await new_release.wait()
+
+    app = _LifecycleHost(
+        '<ui><button id="button" on-pressed="refresh"/><label id="status"/></ui>',
+        {"refresh": refresh}, {"refresh": ActionOptions("status", True)},
+    )
+    async with app.run_test() as pilot:
+        try:
+            button = app.document.get_by_id("button")
+            await app.document.dispatch(Button.Pressed(button))
+            await app.document.dispatch(Button.Pressed(button))
+            await cancelled.wait()
+            assert contexts[0].cancelled
+            assert not contexts[1].cancelled
+            new_release.set()
+            await pilot.pause()
+            old_release.set()
+            await pilot.pause()
+            status = app.document.get_by_id("status")
+            assert not status.has_class("-loading")
+            assert not status.has_class("-error")
+            assert status.textui_error is None
+            assert len(app.errors) == 1
+            assert app.errors[0].__cause__ is original
+            assert app.errors[0].location.source == "lifecycle.xml"
+        finally:
+            old_release.set()
+            new_release.set()
+            await pilot.pause()
+
+
+@pytest.mark.asyncio
+async def test_sync_replacement_supersedes_async_action_without_error_state():
+    contexts = []
+    cancelled, release = asyncio.Event(), asyncio.Event()
+
+    async def pending(context):
+        try:
+            await release.wait()
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+
+    def refresh(context):
+        contexts.append(context)
+        return pending(context) if len(contexts) == 1 else None
+
+    app = _LifecycleHost(
+        '<ui><button id="button" on-pressed="refresh"/><label id="status"/></ui>',
+        {"refresh": refresh}, {"refresh": ActionOptions("status", True)},
+    )
+    async with app.run_test() as pilot:
+        try:
+            button = app.document.get_by_id("button")
+            await app.document.dispatch(Button.Pressed(button))
+            await app.document.dispatch(Button.Pressed(button))
+            await pilot.pause()
+            assert cancelled.is_set()
+            assert contexts[0].cancelled
+            status = app.document.get_by_id("status")
+            assert not status.has_class("-loading")
+            assert not status.has_class("-error")
+        finally:
+            release.set()
+            await pilot.pause()
+    assert app.errors == []
