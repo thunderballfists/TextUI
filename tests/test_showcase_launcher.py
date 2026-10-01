@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import sys
 
-def run_launcher(tmp_path, *, install_exit=0, run_exit=0, missing_uvx=False):
+def run_launcher(tmp_path, *, env_exit=0, install_exit=0, run_exit=0, missing_uvx=False):
     source = Path(__file__).parents[1] / "showcase"
     assert source.is_file(), "The checkout needs a showcase launcher"
     checkout = tmp_path / "checkout with spaces"
@@ -30,7 +30,8 @@ def run_launcher(tmp_path, *, install_exit=0, run_exit=0, missing_uvx=False):
         "'create': os.environ.get('POETRY_VIRTUALENVS_CREATE'), "
         "'in_project': os.environ.get('POETRY_VIRTUALENVS_IN_PROJECT'), "
         "'poetry_python': os.environ.get('POETRY_VIRTUALENVS_USE_POETRY_PYTHON')}) + '\\n')\n"
-        "sys.exit(int(os.environ['INSTALL_EXIT' if 'install' in sys.argv else 'RUN_EXIT']))\n",
+        "stage = 'ENV_EXIT' if 'env' in sys.argv else 'INSTALL_EXIT' if 'install' in sys.argv else 'RUN_EXIT'\n"
+        "sys.exit(int(os.environ[stage]))\n",
         encoding="utf-8",
     )
     fake.chmod(0o755)
@@ -38,6 +39,7 @@ def run_launcher(tmp_path, *, install_exit=0, run_exit=0, missing_uvx=False):
         **os.environ,
         "PATH": "" if missing_uvx else f"{tools}{os.pathsep}/usr/bin{os.pathsep}/bin",
         "LAUNCH_CALLS": str(calls),
+        "ENV_EXIT": str(env_exit),
         "INSTALL_EXIT": str(install_exit),
         "RUN_EXIT": str(run_exit),
         "VIRTUAL_ENV": str(tmp_path / "unrelated environment"),
@@ -59,6 +61,7 @@ def test_launcher_installs_then_runs_showcase_from_another_directory(tmp_path):
     assert result.returncode == 0, result.stderr
     prefix = ["--python", "3.12", "--from", "poetry==2.4.3", "poetry"]
     assert [call["args"] for call in calls] == [
+        prefix + ["env", "use", "3.12"],
         prefix + ["install", "--with", "test", "--no-interaction"],
         prefix + ["run", "python", "-m", "textui", "run", str(checkout / "examples/showcase/app.ui")],
     ]
@@ -72,14 +75,21 @@ def test_launcher_does_not_run_after_installation_fails(tmp_path):
     result, calls, _ = run_launcher(tmp_path, install_exit=17)
 
     assert result.returncode == 17
-    assert len(calls) == 1
+    assert len(calls) == 2
 
 
 def test_launcher_preserves_application_exit_status(tmp_path):
     result, calls, _ = run_launcher(tmp_path, run_exit=23)
 
     assert result.returncode == 23
-    assert len(calls) == 2
+    assert len(calls) == 3
+
+
+def test_launcher_stops_when_python_environment_selection_fails(tmp_path):
+    result, calls, _ = run_launcher(tmp_path, env_exit=19)
+
+    assert result.returncode == 19
+    assert len(calls) == 1
 
 
 def test_launcher_explains_missing_uvx_without_attempting_setup(tmp_path):

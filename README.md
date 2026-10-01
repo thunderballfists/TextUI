@@ -31,6 +31,7 @@ unset VIRTUAL_ENV CONDA_PREFIX
 export POETRY_VIRTUALENVS_CREATE=true
 export POETRY_VIRTUALENVS_IN_PROJECT=false
 export POETRY_VIRTUALENVS_USE_POETRY_PYTHON=true
+uvx --python 3.12 --from poetry==2.4.3 poetry env use 3.12
 uvx --python 3.12 --from poetry==2.4.3 poetry install --with test --no-interaction
 uvx --python 3.12 --from poetry==2.4.3 poetry run python -m textui run examples/project/app.ui
 uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor
