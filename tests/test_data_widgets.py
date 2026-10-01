@@ -1,4 +1,6 @@
 import pytest
+from decimal import Decimal
+from fractions import Fraction
 from textual.app import App
 from textual.widgets import DataTable, Tree
 from textual.coordinate import Coordinate
@@ -480,6 +482,141 @@ async def test_seeded_table_header_sorts_literal_cells():
         table.post_message(DataTable.HeaderSelected(table, column.key, 0, column.label))
         await pilot.pause()
         assert [row.key.value for row in table.ordered_rows] == ["alpha", "zulu"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("base", [2**53, 10**400], ids=["adjacent-large-integers", "outside-float-range"])
+@pytest.mark.parametrize("keyed", [False, True], ids=["positional-keys", "declared-keys"])
+async def test_runtime_table_sort_preserves_integer_precision_and_refresh_identity(base, keyed):
+    row_key = 'row-key="id"' if keyed else ""
+    app = TextUI(DocumentLoader().from_string(f'''<ui>
+      <data-table id="table" {row_key} style="height: 6; width: 38;">
+        <column key="value" width="24">Value</column>
+      </data-table>
+    </ui>'''))
+    async with app.run_test(size=(40, 8)) as pilot:
+        table = app.document.get_by_id("table")
+        table.set_rows([{"id": "high", "value": base + 1}, {"id": "low", "value": base}])
+        table.move_cursor(row=0, animate=False)
+        await pilot.pause()
+        assert await pilot.click(table, offset=(3, 0))
+        await pilot.pause()
+        assert [table.get_record(row.key.value)["value"] for row in table.ordered_rows] == [base, base + 1]
+        if keyed:
+            assert table.coordinate_to_cell_key(table.cursor_coordinate).row_key.value == "high"
+        assert await pilot.click(table, offset=(3, 0))
+        await pilot.pause()
+        assert [table.get_record(row.key.value)["value"] for row in table.ordered_rows] == [base + 1, base]
+        table.set_rows([
+            {"id": "new", "value": base + 2},
+            {"id": "low", "value": base - 1},
+            {"id": "high", "value": base + 1},
+        ])
+        assert [table.get_record(row.key.value)["value"] for row in table.ordered_rows] == [base + 2, base + 1, base - 1]
+        assert table.columns["value"].label.plain == "Value ↓"
+        if keyed:
+            assert table.coordinate_to_cell_key(table.cursor_coordinate).row_key.value == "high"
+
+
+@pytest.mark.asyncio
+async def test_runtime_numeric_sort_has_deterministic_mixed_nan_and_infinity_order():
+    nan = float("nan")
+    records = [
+        {"id": "none", "value": None}, {"id": "nan", "value": nan},
+        {"id": "alpha", "value": "alpha"}, {"id": "pos_inf", "value": float("inf")},
+        {"id": "huge", "value": 10**400}, {"id": "fraction", "value": 1.5},
+        {"id": "one", "value": 1}, {"id": "neg_inf", "value": float("-inf")},
+        {"id": "true", "value": True}, {"id": "false", "value": False},
+    ]
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <data-table id="table" row-key="id"><column key="value" width="24">Value</column></data-table>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("table")
+        table.set_rows(records)
+        await pilot.pause()
+        assert await pilot.click(table, offset=(3, 0))
+        await pilot.pause()
+        assert [row.key.value for row in table.ordered_rows] == [
+            "false", "true", "neg_inf", "one", "fraction", "huge", "pos_inf", "alpha", "nan", "none",
+        ]
+        assert table.get_record("nan")["value"] is nan
+        assert table.get_cell("none", "value").plain == ""
+        assert await pilot.click(table, offset=(3, 0))
+        await pilot.pause()
+        assert [row.key.value for row in table.ordered_rows] == [
+            "none", "nan", "alpha", "pos_inf", "huge", "fraction", "one", "neg_inf", "true", "false",
+        ]
+
+
+@pytest.mark.asyncio
+async def test_numeric_ties_are_stable_and_decimal_keeps_textual_ordering():
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <data-table id="table" row-key="id"><column key="value">Value</column></data-table>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("table")
+        table.set_rows([
+            {"id": "decimal_two", "value": Decimal("2")},
+            {"id": "float_one", "value": 1.0},
+            {"id": "decimal_ten", "value": Decimal("10")},
+            {"id": "int_one", "value": 1},
+            {"id": "fraction_one", "value": Fraction(1, 1)},
+            {"id": "two", "value": 2},
+        ])
+        await pilot.pause()
+        assert await pilot.click(table, offset=(3, 0))
+        await pilot.pause()
+        assert [row.key.value for row in table.ordered_rows] == [
+            "float_one", "int_one", "fraction_one", "two", "decimal_ten", "decimal_two",
+        ]
+        assert await pilot.click(table, offset=(3, 0))
+        await pilot.pause()
+        assert [row.key.value for row in table.ordered_rows] == [
+            "decimal_two", "decimal_ten", "two", "float_one", "int_one", "fraction_one",
+        ]
+
+
+@pytest.mark.asyncio
+async def test_failed_header_sort_and_rejected_refresh_preserve_rows_cursor_and_sort_state():
+    class UnsortableReal(float):
+        def __float__(self):
+            raise ValueError("cannot compare")
+
+        def __lt__(self, other):
+            raise ValueError("cannot compare")
+
+    app = TextUI(DocumentLoader().from_string('''<ui>
+      <data-table id="table" row-key="id">
+        <column key="name">Name</column><column key="value">Value</column>
+      </data-table>
+    </ui>'''))
+    async with app.run_test() as pilot:
+        table = app.document.get_by_id("table")
+        table.set_rows([
+            {"id": "a", "name": "Alpha", "value": UnsortableReal(2)},
+            {"id": "b", "name": "Bravo", "value": UnsortableReal(1)},
+        ])
+        for _ in range(2):
+            name_column = table.columns["name"]
+            table.on_data_table_header_selected(DataTable.HeaderSelected(table, name_column.key, 0, name_column.label))
+        table.move_cursor(row=1, column=1, animate=False)
+        await pilot.pause()
+        cursor = table.cursor_coordinate
+        value_column = table.columns["value"]
+        with pytest.raises(ValueError, match="cannot compare"):
+            table.on_data_table_header_selected(DataTable.HeaderSelected(table, value_column.key, 1, value_column.label))
+        assert [row.key.value for row in table.ordered_rows] == ["b", "a"]
+        assert table.cursor_coordinate == cursor
+        assert table._sort_column == "name" and table._sort_reverse
+        assert table.columns["name"].label.plain == "Name ↓"
+        assert table.columns["value"].label.plain == "Value"
+        with pytest.raises(ValueError, match="missing column 'value'"):
+            table.set_rows([{"id": "bad", "name": "Missing"}])
+        assert [row.key.value for row in table.ordered_rows] == ["b", "a"]
+        assert table.cursor_coordinate == cursor
+        assert table._sort_column == "name" and table._sort_reverse
+        assert table.get_record("a")["name"] == "Alpha"
 
 
 def test_data_widgets_can_be_composed_before_app_runs():

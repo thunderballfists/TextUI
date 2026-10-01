@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Runtime table sorting preserves large-integer precision without float conversion, treats numeric NaN deterministically as text, and keeps table state unchanged when a header comparison fails. Refresh continues to retain the active sort and declared row identity.
 - Project timers release finished async and threaded workers, including failed or cancelled work. Repeated close clears timer and worker ownership without suppressing native worker errors or changing overlap prevention.
 - Actions and commands now share lifecycle ownership: synchronous completion releases loading, shared targets stay loading until all work finishes, and older failures cannot overwrite newer target state. Shutdown cancels untargeted work and queued command wrappers as well as targeted work, and closed documents reject new invocations.
 - Focus cues now blend over native and author backgrounds instead of replacing them, so variant buttons retain their colors. Compact inputs, selects, and text areas also preserve their backgrounds; tint strengths remain 15% by default and 25% for compact editable controls.
