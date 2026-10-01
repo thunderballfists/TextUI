@@ -42,6 +42,22 @@ Use `<style preset="borders"/>` for rounded Unicode button outlines. It is indep
 
 Use `<include src="views/workspace.ui"/>` wherever a widget child is allowed. Included files have their own `<ui>` root and may include other files, but may not declare scripts or styles. Relative paths are resolved from the file containing each directive, not from the shell's current directory. Cycles, missing resources, duplicate IDs, and invalid markup fail with source context. Includes are static; there is no network loading or reload.
 
+## Project validation
+
+Use `python -m textui check /absolute/path/app.ui` with the project's installed interpreter. From a checkout, follow [setup](../README.md#install-and-run), then run:
+
+```sh
+uvx --python 3.12 --from poetry==2.4.3 poetry run python -m textui check examples/showcase/app.ui
+```
+
+The check discovers linked resources, executes controller scripts in entry order, awaits `on_setup`, lowers components/includes, validates action and command bindings, and constructs declared widget trees. Dormant modal contents and their inline styles are checked too. Document styles use native TCSS parsing and the default host theme variables. The app and widgets are never mounted; no ready/resize hooks, event dispatch or declared timers run.
+
+`on_close` runs once when setup has begun, on success or failure. If cleanup also fails, the original validation failure remains primary and the cleanup diagnostic is reported alongside it. During `check`, script loading failures before setup do not run close hooks; native `run` shutdown may close already-loaded controllers in that case. Setup and close hooks must tolerate an unmounted document; mounted lookup is unavailable. Scripts, hooks and factories are trusted Python and can perform arbitrary side effects. This is not static-only validation or an untrusted-input sandbox.
+
+A successful check covers declarations and construction, not custom widget `compose()`/mount hooks, widget default TCSS, computed layout or interactive behavior. Exercise those with native Textual `run_test()` and Pilot or by launching the app.
+
+Expected TextUI errors print source context to stderr without a traceback. `--debug` before or after `check`/`run` includes their original exception chains. Unexpected exceptions always retain a traceback. Exit statuses are 0 (success), 1 (project error), 2 (usage error), 3 (unexpected failure), and 130 (keyboard interruption). `run` preserves explicit application exit codes and restores the terminal before reporting captured runtime errors.
+
 ## Reusable components
 
 Import reusable markup directly below the entry `<ui>` root. The alias is a project-local lowercase kebab-case widget name:
