@@ -1,6 +1,6 @@
 # TextUI Roadmap
 
-Updated: 2026-09-30. Status: planned. Review baseline: `f8e472c` (TextUI 0.6.0).
+Updated: 2026-09-30. Status: Phase 0 complete; Phase 1 planned. Initial review baseline: `f8e472c` (TextUI 0.6.0).
 
 This is the current delivery order. The [extension triage](2026-09-19-extension-triage.md) retains the historical library comparisons and adoption rationale. Its external compatibility claims are dated evidence and must be checked again before adding a dependency.
 
@@ -14,9 +14,9 @@ Prioritize reliable application lifecycles and approachable authoring before exp
 
 Main includes reusable local components and slots; linked scripts, includes and styles; actions, commands and timers; context and resize hooks; navigation, splits and modals; runtime tables/lists; compact/border presets; gradients; native range controls; autofocus on reveal; selectable logs and asynchronous clipboard copying.
 
-The review ran 389 committed headless tests successfully, but separate behavioral probes exposed five defects. A green baseline does not waive the regression tests below.
+The initial review ran 389 committed headless tests successfully, but separate behavioral probes exposed five defects. All five are fixed in [PR #93](https://github.com/thunderballfists/TextUI/pull/93), merged at `9e5a464`. The resulting suite has 431 passing tests, including 34 cases that reproduced defects before their fixes and one additional ordering compatibility case.
 
-## Phase 0 — Reliability
+## Phase 0 — Reliability (completed)
 
 | Unit | Deliverable | Completion gate |
 | --- | --- | --- |
@@ -24,7 +24,9 @@ The review ran 389 committed headless tests successfully, but separate behaviora
 | 0B | Timer worker cleanup | Completed async/threaded workers are released; repeated close stops timers and clears ownership; overlap skipping and native error reporting remain intact. |
 | 0C | Exact table sorting | Adjacent large integers and arbitrarily large integers sort correctly; mixed numeric/text values, missing values, NaN and infinity have documented deterministic behavior; refresh retains sort and row identity. |
 
-Implement 0A first because it defines shared ownership semantics. 0B and 0C are independent afterward and may use separate worktrees. Integrate them into one reviewed reliability PR with separate logical commits, avoiding competing edits to shared documentation.
+Delivered 0A, 0B and 0C as separate logical commits in one reviewed reliability PR. All completion gates above are met. Independent review found no actionable issues; the Python 3.11/3.12/3.14 test, build and clean-wheel matrix, lint and Linux visual checks passed. Local visual comparison passed all six checks without baseline changes. GitHub feedback was checked before and after merge; no comments or unresolved threads were present.
+
+Next: 1A, dependable setup and showcase launch. Phase 1B's trusted-controller validation boundary still needs its own design before implementation.
 
 Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-reliability-design.md) and [implementation plan](superpowers/plans/2026-09-30-runtime-reliability.md).
 

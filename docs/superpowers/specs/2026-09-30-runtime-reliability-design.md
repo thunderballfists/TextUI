@@ -1,6 +1,6 @@
 # Runtime Reliability Design
 
-Date: 2026-09-30. Status: proposed for implementation. Baseline: `f8e472c`.
+Date: 2026-09-30. Status: implemented in [PR #93](https://github.com/thunderballfists/TextUI/pull/93) at `9e5a464`. Initial review baseline: `f8e472c`.
 
 ## Purpose and scope
 
