@@ -16,7 +16,14 @@ from textual.content import Content
 async def main() -> None:
     package_path = Path(textui.__file__).resolve()
     assert package_path.is_relative_to(Path(sys.prefix).resolve()), package_path
-    assert importlib.metadata.version("textui") == "0.6.0"
+    distribution = importlib.metadata.distribution("textui-markup")
+    assert distribution.version == "0.7.0"
+    assert distribution.metadata["Name"] == "textui-markup"
+    assert any(
+        entry.group == "console_scripts" and entry.name == "textui"
+        and entry.value == "textui.__main__:main"
+        for entry in distribution.entry_points
+    )
     installed = {dist.metadata["Name"].lower().replace("_", "-") for dist in importlib.metadata.distributions()}
     assert "pillow" not in installed
     assert "textual-imageview" not in installed
@@ -82,7 +89,7 @@ async def main() -> None:
         assert controls_app.document.get_by_id("files").root.children[0].data == "app"
     assert not any(name == "PIL" or name.startswith("PIL.") or name == "textual_imageview" or name.startswith("textual_imageview.") for name in sys.modules)
     print(f"Clean wheel headless smoke passed: {package_path}")
-    print({name: importlib.metadata.version(name) for name in ("textui", "textual", "lxml")})
+    print({name: importlib.metadata.version(name) for name in ("textui-markup", "textual", "lxml")})
 
 
 if __name__ == "__main__":

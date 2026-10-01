@@ -3,6 +3,7 @@ name: Tests and packaging
 on:
   push:
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read

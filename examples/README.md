@@ -1,6 +1,6 @@
 # Examples
 
-The examples use the public TextUI 0.6 API. Follow the [checkout setup](../README.md#install-and-run) once, then run the commands below from the repository root. They use the installed project through Poetry rather than relying on a `textui` command on your shell's PATH.
+The examples use the public TextUI 0.7 API from the `textui-markup` distribution. Follow the [checkout setup](../README.md#install-and-run) once, then run the commands below from the repository root. They use the installed project through Poetry rather than relying on a `textui` command on your shell's PATH.
 
 For the full showcase on macOS or Linux, `./showcase` handles setup and launch automatically. Its absolute path also works from another directory; Ctrl+Q quits. Examples ship in the source distribution, not the library wheel.
 
