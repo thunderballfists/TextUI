@@ -2,9 +2,9 @@
 
 TextUI 0.7 turns declarative, HTML-like markup into native [Textual](https://textual.textualize.io/) widgets. Tags describe structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files. The distribution is named **`textui-markup`**; Python imports and the command remain **`textui`**.
 
-This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
+This is a breaking pre-1.0 reboot. See the [migration guide](https://github.com/thunderballfists/TextUI/blob/main/docs/migration.md) for changes from 0.1, the [changelog](https://github.com/thunderballfists/TextUI/blob/main/CHANGELOG.md) for release history, and the [implemented design](https://github.com/thunderballfists/TextUI/blob/main/docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
-The [roadmap](docs/roadmap.md) records current priorities, completion gates, and the reliability implementation plan. Historical library comparisons remain in the [extension triage](docs/2026-09-19-extension-triage.md).
+The [roadmap](https://github.com/thunderballfists/TextUI/blob/main/docs/roadmap.md) records current priorities, completion gates, and the reliability implementation plan. Historical library comparisons remain in the [extension triage](https://github.com/thunderballfists/TextUI/blob/main/docs/2026-09-19-extension-triage.md).
 
 ## Install and run
 
@@ -18,7 +18,7 @@ python -c "import textui"
 python -m textui run /absolute/path/app.ui
 ```
 
-The PyPI project named `textui` is unrelated. Both distributions use the `textui` import package, so installing them together causes collisions. For an existing Git installation, follow the [distribution migration](docs/migration.md#distribution-name-in-07). Until publication, use the checkout instructions below. Maintainers: see the [release guide](docs/releases.md).
+The PyPI project named `textui` is unrelated. Both distributions use the `textui` import package, so installing them together causes collisions. For an existing Git installation, follow the [distribution migration](https://github.com/thunderballfists/TextUI/blob/main/docs/migration.md#distribution-name-in-07). Until publication, use the checkout instructions below. Maintainers: see the [release guide](https://github.com/thunderballfists/TextUI/blob/main/docs/releases.md).
 
 For a checkout on macOS or Linux, install [uv](https://docs.astral.sh/uv/getting-started/installation/) once, then run:
 
@@ -49,9 +49,9 @@ uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor
 
 Replace `examples/project/app.ui` with `examples/controls/app.ui`, `examples/data/app.ui` or `examples/components/app.ui` to try those projects. Run tests with `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`. To locate the managed environment, run `uvx --python 3.12 --from poetry==2.4.3 poetry env info --path`; do not assume `.venv/bin/textui` exists. An installed library also supports `python -m textui run /absolute/path/app.ui` using the Python interpreter where it was installed.
 
-The [showcase](examples/showcase/app.ui) combines every built-in widget family in one navigable project: components, layouts, controls, tables, trees, lists, logs, modals, actions, and timers. The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [component example](examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates an API-backed runtime table beside seeded native tables and trees; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its markup path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
+The [showcase](https://github.com/thunderballfists/TextUI/blob/main/examples/showcase/app.ui) combines every built-in widget family in one navigable project: components, layouts, controls, tables, trees, lists, logs, modals, actions, and timers. The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](https://github.com/thunderballfists/TextUI/blob/main/docs/project-runtime.md). The [component example](https://github.com/thunderballfists/TextUI/blob/main/examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](https://github.com/thunderballfists/TextUI/blob/main/examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](https://github.com/thunderballfists/TextUI/blob/main/examples/data/app.ui) demonstrates an API-backed runtime table beside seeded native tables and trees; see the [controls guide](https://github.com/thunderballfists/TextUI/blob/main/docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its markup path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
-For a linked-script project launched from Python, `ProjectApp(source, context=host_value)` makes `host_value` available as read-only `window.context` in the controller. Controllers may also define `on_resize(width, height)` to update width-sensitive content after the screen refreshes; see the [runtime lifecycle guide](docs/project-runtime.md).
+For a linked-script project launched from Python, `ProjectApp(source, context=host_value)` makes `host_value` available as read-only `window.context` in the controller. Controllers may also define `on_resize(width, height)` to update width-sensitive content after the screen refreshes; see the [runtime lifecycle guide](https://github.com/thunderballfists/TextUI/blob/main/docs/project-runtime.md).
 
 ## Check a project
 
@@ -63,7 +63,7 @@ uvx --python 3.12 --from poetry==2.4.3 poetry run python -m textui check example
 
 `check` reads includes/components/styles, executes linked Python and `on_setup`, binds actions/commands, and constructs declared widgets including dormant modal contents. It checks document and inline TCSS with native theme variables. It does not mount widgets, run `on_ready`/`on_resize`, dispatch events, or start declared timers. `on_close` runs once after setup begins, including on validation failure. Linked scripts, setup/close hooks and factories remain trusted code and may have side effects; this is not a sandbox or a static-only check. Custom widget composition, mount hooks, default styles and layout still require a running-app test.
 
-Both `check` and `run` report expected project errors on stderr with source context. Add `--debug` before or after the command for their tracebacks. Status codes are 0 for success, 1 for a project error, 2 for invalid CLI usage, 3 for an unexpected failure (with traceback), and 130 for interruption. `run` also preserves an explicit application exit code. See the [validation guide](docs/project-runtime.md#project-validation) for the full boundary.
+Both `check` and `run` report expected project errors on stderr with source context. Add `--debug` before or after the command for their tracebacks. Status codes are 0 for success, 1 for a project error, 2 for invalid CLI usage, 3 for an unexpected failure (with traceback), and 130 for interruption. `run` also preserves an explicit application exit code. See the [validation guide](https://github.com/thunderballfists/TextUI/blob/main/docs/project-runtime.md#project-validation) for the full boundary.
 
 ## Python integration
 
@@ -141,7 +141,7 @@ The HTML-like feel does not imply browser compatibility. Tags such as `vertical`
 
 Mounted widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`; `option`, `column`, `row`, `cell`, and `tree-node` are data-only children and do not accept these attributes. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
 
-`split` uses a draggable divider that accepts arrow keys when focused. Set `pane.display = False` to hide a pane; showing it restores its stored size. A `nav-item` target must name a direct child of a `content-switcher`. The `selected` event carries `context.event.target`, which an action can assign to the switcher's `current` property. The [project example](examples/project/app.ui) shows these controls together.
+`split` uses a draggable divider that accepts arrow keys when focused. Set `pane.display = False` to hide a pane; showing it restores its stored size. A `nav-item` target must name a direct child of a `content-switcher`. The `selected` event carries `context.event.target`, which an action can assign to the switcher's `current` property. The [project example](https://github.com/thunderballfists/TextUI/blob/main/examples/project/app.ui) shows these controls together.
 
 ## Reusable project components
 
@@ -154,11 +154,11 @@ Project entry files may import a local component directly below `<ui>`, then use
 </agent-card>
 ```
 
-A component file has a `<component>` root, optional string `<props>`, and exactly one widget root. Literal `{property}` placeholders work in text and attribute values. Named `<slot>` declarations accept caller content and otherwise retain their fallback widgets. The instance `id`, class, style, disabled state, and events apply to the rendered root; template IDs are private and receive unique instance prefixes. Components may import other components, but cannot contain scripts or styles. See the [project runtime guide](docs/project-runtime.md) and runnable [component example](examples/components/app.ui).
+A component file has a `<component>` root, optional string `<props>`, and exactly one widget root. Literal `{property}` placeholders work in text and attribute values. Named `<slot>` declarations accept caller content and otherwise retain their fallback widgets. The instance `id`, class, style, disabled state, and events apply to the rendered root; template IDs are private and receive unique instance prefixes. Components may import other components, but cannot contain scripts or styles. See the [project runtime guide](https://github.com/thunderballfists/TextUI/blob/main/docs/project-runtime.md) and runnable [component example](https://github.com/thunderballfists/TextUI/blob/main/examples/components/app.ui).
 
 ## Integrate with a normal App
 
-Bind after `App.__init__` and before the App runs. Compose the binding through the normal Textual hook, then explicitly forward native messages. [The runnable editor](examples/editor.py) implements this complete pattern:
+Bind after `App.__init__` and before the App runs. Compose the binding through the normal Textual hook, then explicitly forward native messages. [The runnable editor](https://github.com/thunderballfists/TextUI/blob/main/examples/editor.py) implements this complete pattern:
 
 ```python
 from textual import on
@@ -192,7 +192,7 @@ Host(DocumentLoader().from_string("<ui><label>Hello</label></ui>")).run()
 
 `TextUI` supplies these built-in handlers for convenience. Add decorators for any other component messages used by your document. `get_by_id` returns only widgets with declared document IDs and requires them to be mounted. Use native `app.query()` / `app.query_one()` for general selectors. A `Document` can be reused in independent Apps; each binding constructs fresh widgets. There is one binding per App and a single composition attempt per binding. Recomposition, remounting, document replacement, and transparent attachment to a running App are unsupported.
 
-Normal hosts must call `self.document.close()` when shutdown begins and on unmount to cancel owned actions and commands; the convenience Apps do this automatically. Closing is idempotent and ignores later queued document events. See the [runtime lifecycle guide](docs/project-runtime.md) for shared loading targets, supersession, and cooperative cancellation.
+Normal hosts must call `self.document.close()` when shutdown begins and on unmount to cancel owned actions and commands; the convenience Apps do this automatically. Closing is idempotent and ignores later queued document events. See the [runtime lifecycle guide](https://github.com/thunderballfists/TextUI/blob/main/docs/project-runtime.md) for shared loading targets, supersession, and cooperative cancellation.
 
 ## Add components and events
 
@@ -222,7 +222,7 @@ loader = DocumentLoader(registry)
 TextUI(loader.from_string('<ui><count-label count="3" /></ui>')).run()
 ```
 
-Declare custom events with `events={"updated": EventSpec(CustomMessage, lambda event: event.widget)}` on the component spec, using the message's actual source-widget property. The host must also implement `@on(CustomMessage)` and `await self.document.dispatch(event)`. Subclassing `TextUI` is sufficient. Dispatch matches the **exact registered message type** and originating widget identity; no handlers are discovered automatically. See the [tested custom component and message example](tests/test_extensions.py).
+Declare custom events with `events={"updated": EventSpec(CustomMessage, lambda event: event.widget)}` on the component spec, using the message's actual source-widget property. The host must also implement `@on(CustomMessage)` and `await self.document.dispatch(event)`. Subclassing `TextUI` is sufficient. Dispatch matches the **exact registered message type** and originating widget identity; no handlers are discovered automatically. See the [tested custom component and message example](https://github.com/thunderballfists/TextUI/blob/main/tests/test_extensions.py).
 
 ## Styles and trust
 
@@ -246,4 +246,4 @@ uvx --python 3.12 --from poetry==2.4.3 poetry build
 
 Tests run headlessly and include actual Pilot interactions, computed styles, custom events, and the example form. CI runs Python 3.11/3.12/3.14, builds the distribution, and installs each wheel into a clean environment for an image-free headless smoke test.
 
-TextUI is released under the [MIT License](LICENSE).
+TextUI is released under the [MIT License](https://github.com/thunderballfists/TextUI/blob/main/LICENSE).
