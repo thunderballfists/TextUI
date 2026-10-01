@@ -50,6 +50,7 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- A checkout `./showcase` launcher for macOS/Linux that installs the locked project through isolated Poetry and launches via `python -m textui`, including from another working directory. Setup instructions now use the same managed environment instead of assuming a global command or `.venv/bin/textui`.
 - Log `on-selection-ended` actions receive completed pointer selections without polling or redraw-triggered callbacks. Copying remains opt-in through asynchronous `window.copy(text)` or the exported `copy_to_clipboard(app, text)` helper, with native clipboard tools and OSC 52 transport.
 - `ProjectApp(source, context=...)` exposes a host-supplied object through read-only `window.context` from controller script loading onward.
 - Linked controllers may define synchronous or asynchronous `on_resize(width, height)` to respond after terminal resize layout refreshes, without polling.

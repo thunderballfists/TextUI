@@ -1,0 +1,20 @@
+#!/bin/sh
+# Launch the checkout's showcase through an isolated, locked environment.
+set -eu
+
+if ! command -v uvx >/dev/null 2>&1; then
+    echo "Install uv (which provides uvx): https://docs.astral.sh/uv/getting-started/installation/" >&2
+    exit 127
+fi
+
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+cd "$repo_root"
+
+# Avoid borrowing an activated environment or a stale checkout .venv.
+unset VIRTUAL_ENV CONDA_PREFIX
+export POETRY_VIRTUALENVS_CREATE=true
+export POETRY_VIRTUALENVS_IN_PROJECT=false
+export POETRY_VIRTUALENVS_USE_POETRY_PYTHON=true
+
+uvx --python 3.12 --from poetry==2.4.3 poetry install --with test --no-interaction
+exec uvx --python 3.12 --from poetry==2.4.3 poetry run python -m textui run "$repo_root/examples/showcase/app.ui"

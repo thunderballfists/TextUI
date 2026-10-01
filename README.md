@@ -10,16 +10,33 @@ The [roadmap](docs/roadmap.md) records current priorities, completion gates, and
 
 Python `>=3.11,<4` is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
 
-From a checkout:
+For a checkout on macOS or Linux, install [uv](https://docs.astral.sh/uv/getting-started/installation/) once, then run:
 
 ```sh
-python -m pip install .
-textui run examples/project/app.ui
-textui run examples/controls/app.ui
-textui run examples/data/app.ui
-textui run examples/showcase/app.ui
-python -m examples.editor
+./showcase
 ```
+
+The launcher uses Python 3.12 and isolated Poetry 2.4.3, installs the locked project and test dependencies, and runs `python -m textui`. Its Poetry-managed environment lives in Poetry's cache, outside the checkout. No shell activation or globally available `textui` command is needed. The first run may download Python, Poetry and dependencies; later runs check the locked install before opening the app. Ctrl+Q quits.
+
+From another directory, use the launcher's absolute path, for example:
+
+```sh
+/Users/abeihl/Development/TextUI/showcase
+```
+
+For other examples or development commands, use the same environment policy from the repository root:
+
+```sh
+unset VIRTUAL_ENV CONDA_PREFIX
+export POETRY_VIRTUALENVS_CREATE=true
+export POETRY_VIRTUALENVS_IN_PROJECT=false
+export POETRY_VIRTUALENVS_USE_POETRY_PYTHON=true
+uvx --python 3.12 --from poetry==2.4.3 poetry install --with test --no-interaction
+uvx --python 3.12 --from poetry==2.4.3 poetry run python -m textui run examples/project/app.ui
+uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor
+```
+
+Replace `examples/project/app.ui` with `examples/controls/app.ui`, `examples/data/app.ui` or `examples/components/app.ui` to try those projects. Run tests with `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`. To locate the managed environment, run `uvx --python 3.12 --from poetry==2.4.3 poetry env info --path`; do not assume `.venv/bin/textui` exists. An installed library also supports `python -m textui run /absolute/path/app.ui` using the Python interpreter where it was installed.
 
 The [showcase](examples/showcase/app.ui) combines every built-in widget family in one navigable project: components, layouts, controls, tables, trees, lists, logs, modals, actions, and timers. The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [component example](examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates an API-backed runtime table beside seeded native tables and trees; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
