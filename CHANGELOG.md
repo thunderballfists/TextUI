@@ -4,6 +4,13 @@ All notable changes to TextUI are documented here.
 
 ## [Unreleased]
 
+### Planned
+
+- Optional image components remain outside the core package.
+- Future releases may add capabilities without changing the strict document and lifecycle contracts established in 0.2.
+
+## [0.7.0] - 2026-10-01
+
 ### Fixed
 
 - Invalid action targets retain their markup reference or project source. Setup failures remain primary when `on_close` also fails, with cleanup details reported alongside them.
@@ -42,7 +49,7 @@ All notable changes to TextUI are documented here.
 
 ### Changed
 
-- The distribution is renamed to `textui-markup` for the upcoming 0.7.0 release. Python imports, the `textui` command, `.ui` markup and runtime behavior are unchanged. Git-install users should replace requirements named `textui`; migrate in a fresh environment or uninstall the old distribution before installing `textui-markup`.
+- The distribution is renamed to `textui-markup`. Python imports, the `textui` command, `.ui` markup and runtime behavior are unchanged. Git-install users should replace requirements named `textui`; migrate in a fresh environment or uninstall the old distribution before installing `textui-markup`.
 - Current authoring documentation describes HTML-like markup, with explicit syntax rules and HTML differences. A tag-driven trusted-publishing workflow validates the release version and full CI checks before PyPI publication; maintainer publisher/environment setup is required.
 - Resizable data tables now draw and highlight a visible handle on the last column, tint the heading separator under the pointer, and show their keyboard resize bindings in a native Footer when focused. Explicit `column-borders="false"` still hides separators.
 - `tabbed-content`, its content switcher and each `tab-pane` now fill their parent's remaining height by default, as `split` already does. A vertical shell of header, tabs and status bar keeps the status bar on screen, and a `1fr` widget inside a pane no longer collapses. An application that wants content-sized tabs overrides the height in its own TCSS.
@@ -78,11 +85,6 @@ All notable changes to TextUI are documented here.
 - Runtime data-table rows through `row-key`, typed column `label`/`align`/`width` metadata, atomic `set_rows()`, and read-only `get_record()`.
 - Clickable data-table headings with independent hover states, a full-cell active `↑`/`↓` background, and sorting by original runtime record values or displayed seed values.
 - Runtime table refreshes retain an active column sort instead of reverting to source order.
-
-### Planned
-
-- Optional image components remain outside the core package.
-- Future releases may add capabilities without changing the strict document and lifecycle contracts established in 0.2.
 
 ## [0.6.0] - 2026-09-18
 

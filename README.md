@@ -10,7 +10,7 @@ The [roadmap](https://github.com/thunderballfists/TextUI/blob/main/docs/roadmap.
 
 Python `>=3.11,<4` is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
 
-Once the first PyPI release is published, install the library into a fresh virtual environment:
+Install the library into a fresh virtual environment:
 
 ```sh
 python -m pip install textui-markup
@@ -18,7 +18,7 @@ python -c "import textui"
 python -m textui run /absolute/path/app.ui
 ```
 
-The PyPI project named `textui` is unrelated. Both distributions use the `textui` import package, so installing them together causes collisions. For an existing Git installation, follow the [distribution migration](https://github.com/thunderballfists/TextUI/blob/main/docs/migration.md#distribution-name-in-07). Until publication, use the checkout instructions below. Maintainers: see the [release guide](https://github.com/thunderballfists/TextUI/blob/main/docs/releases.md).
+The PyPI project named `textui` is unrelated. Both distributions use the `textui` import package, so installing them together causes collisions. For an existing Git installation, follow the [distribution migration](https://github.com/thunderballfists/TextUI/blob/main/docs/migration.md#distribution-name-in-07). For development and the bundled examples, use the checkout instructions below. Maintainers: see the [release guide](https://github.com/thunderballfists/TextUI/blob/main/docs/releases.md).
 
 For a checkout on macOS or Linux, install [uv](https://docs.astral.sh/uv/getting-started/installation/) once, then run:
 
