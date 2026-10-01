@@ -81,10 +81,17 @@ class ProjectApp(App):
                     bindings = self._bindings.get_bindings_for_key(command.shortcut)
                     bindings.insert(0, bindings.pop())
             self.window.phase = "bound"
-        except BaseException:
+        except BaseException as error:
             if self._setup_completed:
-                await self._close_once()
+                await self._close_after_error(error)
             raise
+
+    async def _close_after_error(self, error: BaseException) -> None:
+        """Keep the initiating failure when trusted cleanup also raises."""
+        try:
+            await self._close_once()
+        except Exception as cleanup_error:
+            error.add_note(f"Cleanup also failed: {cleanup_error}")
 
     def compose(self) -> ComposeResult:
         if self.document is None:

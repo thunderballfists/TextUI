@@ -19,7 +19,7 @@ from .actions import ActionCallback, ActionContext
 from .invocations import InvocationOwner
 from .errors import (
     ActionExecutionError, ComponentBuildError, DocumentStateError,
-    DocumentStyleError, DocumentValidationError, ElementNotFoundError,
+    DocumentStyleError, DocumentValidationError, ElementNotFoundError, SourceLocation,
 )
 from .nodes import ElementNode, StyleBlock
 from .registry import BuildContext, EventSpec
@@ -76,14 +76,18 @@ class Document:
             raise DocumentStateError('An App may have only one document binding')
         callbacks = dict(actions)
         metadata = dict(action_metadata or {})
+        locations_by_command = dict(command_locations or {})
         declared_ids = {node.common['id'] for node in _walk(self.nodes) if node.common['id'] is not None and not node.private_id}
         for name, options in metadata.items():
             target = getattr(options, "target", None)
             if target is not None and target not in declared_ids:
-                raise DocumentValidationError(f"Action {name!r} target {target!r} must name a declared ID")
+                location = next(
+                    (node.location for node in _walk(self.nodes) if name in node.events.values()),
+                    locations_by_command.get(name) or SourceLocation(self.source_name, None),
+                )
+                raise DocumentValidationError(f"Action {name!r} target {target!r} must name a declared ID", location=location)
         declared_commands = dict(commands or {})
         callbacks_by_command = dict(command_callbacks or {})
-        locations_by_command = dict(command_locations or {})
         for node in _walk(self.nodes):
             if node.spec.tag == "command-button":
                 command_name = node.attributes["command"]
@@ -240,6 +244,12 @@ class BoundDocument:
                     "linear-gradient() backgrounds may target only header or status-bar IDs",
                     location=gradient.location,
                 )
+
+    def _check_unmounted(self) -> None:
+        """Prepare the main tree and dormant modals without dispatching messages."""
+        tuple(self.compose())
+        for node in self._modal_nodes.values():
+            self._build_node(node, {}, {})
 
     def _apply_gradient_backgrounds(self) -> None:
         """Install candidate gradients on mounted bars; native styles choose one."""

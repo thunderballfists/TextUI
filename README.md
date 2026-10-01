@@ -43,6 +43,20 @@ The [showcase](examples/showcase/app.ui) combines every built-in widget family i
 
 For a linked-script project launched from Python, `ProjectApp(source, context=host_value)` makes `host_value` available as read-only `window.context` in the controller. Controllers may also define `on_resize(width, height)` to update width-sensitive content after the screen refreshes; see the [runtime lifecycle guide](docs/project-runtime.md).
 
+## Check a project
+
+After checkout setup, validate a project without opening a terminal UI:
+
+```sh
+uvx --python 3.12 --from poetry==2.4.3 poetry run python -m textui check examples/showcase/app.ui
+```
+
+`check` reads includes/components/styles, executes linked Python and `on_setup`, binds actions/commands, and constructs declared widgets including dormant modal contents. It checks document and inline TCSS with native theme variables. It does not mount widgets, run `on_ready`/`on_resize`, dispatch events, or start declared timers. `on_close` runs once after setup begins, including on validation failure. Linked scripts, setup/close hooks and factories remain trusted code and may have side effects; this is not a sandbox or a static-only check. Custom widget composition, mount hooks, default styles and layout still require a running-app test.
+
+Both `check` and `run` report expected project errors on stderr with source context. Add `--debug` before or after the command for their tracebacks. Status codes are 0 for success, 1 for a project error, 2 for invalid CLI usage, 3 for an unexpected failure (with traceback), and 130 for interruption. `run` also preserves an explicit application exit code. See the [validation guide](docs/project-runtime.md#project-validation) for the full boundary.
+
+## Python integration
+
 A self-contained application:
 
 ```python

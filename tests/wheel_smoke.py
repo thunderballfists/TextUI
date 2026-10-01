@@ -5,6 +5,7 @@ import importlib.metadata
 import importlib.util
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 
 import textui
@@ -44,6 +45,13 @@ async def main() -> None:
         project = Path(directory)
         (project / "app.ui").write_text('<ui><script src="controller.py"/><button id="go" on-pressed="click">Go</button></ui>', encoding="utf-8")
         (project / "controller.py").write_text('from textui import action\n@action\ndef click():\n    window.app.clicked = True\n', encoding="utf-8")
+        checked = subprocess.run(
+            [sys.executable, "-I", "-m", "textui", "check", str(project / "app.ui")],
+            cwd=directory, capture_output=True, text=True,
+        )
+        assert checked.returncode == 0, checked.stderr
+        assert str(project / "app.ui") in checked.stdout
+        assert checked.stderr == ""
         project_app = ProjectApp(ProjectSource.discover(project / "app.ui"))
         async with project_app.run_test() as pilot:
             assert await pilot.click("#go")

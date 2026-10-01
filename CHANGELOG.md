@@ -6,6 +6,7 @@ All notable changes to TextUI are documented here.
 
 ### Fixed
 
+- Invalid action targets retain their markup reference or project source. Setup failures remain primary when `on_close` also fails, with cleanup details reported alongside them.
 - Runtime table sorting preserves large-integer precision without float conversion, treats numeric NaN deterministically as text, and keeps table state unchanged when a header comparison fails. Refresh continues to retain the active sort and declared row identity.
 - Project timers release finished async and threaded workers, including failed or cancelled work. Repeated close clears timer and worker ownership without suppressing native worker errors or changing overlap prevention.
 - Actions and commands now share lifecycle ownership: synchronous completion releases loading, shared targets stay loading until all work finishes, and older failures cannot overwrite newer target state. Shutdown cancels untargeted work and queued command wrappers as well as targeted work, and closed documents reject new invocations.
@@ -50,6 +51,7 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- `textui check PATH` validates trusted projects without mounting: linked scripts, setup/close hooks, action/command bindings, document TCSS, declared widget construction and dormant modal contents. CLI project errors now have source-aware stderr diagnostics and stable exit statuses; `--debug` retains tracebacks, and unexpected failures always show them.
 - A checkout `./showcase` launcher for macOS/Linux that installs the locked project through isolated Poetry and launches via `python -m textui`, including from another working directory. Setup instructions now use the same managed environment instead of assuming a global command or `.venv/bin/textui`.
 - Log `on-selection-ended` actions receive completed pointer selections without polling or redraw-triggered callbacks. Copying remains opt-in through asynchronous `window.copy(text)` or the exported `copy_to_clipboard(app, text)` helper, with native clipboard tools and OSC 52 transport.
 - `ProjectApp(source, context=...)` exposes a host-supplied object through read-only `window.context` from controller script loading onward.
