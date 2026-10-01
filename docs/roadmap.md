@@ -1,6 +1,6 @@
 # TextUI Roadmap
 
-Updated: 2026-10-01. Status: Phase 0 and Phase 1A complete; Phase 1B next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
+Updated: 2026-10-01. Status: Phase 0 and Phase 1A/1B complete; Phase 1C next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
 
 This is the current delivery order. The [extension triage](2026-09-19-extension-triage.md) retains the historical library comparisons and adoption rationale. Its external compatibility claims are dated evidence and must be checked again before adding a dependency.
 
@@ -12,7 +12,7 @@ Prioritize reliable application lifecycles and approachable authoring before exp
 
 ## Current baseline
 
-Main includes reusable local components and slots; linked scripts, includes and styles; actions, commands and timers; context and resize hooks; navigation, splits and modals; runtime tables/lists; compact/border presets; gradients; native range controls; autofocus on reveal; selectable logs and asynchronous clipboard copying.
+Main includes reusable local components and slots; linked scripts, includes and styles; actions, commands and timers; context and resize hooks; navigation, splits and modals; runtime tables/lists; compact/border presets; gradients; native range controls; autofocus on reveal; selectable logs and asynchronous clipboard copying; dependable checkout launch; trusted project checks and source-aware CLI diagnostics.
 
 The initial review ran 389 committed headless tests successfully, but separate behavioral probes exposed five defects. All five are fixed in [PR #93](https://github.com/thunderballfists/TextUI/pull/93), merged at `9e5a464`. The resulting suite has 431 passing tests, including 34 cases that reproduced defects before their fixes and one additional ordering compatibility case.
 
@@ -26,7 +26,7 @@ The initial review ran 389 committed headless tests successfully, but separate b
 
 Delivered 0A, 0B and 0C as separate logical commits in one reviewed reliability PR. All completion gates above are met. Independent review found no actionable issues; the Python 3.11/3.12/3.14 test, build and clean-wheel matrix, lint and Linux visual checks passed. Local visual comparison passed all six checks without baseline changes. GitHub feedback was checked before and after merge; no comments or unresolved threads were present.
 
-Next: 1B, project validation and CLI diagnostics. Its trusted-controller validation boundary still needs its own design before implementation.
+Next: 1C, registry-derived authoring reference and completion metadata. Define its explicit metadata format before implementation.
 
 Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-reliability-design.md) and [implementation plan](superpowers/plans/2026-09-30-runtime-reliability.md).
 
@@ -35,7 +35,7 @@ Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-re
 | Unit | Scope | Completion gate |
 | --- | --- | --- |
 | 1A (completed) | Dependable setup and showcase launch | Document one isolated environment path and a module-based launch; verify from a clean checkout and another working directory. A small launcher may wrap the existing Poetry workflow. |
-| 1B | Project validation and CLI diagnostics | Add a headless `textui check` workflow, concise expected-error output and stable exit codes; missing files, XML, TCSS and action errors retain their source location. Keep tracebacks available for unexpected failures/debugging. |
+| 1B (completed) | Project validation and CLI diagnostics | Add a headless `textui check` workflow, concise expected-error output and stable exit codes; missing files, XML, TCSS and action errors retain their source location. Keep tracebacks available for unexpected failures/debugging. |
 | 1C | Registry-derived authoring reference | Generate tags, attributes, defaults, events and examples from registry metadata; provide machine-readable completion data. Compound structural rules remain explicit, and custom components remain supported. |
 | 1D | Documentation consolidation | Separate current reference from historical design records; reconcile migration/examples/testing guidance and shipped roadmap items; make install, launch and extension paths easy to find. |
 
@@ -43,7 +43,11 @@ Delivered 1A in [PR #94](https://github.com/thunderballfists/TextUI/pull/94), me
 
 Verification: 436 headless tests, including five launcher regressions; six local visual checks; lint, lock validation and distribution builds; and the Python 3.11/3.12/3.14 CI matrix with clean-wheel checks. A fresh-clone terminal launch from another directory passed, including paths with spaces, a stale `.venv`, unrelated active-environment settings and a saved Python 3.14 selection. Ctrl+Q exited cleanly. Independent review's saved-interpreter finding was fixed and verified; GitHub's visual-command feedback was fixed and resolved before merge.
 
-1D can proceed alongside 1B. Design 1B's execution boundary first: full validation may need trusted controller setup to register components. The command must explain which hooks execute and must not claim static or sandboxed validation. 1C depends on that boundary and on an explicit metadata format; a complete XML schema is a later step if it can express compound rules accurately.
+Delivered 1B in [PR #95](https://github.com/thunderballfists/TextUI/pull/95), merged at `48598b1`. `textui check PATH` executes trusted linked scripts and setup/close hooks, validates bindings and TCSS, and constructs declared widgets including dormant modal contents without mounting. Ready/resize hooks, event dispatch and declared timers do not run. The [validation guide](project-runtime.md#project-validation) records this boundary and its limits. CLI errors retain source context, debug/unexpected tracebacks and distinct statuses; native runs preserve explicit app exit codes and return 130 after ordinary SIGINT cleanup.
+
+Verification: 464 full headless tests, including 28 new cases; 30 CLI checks on Python 3.11/3.12/3.14; six unchanged local visual checks; lint, lock validation, builds and fresh wheel-only smoke with the installed check command. A real terminal probe confirmed restoration before error output. The full CI matrix and Linux visual checks passed. Independent review's interruption and documentation findings were fixed and verified; the GitHub review bot gave a thumbs-up with no unresolved feedback before merge.
+
+1D can proceed alongside 1C. The trusted-controller validation boundary is now established; 1C still needs an explicit metadata format. Keep compound structural rules explicit and support custom registrations. A complete XML schema is a later step if it can express those rules accurately.
 
 ## Phase 2 — Compatibility and maintenance
 
