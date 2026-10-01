@@ -1,0 +1,88 @@
+name: Publish textui-markup
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Check release identity and tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          project = tomllib.loads(Path("pyproject.toml").read_text())["project"]
+          if project["name"] != "textui-markup":
+              raise SystemExit("Release distribution must be textui-markup")
+          expected = f"v{project['version']}"
+          if os.environ["RELEASE_TAG"] != expected:
+              raise SystemExit(f"Release tag must equal {expected}")
+          print(f"Verified textui-markup {project['version']}")
+          PY
+
+  checks:
+    needs: version
+    uses: ./.github/workflows/tests.yml
+
+  build:
+    needs: checks
+    runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install isolated Poetry
+        run: pipx install poetry==2.4.3
+      - name: Build release distributions
+        run: |
+          poetry check --lock
+          poetry build
+      - name: Verify release wheel outside checkout
+        run: |
+          python -m venv "$RUNNER_TEMP/textui-wheel"
+          "$RUNNER_TEMP/textui-wheel/bin/python" -m pip install dist/*.whl
+          "$RUNNER_TEMP/textui-wheel/bin/python" -m pip check
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/textui-wheel/bin/python" -I "$GITHUB_WORKSPACE/tests/wheel_smoke.py"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: textui-markup-distributions
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: github.repository == 'thunderballfists/TextUI'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/textui-markup
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: textui-markup-distributions
+          path: dist/
+      - name: Publish to PyPI with trusted publishing
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1

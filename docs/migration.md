@@ -1,4 +1,14 @@
-# Migrating to TextUI 0.2
+# Migrating to TextUI
+
+## Distribution name in 0.7
+
+The distribution is now `textui-markup` (version 0.7.0); `import textui`, the `textui` command, `.ui` files, and the MIT license are unchanged. Replace Git-based requirements named `textui` with `textui-markup==0.7.0` after the first PyPI release. Until then, `textui-markup @ git+https://github.com/thunderballfists/TextUI.git@COMMIT` can pin a commit containing the rename.
+
+Use a fresh virtual environment when migrating an existing installation. Alternatively, uninstall the old distribution **before** installing the new one: `python -m pip uninstall textui`, then `python -m pip install textui-markup==0.7.0`. Installing both and subsequently uninstalling either can remove shared import files. The unrelated PyPI project named `textui` is not this framework.
+
+The product is described as HTML-like markup; its parsing rules are unchanged. See the README [Syntax](../README.md#syntax) and [HTML differences](../README.md#not-a-subset-of-html).
+
+## Interface reboot in 0.2
 
 Version 0.2 replaces the experimental 0.1 interface. Documents and APIs intentionally break compatibility. The [README](../README.md), [changelog](../CHANGELOG.md), [examples guide](../examples/README.md), and [editor example](../examples/editor.py) show the current usage and release scope.
 
@@ -34,7 +44,7 @@ Use lowercase kebab-case names (`max-length`, not `max_length`). Booleans are ex
 
 ## Move behavior into Python
 
-Callbacks receive one `ActionContext`. Register an exact action key and reference it in XML. For example, `on-pressed="save_document"` calls the callback registered under `save_document`. Strings containing expressions, arguments, imports, and dotted names are rejected. Both sync and async callbacks work; callback exceptions become `ActionExecutionError` and propagate with their cause intact.
+Callbacks receive one `ActionContext`. Register an exact action key and reference it in markup. For example, `on-pressed="save_document"` calls the callback registered under `save_document`. Strings containing expressions, arguments, imports, and dotted names are rejected. Both sync and async callbacks work; callback exceptions become `ActionExecutionError` and propagate with their cause intact.
 
 The convenience `TextUI` App forwards Button.Pressed, Input.Changed, Input.Submitted, and Checkbox.Changed. A normal App must compose the binding and forward these messages itself; the [editor](../examples/editor.py) demonstrates this. Custom registered events always require an explicit host `@on(CustomMessage)` forwarder. Message matching uses the exact registered type, not subclass matching. Native bubbling and initialization events remain in effect.
 
@@ -50,4 +60,4 @@ Inline `style` accepts literal TCSS declarations only. Move variable-dependent d
 
 The core targets Python `>=3.11,<4`, Textual `>=8.2.8,<9`, and lxml `>=6.1.3,<7`. Pillow and textual-imageview are no longer core dependencies. The previous `<img>` adapter and image assets are removed; an optional image extension is a separate future capability, not a current extra.
 
-Developer-authored XML and trusted Python registrations are required. Strict XML parsing does not establish an untrusted-document security guarantee. Embedded Python execution and automatic imports are absent from the new API.
+Developer-authored markup and trusted Python registrations are required. Strict XML parsing does not establish an untrusted-document security guarantee. The standalone loader does not execute Python; linked scripts are supported by the trusted project runtime.

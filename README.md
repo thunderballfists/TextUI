@@ -1,6 +1,6 @@
 # TextUI
 
-TextUI 0.6 turns strict XML documents into native [Textual](https://textual.textualize.io/) widgets. XML describes structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files.
+TextUI 0.7 turns declarative, HTML-like markup into native [Textual](https://textual.textualize.io/) widgets. Tags describe structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files. The distribution is named **`textui-markup`**; Python imports and the command remain **`textui`**.
 
 This is a breaking pre-1.0 reboot. See the [migration guide](docs/migration.md) for changes from 0.1, the [changelog](CHANGELOG.md) for release history, and the [implemented design](docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
 
@@ -9,6 +9,16 @@ The [roadmap](docs/roadmap.md) records current priorities, completion gates, and
 ## Install and run
 
 Python `>=3.11,<4` is required; the release matrix covers 3.11, 3.12, and 3.14. Core dependencies are Textual `>=8.2.8,<9` and lxml `>=6.1.3,<7`. Core installation does not require Pillow or textual-imageview; image components are a future extension.
+
+Once the first PyPI release is published, install the library into a fresh virtual environment:
+
+```sh
+python -m pip install textui-markup
+python -c "import textui"
+python -m textui run /absolute/path/app.ui
+```
+
+The PyPI project named `textui` is unrelated. Both distributions use the `textui` import package, so installing them together causes collisions. For an existing Git installation, follow the [distribution migration](docs/migration.md#distribution-name-in-07). Until publication, use the checkout instructions below. Maintainers: see the [release guide](docs/releases.md).
 
 For a checkout on macOS or Linux, install [uv](https://docs.astral.sh/uv/getting-started/installation/) once, then run:
 
@@ -39,7 +49,7 @@ uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor
 
 Replace `examples/project/app.ui` with `examples/controls/app.ui`, `examples/data/app.ui` or `examples/components/app.ui` to try those projects. Run tests with `uvx --python 3.12 --from poetry==2.4.3 poetry run python -m pytest -q`. To locate the managed environment, run `uvx --python 3.12 --from poetry==2.4.3 poetry env info --path`; do not assume `.venv/bin/textui` exists. An installed library also supports `python -m textui run /absolute/path/app.ui` using the Python interpreter where it was installed.
 
-The [showcase](examples/showcase/app.ui) combines every built-in widget family in one navigable project: components, layouts, controls, tables, trees, lists, logs, modals, actions, and timers. The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [component example](examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates an API-backed runtime table beside seeded native tables and trees; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its XML path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
+The [showcase](examples/showcase/app.ui) combines every built-in widget family in one navigable project: components, layouts, controls, tables, trees, lists, logs, modals, actions, and timers. The project example demonstrates a linked Python controller, local TCSS, an included view, sidebar navigation, a resizable split, and a timer; see the [project runtime guide](docs/project-runtime.md). The [component example](examples/components/app.ui) demonstrates imported `.ui` components, literal properties, and slots. The [controls example](examples/controls/app.ui) demonstrates form controls, tabs, radio choices, collapsible content, progress bars, and rules. The [data example](examples/data/app.ui) demonstrates an API-backed runtime table beside seeded native tables and trees; see the [controls guide](docs/controls.md). The separate editor is a small form demonstrating a Save action that updates a status label; it does not write a file. Press Ctrl+Q to quit. Its markup path is relative to the example module, independent of the working directory. Examples are included in the source distribution, not the installed library wheel.
 
 For a linked-script project launched from Python, `ProjectApp(source, context=host_value)` makes `host_value` available as read-only `window.context` in the controller. Controllers may also define `on_resize(width, height)` to update width-sensitive content after the screen refreshes; see the [runtime lifecycle guide](docs/project-runtime.md).
 
@@ -86,7 +96,15 @@ Use `DocumentLoader().from_file("form.xml")` for UTF-8 files. `from_string` alwa
 
 ## Markup
 
-Require one attribute-free `<ui>` root. Names are lowercase kebab-case; XML is parsed strictly. Comments are allowed. The project runtime accepts only linked scripts declared at the entry root; the standalone `DocumentLoader` does not load scripts. Namespaces, DTDs, entities, unknown tags/attributes/events, and duplicate IDs are rejected. Text in leaf widgets is literal, with whitespace collapsed; nested markup in leaves and mixed text/widget content are unsupported.
+The project runtime accepts only linked scripts declared at the entry root; the standalone `DocumentLoader` does not load scripts. Text in leaf widgets is literal, with whitespace collapsed; nested markup in leaves and mixed text/widget content are unsupported.
+
+### Syntax
+
+TextUI uses strict XML parsing for its own markup vocabulary. Documents must be well-formed UTF-8 with one attribute-free `<ui>` root, quoted attribute values, and closed or self-closing tags. Names are lowercase kebab-case; booleans are exactly `"true"` or `"false"`. Comments and CDATA are allowed. Only the five predefined named entities (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`) are supported, alongside numeric character references. DTDs, namespaces, processing instructions, unknown tags/attributes/events, and duplicate IDs are rejected.
+
+### Not a subset of HTML
+
+The HTML-like feel does not imply browser compatibility. Tags such as `vertical`, `split`, `switch`, and `data-table` are TextUI controls; shared names such as `input` and `select` have TextUI attributes and content rules. Self-closing `<switch />` and `<data-table />` work here, while HTML parsers ignore `/>` on non-void elements. Bare boolean attributes and HTML named entities such as `&nbsp;` are invalid. `on-pressed="save"` names a Python action, not JavaScript.
 
 | Tag | Content | Attributes beyond common attributes | Events |
 | --- | --- | --- | --- |
