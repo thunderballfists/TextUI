@@ -17,6 +17,8 @@ textui = "textui.__main__:main"
 [tool.poetry]
 packages = [{ include = "textui" }]
 include = [
+    { path = "showcase", format = "sdist" },
+    { path = "poetry.lock", format = "sdist" },
     { path = "examples", format = "sdist" },
     { path = "docs", format = "sdist" },
 ]
