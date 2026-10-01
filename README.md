@@ -142,6 +142,8 @@ Host(DocumentLoader().from_string("<ui><label>Hello</label></ui>")).run()
 
 `TextUI` supplies these built-in handlers for convenience. Add decorators for any other component messages used by your document. `get_by_id` returns only widgets with declared document IDs and requires them to be mounted. Use native `app.query()` / `app.query_one()` for general selectors. A `Document` can be reused in independent Apps; each binding constructs fresh widgets. There is one binding per App and a single composition attempt per binding. Recomposition, remounting, document replacement, and transparent attachment to a running App are unsupported.
 
+Normal hosts must call `self.document.close()` when shutdown begins and on unmount to cancel owned actions and commands; the convenience Apps do this automatically. Closing is idempotent and ignores later queued document events. See the [runtime lifecycle guide](docs/project-runtime.md) for shared loading targets, supersession, and cooperative cancellation.
+
 ## Add components and events
 
 `ComponentRegistry()` starts empty. To extend the built-ins, use `default_component_registry` from `textui.widgets.builtin_widgets`, then register additional immutable `ComponentSpec` definitions. Construct `DocumentLoader(registry)` after registration; the loader snapshots the registry.

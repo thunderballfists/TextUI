@@ -88,7 +88,9 @@ async def refresh():
 
 An `@action` function is exposed under its Python name and may take zero arguments or one `ActionContext`; undecorated functions are private to the script. `on-pressed="save"` refers to that exact name. Duplicate action names, including collisions with host-supplied actions, are errors.
 
-Async data actions can opt into target lifecycle state. Set `target` to a declared widget ID to add `-loading` while work runs and `-error` with a readable `textui_error` value when it fails. Set `supersede=True` to cancel an earlier invocation of the same action and target; shutdown also cancels active lifecycle work. `context.target` is the mounted target and `context.cancelled` reports cancellation.
+Actions and commands can opt into target lifecycle state, for synchronous or asynchronous work. Set `target` to a declared widget ID to add `-loading` while work runs and `-error` with a readable `textui_error` value when it fails. A shared target stays loading until every active invocation finishes; synchronous completion also releases its ownership. Starting new work clears previous errors, and only the newest invocation may publish a target error. An older failure still reaches the normal source-located error handler.
+
+Set `supersede=True` to cancel earlier invocations of the same operation and target, including when the replacement completes synchronously. Other operations sharing the target continue. `context.target` is the mounted target and `context.cancelled` reports cancellation, including for untargeted actions. Cancellation is cooperative: callbacks that suppress it and threads may still perform their own side effects.
 
 ```python
 @action(target="results", supersede=True)
@@ -117,6 +119,8 @@ Render it with a self-labeling control:
 `label` defaults to the function name in title case, so `open_help` becomes **Open Help**. The shortcut description defaults to the label and appears in Textual binding help. `enabled=False` renders each command button disabled and ignores its shortcut. Commands also accept the same optional `target` and `supersede` lifecycle arguments as actions. Command names must be unique across linked scripts, command functions take no parameters, and every command button must reference a declared command. A command is also available to an ordinary `on-*` directive by its function name; use `@action` when the callback needs an `ActionContext` event.
 
 Optional `on_setup`, `on_ready`, and `on_close` functions take no arguments and may be synchronous or asynchronous. Setup runs before component validation and binding; ready runs after mount; close runs once on shutdown and after a failed setup. `window.document` is available after binding, while ID lookup requires mounted widgets.
+
+Both convenience Apps close their document when exit begins, cancelling all owned asynchronous actions and commands, including untargeted work and queued shortcut wrappers. Repeated `document.close()` calls are harmless. A closed document ignores queued `dispatch()` messages, rejects direct `invoke_command()` calls with `DocumentStateError`, and makes `start_command()` a no-op. Normal Textual hosts must call their bound document's `close()` when shutdown begins and on unmount; it requests cancellation without waiting for user callbacks.
 
 Optional `on_resize(width, height)` runs after Textual delivers a terminal resize to the active screen and refreshes its layout. Width and height are terminal cells; mounted widget sizes can be read inside the hook. It accepts a synchronous or asynchronous function, runs only while the project is ready, and stops when exit begins. TextUI drops stale and duplicate sizes; Textual may also coalesce rapid terminal resizes, so paint from the dimensions supplied rather than counting raw resize events:
 

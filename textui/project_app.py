@@ -143,10 +143,12 @@ class ProjectApp(App):
         await self.controllers.hook("on_resize", width, height)
 
     def exit(self, result: Any = None, return_code: int = 0, message: Any = None) -> None:
-        """Stop project-owned timers before Textual starts application teardown."""
-        if self.window.phase == "ready":
+        """Stop project-owned work before Textual starts application teardown."""
+        if self.window.phase != "closed":
             self.window.phase = "closing"
             self.window.timers.close()
+            if self.document is not None:
+                self.document.close()
         super().exit(result=result, return_code=return_code, message=message)
 
     async def _close_once(self) -> None:
