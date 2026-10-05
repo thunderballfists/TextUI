@@ -116,3 +116,16 @@ def test_llm_reference_covers_named_document_rules():
     reference = artifacts()["docs/llm-reference.md"]
     for rule in default_component_registry().describe()["document_rules"]:
         assert rule["name"] in reference
+
+
+def test_web_types_defaults_use_markup_literals_and_require_values():
+    from textui.authoring import artifacts
+
+    web = json.loads(artifacts()["spec/web-types.json"])
+    tags = {tag["name"]: {attr["name"]: attr for attr in tag["attributes"]}
+            for tag in web["contributions"]["html"]["elements"]}
+    assert tags["button"]["variant"]["default"] == "default"
+    assert tags["switch"]["value"]["default"] == "false"
+    assert "default" not in tags["progress-bar"]["total"]
+    assert tags["button"]["class"]["default"] == ""
+    assert all(attr["value"]["required"] for attrs in tags.values() for attr in attrs.values())

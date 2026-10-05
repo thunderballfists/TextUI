@@ -60,12 +60,14 @@ def completion_data(description: dict) -> tuple[dict, dict]:
         web_attrs = []
         for attr in attrs:
             item = {"name": attr["name"], "description": attr["description"]}
-            item["value"] = {"kind": "plain", "type": "enum" if "values" in attr else "string"}
+            item["value"] = {"kind": "plain", "type": "enum" if "values" in attr else "string", "required": True}
             source = attributes_for(component, description["common_attributes"]).get(attr["name"])
             if source is not None:
                 item["required"] = source["required"]
-                if "default" in source:
-                    item["default"] = json.dumps(source["default"], ensure_ascii=False)
+                if "default" in source and source["default"] is not None:
+                    default = source["default"]
+                    item["default"] = (" ".join(default) if isinstance(default, (tuple, list)) else
+                                       str(default).lower() if isinstance(default, bool) else str(default))
             if "values" in attr:
                 item["values"] = attr["values"]
             web_attrs.append(item)
