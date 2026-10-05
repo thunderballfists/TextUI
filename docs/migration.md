@@ -10,6 +10,8 @@ The product is described as HTML-like markup; its parsing rules are unchanged. S
 
 ## Unreleased component guidance
 
+Authoring tools are additive: `python -m textui spec --output DIR` generates references and editor data, and `python -m textui check --static --format json app.ui` checks declarative markup without executing controllers or constructing widgets. Existing trusted `check` and runtime markup are unchanged. Static checks use built-ins and local declarative components; Python-registered custom tags still need the trusted registry/runtime. See [editor setup](editors.md) for the strict and permissive schema profiles and their limits. Keep schema associations in workspace settings; namespaces and `xml-model` processing instructions remain rejected.
+
 Existing `AttributeSpec(converter)` and `ComponentSpec(child_policy=...)` registrations remain valid. Optional frozen attribute types, explicit `content` constraints and `describe()` methods add inspectable metadata; they do not change markup. Native-factory aliases retain their existing rules. See the [metadata guide](registry-metadata.md) before adding custom constraints or describing a callable converter.
 
 For runtime lists inside reusable components, pass record formats through a component property, such as `row-format="{name}"` at the call site and `item-label="{row-format}"` in the template. Direct braces in templates refer to component properties; doubled braces do not escape component substitution. See the [component formatting example](project-runtime.md#reusable-components).
