@@ -8,6 +8,10 @@ Use a fresh virtual environment when migrating an existing installation. Alterna
 
 The product is described as HTML-like markup; its parsing rules are unchanged. See the README [Syntax](../README.md#syntax) and [HTML differences](../README.md#not-a-subset-of-html).
 
+## Unreleased component guidance
+
+For runtime lists inside reusable components, pass record formats through a component property, such as `row-format="{name}"` at the call site and `item-label="{row-format}"` in the template. Direct braces in templates refer to component properties; doubled braces do not escape component substitution. See the [component formatting example](project-runtime.md#reusable-components).
+
 ## Interface reboot in 0.2
 
 Version 0.2 replaces the experimental 0.1 interface. Documents and APIs intentionally break compatibility. The [README](../README.md), [changelog](../CHANGELOG.md), [examples guide](../examples/README.md), and [editor example](../examples/editor.py) show the current usage and release scope.

@@ -46,6 +46,54 @@ async def freeze_snapshot(pilot):
     await pilot.pause(0.25)
 
 
+async def show_view(pilot, index, view_id):
+    await freeze_snapshot(pilot)
+    navigation = pilot.app.document.get_by_id("navigation")
+    assert await pilot.click(navigation.items[index])
+    await pilot.pause()
+    assert pilot.app.document.get_by_id("content").current == view_id
+    assert len(pilot.app.screen_stack) == 1
+
+
+async def show_data(pilot):
+    await show_view(pilot, 2, "data")
+    assert await pilot.click("#refresh-usage")
+    await pilot.pause()
+    table = pilot.app.document.get_by_id("usage")
+    assert table.row_count > 0
+    assert await pilot.hover(table, offset=(3, 0))
+    await pilot.pause(0.25)
+    tree = pilot.app.document.get_by_id("files")
+    assert tree.is_on_screen
+
+
+async def show_activity(pilot):
+    await show_view(pilot, 3, "activity")
+    agents = pilot.app.document.get_by_id("agents")
+    assert await pilot.click(agents.items[1].children[0], offset=(1, 0))
+    await pilot.pause()
+    assert agents.selected["name"] == "Bravo"
+    assert await pilot.click("#append-log")
+    await pilot.pause()
+
+
+async def show_choices(pilot):
+    await show_view(pilot, 1, "controls")
+    tab = pilot.app.query_one("#--content-tab-choices")
+    tab.scroll_visible(animate=False)
+    await pilot.pause()
+    assert await pilot.click(tab)
+    await pilot.pause()
+    assert pilot.app.document.get_by_id("tabs").active == "choices"
+
+
+async def show_details(pilot):
+    await show_choices(pilot)
+    assert await pilot.click("#--content-tab-details")
+    await pilot.pause()
+    assert pilot.app.document.get_by_id("tabs").active == "details"
+
+
 async def open_help_modal(pilot):
     await freeze_snapshot(pilot)
     navigation = pilot.app.document.get_by_id("navigation")
@@ -107,3 +155,12 @@ async def test_showcase_first_modal_80x24_snapshot(request):
 @pytest.mark.asyncio
 async def test_showcase_reopened_modal_80x24_snapshot(request):
     await assert_snapshot("showcase-reopened-modal-80x24", (80, 24), reopen_help_modal, request)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("view,prepare", [
+    ("data", show_data), ("activity", show_activity),
+    ("controls-choices", show_choices), ("controls-details", show_details),
+])
+async def test_showcase_unobscured_view_80x24_snapshot(request, view, prepare):
+    await assert_snapshot(f"showcase-{view}-80x24", (80, 24), prepare, request)

@@ -82,6 +82,24 @@ The imported file has a `<component>` root, optional properties, and one widget 
 
 Properties are literal strings: required values must be supplied, defaults fill omissions, and unknown properties fail. `{name}` substitutes only the declared property; it never evaluates Python. A caller's named slot replaces the matching template slot, while omitted slots keep fallback content. The instance `id`, classes, style, disabled state, and `on-*` event bindings apply to the rendered root. Template IDs receive unique private prefixes, so controller code addresses the public instance ID. Components may import other explicitly declared components. Component files cannot declare scripts or styles; entry-document TCSS styles their widgets. The runnable [component example](../examples/components/app.ui) shows the complete layout.
 
+For a runtime list inside a component, pass its record format through a separate property. Component substitution runs once, so braces in the supplied property value reach the list unchanged. A direct `item-label="{name}"` in the template instead refers to a component property; `{{name}}` is not a component escape.
+
+```xml
+<!-- records.ui -->
+<component>
+  <props><prop name="row-format" required="true" /></props>
+  <list item-label="{row-format}" />
+</component>
+
+<!-- entry app.ui -->
+<ui>
+  <component src="records.ui" as="record-list" />
+  <record-list id="records" row-format="{name}: {count:03d}" />
+</ui>
+```
+
+After mount, call `await window.document.get_by_id("records").set_items([{"name": "Alpha", "count": 2}])` to display `Alpha: 002`. Literal braces use the list formatter's doubled braces in the supplied value, such as `row-format="{name} {{ready}}"`.
+
 Linked Python is trusted application code. Each App executes each linked file once in its own namespace, with a module-global `window` available before the script executes. Use `window.app` for the host Textual App, `window.registry` to register components during `on_setup`, and `window.document.get_by_id("status")` after widgets mount. Ordinary imports work as normal Python imports. No Python is embedded in markup.
 
 Hosts can pass application inputs directly: `ProjectApp(source, context={"account": "demo"})` exposes the same object as `window.context` during script loading and every hook. `window.context` cannot be reassigned, though a mutable object passed by the host remains mutable. Its default is `None`; each App receives its own supplied reference.

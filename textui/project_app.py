@@ -13,7 +13,7 @@ from .widgets.navigation import Nav
 from .widgets.runtime_list import RuntimeList
 from .widgets.range_control import RangeControl
 from .widgets.transcript import TranscriptLog
-from .accelerators import activate_tab, install_tab_accelerators, tab_accelerators
+from .accelerators import activate_tab, install_tab_accelerators, tab_accelerators, tab_available
 
 from .actions import ActionCallback
 from .controllers import ControllerSet, ProjectWindow
@@ -102,6 +102,11 @@ class ProjectApp(App):
         if self.document is None:
             raise RuntimeError("project document has not been bound")
         activate_tab(self.document, pane_id)
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        if action == "textui_activate_tab":
+            return tab_available(self.document, parameters[0])
+        return super().check_action(action, parameters)
 
     def action_textui_invoke_command(self, command_name: str) -> None:
         if self.document is None:
