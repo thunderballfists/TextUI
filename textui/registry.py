@@ -9,6 +9,8 @@ from typing import Any
 
 from textual.widget import Widget
 from .errors import RegistryError, SourceLocation
+from .metadata import Bool, Enum, Int, Text, ValueType, Custom
+from .content import Children
 
 
 class _Unset:
@@ -32,25 +34,11 @@ def boolean(value: str) -> bool:
 
 
 def integer(*, minimum: int | None = None, maximum: int | None = None) -> Callable[[str], int]:
-    def convert(value: str) -> int:
-        if not value or (value[0] in "+-" and len(value) == 1) or not value.lstrip("+-").isdigit():
-            raise ValueError(f"expected a base-10 integer; got {value!r}")
-        result = int(value, 10)
-        if minimum is not None and result < minimum:
-            raise ValueError(f"expected an integer >= {minimum}; got {value!r}")
-        if maximum is not None and result > maximum:
-            raise ValueError(f"expected an integer <= {maximum}; got {value!r}")
-        return result
-    return convert
+    return Int(minimum, maximum)
 
 
 def enum(*values: str) -> Callable[[str], str]:
-    allowed = tuple(values)
-    def convert(value: str) -> str:
-        if value not in allowed:
-            raise ValueError(f"expected one of {', '.join(repr(choice) for choice in allowed)}; got {value!r}")
-        return value
-    return convert
+    return Enum(*values)
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,15 +46,37 @@ class AttributeSpec:
     converter: Callable[[str], Any] = str
     required: bool = False
     default: Any = UNSET
+    doc: str = ""
+    value_type: ValueType | None = None
     def __post_init__(self) -> None:
         if not callable(self.converter):
             raise RegistryError("attribute converter must be callable")
         if self.required and self.default is not UNSET:
             raise RegistryError("a required attribute cannot have a default")
+        if self.value_type is not None and not isinstance(self.value_type, ValueType):
+            raise RegistryError("attribute value_type must be a ValueType")
     def value_or_default(self) -> Any:
         if self.default is UNSET:
             return UNSET
         return deepcopy(self.default)
+
+    def describe(self) -> dict[str, object]:
+        value_type = self.value_type
+        if value_type is None:
+            if isinstance(self.converter, ValueType):
+                value_type = self.converter
+            elif self.converter is str:
+                value_type = Text()
+            elif self.converter is boolean:
+                value_type = Bool()
+            else:
+                value_type = Custom(self.converter)
+        result: dict[str, object] = {"type": value_type.describe(), "required": self.required}
+        if self.default is not UNSET:
+            result["default"] = self.value_or_default()
+        if self.doc:
+            result["doc"] = self.doc
+        return result
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,6 +98,7 @@ class ComponentSpec:
     text_policy: str = "none"
     child_policy: str = "none"
     events: Mapping[str, EventSpec] = field(default_factory=dict)
+    content: Children | None = None
     def __post_init__(self) -> None:
         if not callable(self.factory):
             raise RegistryError("component factory must be callable")
@@ -102,6 +113,19 @@ class ComponentSpec:
             raise RegistryError("component events must contain EventSpec values")
         object.__setattr__(self, "attributes", attributes)
         object.__setattr__(self, "events", events)
+        if self.content is not None:
+            if not isinstance(self.content, Children):
+                raise RegistryError("component content must be Children")
+            if self.content.policy != self.child_policy:
+                raise RegistryError("content policy must match child_policy")
+
+    def describe(self) -> dict[str, object]:
+        from .widgets.metadata import content_for
+        content = content_for(self)
+        return {"tag": self.tag, "attributes": {name: spec.describe() for name, spec in self.attributes.items()},
+                "text_policy": self.text_policy, "content": content.describe(),
+                "events": {name: {"message_type": f"{spec.message_type.__module__}.{spec.message_type.__qualname__}"}
+                           for name, spec in self.events.items()}}
 
 
 @dataclass(frozen=True, slots=True)
@@ -147,6 +171,15 @@ class ComponentRegistry:
 
     def snapshot(self) -> Mapping[str, ComponentSpec]:
         return MappingProxyType(dict(self._specifications))
+
+    def describe(self) -> dict[str, object]:
+        """Inspect registrations without constructing widgets or invoking converters."""
+        from .widgets.metadata import DOCUMENT_RULES
+        common = {"id": AttributeSpec(), "class": AttributeSpec(default=()), "style": AttributeSpec(),
+                  "disabled": AttributeSpec(boolean, default=False), "autofocus": AttributeSpec(boolean, default=False)}
+        return {"components": [spec.describe() for spec in self._specifications.values()],
+                "common_attributes": {name: spec.describe() for name, spec in common.items()},
+                "document_rules": [rule.describe() for rule in DOCUMENT_RULES]}
 
 
 def _is_kebab_name(name: str) -> bool:

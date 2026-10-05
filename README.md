@@ -198,6 +198,8 @@ Normal hosts must call `self.document.close()` when shutdown begins and on unmou
 
 `ComponentRegistry()` starts empty. To extend the built-ins, use `default_component_registry` from `textui.widgets.builtin_widgets`, then register additional immutable `ComponentSpec` definitions. Construct `DocumentLoader(registry)` after registration; the loader snapshots the registry.
 
+Inspect attribute types, defaults, events and ordered content rules with `registry.describe()` or `spec.describe()`. Frozen types and content constraints support explicit custom metadata while preserving existing callable converters. Inspection does not invoke converters or factories. See the [registry metadata guide](https://github.com/thunderballfists/TextUI/blob/main/docs/registry-metadata.md); generated schemas and static checking are planned separately.
+
 A factory receives `BuildContext(attributes, text, children, location)` and must return a fresh, unmounted Textual `Widget`. Attributes have already been converted by the registered `AttributeSpec` converters; the common layer applies IDs, classes, disabled state, and inline styles. Factories for containers attach `context.children` exactly once.
 
 For example, a typed custom label:
