@@ -1,0 +1,2555 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JetBrains/web-types/master/schema/web-types.json",
+  "name": "textui-markup",
+  "version": "0.7.0",
+  "contributions": {
+    "html": {
+      "elements": [
+        {
+          "name": "vertical",
+          "description": "TextUI vertical; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "horizontal",
+          "description": "TextUI horizontal; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "label",
+          "description": "TextUI label; text: text; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "button",
+          "description": "TextUI button; text: text; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "variant",
+              "description": "`default` / `primary` / `success` / `warning` / `error`; default=\"default\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "default",
+                  "primary",
+                  "success",
+                  "warning",
+                  "error"
+                ]
+              }
+            },
+            {
+              "name": "on-pressed",
+              "description": "Python action identifier; textual.widgets._button.Button.Pressed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "input",
+          "description": "TextUI input; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "value",
+              "description": "string; default=\"\"",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "placeholder",
+              "description": "string; default=\"\"",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "password",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "max-length",
+              "description": "integer; minimum=1",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textual.widgets._input.Input.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-submitted",
+              "description": "Python action identifier; textual.widgets._input.Input.Submitted",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "checkbox",
+          "description": "TextUI checkbox; text: text; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "value",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textual.widgets._checkbox.Checkbox.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "pane",
+          "description": "TextUI pane; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "min-size",
+              "description": "integer; minimum=1; default=1",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "size",
+              "description": "integer; minimum=1",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "split",
+          "description": "TextUI split; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "direction",
+              "description": "`horizontal` / `vertical`; default=\"horizontal\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "horizontal",
+                  "vertical"
+                ]
+              }
+            },
+            {
+              "name": "on-resized",
+              "description": "Python action identifier; textui.widgets.split.Split.Resized",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-toggled",
+              "description": "Python action identifier; textui.widgets.split.Split.Toggled",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "nav-item",
+          "description": "TextUI nav-item; text: text; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "target",
+              "description": "string; reference={\"among\": \"content-switcher-children\"}; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "nav",
+          "description": "TextUI nav; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-selected",
+              "description": "Python action identifier; textui.widgets.navigation.Nav.Selected",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "content-switcher",
+          "description": "TextUI content-switcher; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "initial",
+              "description": "string; reference={\"among\": \"children\"}",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "option",
+          "description": "TextUI option; text: text; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "value",
+              "description": "string; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "select",
+          "description": "TextUI select; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "value",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "prompt",
+              "description": "string; default=\"Select\"",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "allow-blank",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textual.widgets._select.Select.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "switch",
+          "description": "TextUI switch; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "value",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textual.widgets._switch.Switch.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "text-area",
+          "description": "TextUI text-area; text: verbatim; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "language",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "soft-wrap",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "read-only",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "show-line-numbers",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "tab-behavior",
+              "description": "`focus` / `indent`; default=\"focus\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "focus",
+                  "indent"
+                ]
+              }
+            },
+            {
+              "name": "placeholder",
+              "description": "string; default=\"\"",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textual.widgets._text_area.TextArea.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "tab-pane",
+          "description": "TextUI tab-pane; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "title",
+              "description": "string; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "accelerator",
+              "description": "string; validation=\"unicode-alphanumeric-character\"",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "accelerator-scope",
+              "description": "`document`",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "document"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "tabbed-content",
+          "description": "TextUI tabbed-content; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "initial",
+              "description": "string; reference={\"among\": \"children\"}",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-tab-activated",
+              "description": "Python action identifier; textual.widgets._tabbed_content.TabbedContent.TabActivated",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "radio-button",
+          "description": "TextUI radio-button; text: text; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "value",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textual.widgets._radio_button.RadioButton.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "radio-set",
+          "description": "TextUI radio-set; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textual.widgets._radio_set.RadioSet.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "collapsible",
+          "description": "TextUI collapsible; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "title",
+              "description": "string; default=\"Toggle\"",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "collapsed",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-collapsed",
+              "description": "Python action identifier; textual.widgets._collapsible.Collapsible.Collapsed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-expanded",
+              "description": "Python action identifier; textual.widgets._collapsible.Collapsible.Expanded",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "progress-bar",
+          "description": "TextUI progress-bar; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "total",
+              "description": "number; minimum=0",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "progress",
+              "description": "number; minimum=0; default=0.0",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "show-bar",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "show-percentage",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "show-eta",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "rule",
+          "description": "TextUI rule; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "orientation",
+              "description": "`horizontal` / `vertical`; default=\"horizontal\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "horizontal",
+                  "vertical"
+                ]
+              }
+            },
+            {
+              "name": "line-style",
+              "description": "`ascii` / `blank` / `dashed` / `double` / `heavy` / `hidden` / `none` / `solid` / `thick`; default=\"solid\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "ascii",
+                  "blank",
+                  "dashed",
+                  "double",
+                  "heavy",
+                  "hidden",
+                  "none",
+                  "solid",
+                  "thick"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "range",
+          "description": "TextUI range; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "min",
+              "description": "integer; default=0",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "max",
+              "description": "integer; default=100",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "step",
+              "description": "integer; minimum=1; default=1",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "value",
+              "description": "integer",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "show-value",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-changed",
+              "description": "Python action identifier; textui.widgets.range_control.RangeControl.Changed",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "column",
+          "description": "TextUI column; text: text; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "key",
+              "description": "string; validation=\"nonempty-key\"; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "label",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "align",
+              "description": "`left` / `center` / `right`; default=\"left\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "left",
+                  "center",
+                  "right"
+                ]
+              }
+            },
+            {
+              "name": "width",
+              "description": "integer; minimum=1",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "cell",
+          "description": "TextUI cell; text: text; children: none. XML syntax required.",
+          "attributes": []
+        },
+        {
+          "name": "row",
+          "description": "TextUI row; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "key",
+              "description": "string; validation=\"nonempty-key\"; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "data-table",
+          "description": "TextUI data-table; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "cursor-type",
+              "description": "`cell` / `row` / `column` / `none`; default=\"row\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "cell",
+                  "row",
+                  "column",
+                  "none"
+                ]
+              }
+            },
+            {
+              "name": "row-key",
+              "description": "string; validation=\"nonempty-key\"",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "striped",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "column-borders",
+              "description": "`true` / `false`",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "resizable",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-row-selected",
+              "description": "Python action identifier; textual.widgets._data_table.DataTable.RowSelected",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-cell-selected",
+              "description": "Python action identifier; textual.widgets._data_table.DataTable.CellSelected",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "tree-node",
+          "description": "TextUI tree-node; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "key",
+              "description": "string; validation=\"nonempty-key\"; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "label",
+              "description": "string; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "expanded",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "tree",
+          "description": "TextUI tree; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "label",
+              "description": "string; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "show-root",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-node-selected",
+              "description": "Python action identifier; textual.widgets._tree.Tree.NodeSelected",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "log",
+          "description": "TextUI log; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "max-lines",
+              "description": "integer; minimum=1",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "wrap",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "highlight",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "markup",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "auto-scroll",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "on-selection-ended",
+              "description": "Python action identifier; textui.widgets.transcript.TranscriptLog.SelectionEnded",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "description": "TextUI list; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "item-label",
+              "description": "string; validation=\"direct-mapping-format\"; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "on-selected",
+              "description": "Python action identifier; textui.widgets.runtime_list.RuntimeList.ItemSelected",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            }
+          ]
+        },
+        {
+          "name": "left",
+          "description": "TextUI left; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "center",
+          "description": "TextUI center; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "right",
+          "description": "TextUI right; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "header",
+          "description": "TextUI header; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "status-bar",
+          "description": "TextUI status-bar; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "command-button",
+          "description": "TextUI command-button; text: none; children: none. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "command",
+              "description": "string; validation=\"python-identifier\"; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "variant",
+              "description": "`default` / `primary` / `success` / `warning` / `error`; default=\"default\"",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "default",
+                  "primary",
+                  "success",
+                  "warning",
+                  "error"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "modal",
+          "description": "TextUI modal; text: none; children: widgets. XML syntax required.",
+          "attributes": [
+            {
+              "name": "id",
+              "description": "string; required",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "class",
+              "description": "string; default=[]",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "style",
+              "description": "string",
+              "value": {
+                "kind": "plain",
+                "type": "string"
+              }
+            },
+            {
+              "name": "disabled",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "autofocus",
+              "description": "`true` / `false`; default=false",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            {
+              "name": "dismissable",
+              "description": "`true` / `false`; default=true",
+              "value": {
+                "kind": "plain",
+                "type": [
+                  "true",
+                  "false"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+<ui>
+  <script src="controller.py" />
+  <component src="agent-card.ui" as="agent-card" />
+  <vertical id="workspace">
+    <label class="heading">Reusable components</label>
+    <agent-card id="alpha" name="Alpha" status="Ready">
+      <slot name="actions"><button on-pressed="open_alpha">Open Alpha</button></slot>
+    </agent-card>
+    <agent-card id="beta" name="Beta" />
+  </vertical>
+</ui>

@@ -54,6 +54,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.set_defaults(debug=False)
     parser.add_argument("--debug", action="store_true", default=argparse.SUPPRESS, help="show tracebacks for project errors")
     commands = parser.add_subparsers(dest="command", required=True)
+    spec_command = commands.add_parser("spec", help="generate registry-derived authoring references and editor data")
+    spec_command.add_argument("--output", default=".", help="output directory (default: current directory)")
+    spec_command.add_argument("--debug", action="store_true", default=argparse.SUPPRESS, help="show tracebacks")
     for name, help_text in (("run", "run a local .ui project"), ("check", "check a trusted project without mounting; runs linked scripts, on_setup and on_close")):
         command = commands.add_parser(name, help=help_text, description=help_text)
         command.add_argument("path", help="entry .ui file")
@@ -65,6 +68,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if arguments.command == "check" and arguments.format == "json" and not arguments.static:
         parser.error("--format json requires check --static")
     try:
+        if arguments.command == "spec":
+            from .authoring import write_spec
+
+            written = write_spec(arguments.output)
+            print(f"Generated {len(written)} authoring artifacts in {arguments.output}")
+            return 0
         if arguments.command == "check" and arguments.static:
             try:
                 check_static(arguments.path)

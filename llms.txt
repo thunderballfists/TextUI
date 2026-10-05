@@ -1,0 +1,16 @@
+# TextUI
+
+> Declarative, HTML-like markup for native Textual applications.
+
+TextUI uses strict XML syntax, TCSS styles and trusted Python controllers. Install textui-markup; import textui. HTML completion data is not an HTML grammar.
+
+## Authoring
+
+- [LLM reference](https://github.com/thunderballfists/TextUI/blob/main/docs/llm-reference.md): Self-contained grammar, examples and common mistakes.
+- [Markup reference](https://github.com/thunderballfists/TextUI/blob/main/docs/markup-reference.md): Generated attributes, events, defaults and rules.
+- [Editor guide](https://github.com/thunderballfists/TextUI/blob/main/docs/editors.md): Schema profiles, completions and static checking.
+
+## Runtime
+
+- [Project runtime](https://github.com/thunderballfists/TextUI/blob/main/docs/project-runtime.md): Controllers, actions, components, lifecycle and timers.
+- [Examples](https://github.com/thunderballfists/TextUI/tree/main/examples): Runnable projects.
