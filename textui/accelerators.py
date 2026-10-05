@@ -9,6 +9,7 @@ from textual.screen import Screen
 from textual.widgets import TabbedContent, TabPane
 
 from .nodes import ElementNode
+from .widgets.modal import build_modal
 
 if TYPE_CHECKING:
     from .document import BoundDocument
@@ -30,7 +31,7 @@ def tab_accelerators(nodes: Iterable[ElementNode]) -> tuple[tuple[str, str], ...
 
 def install_tab_accelerators(host: App | Screen, nodes: Iterable[ElementNode]) -> None:
     """Install bindings on their host; dormant modals own separate bindings."""
-    nodes = tuple(node for node in nodes if node.spec.tag != "modal")
+    nodes = tuple(node for node in nodes if node.spec.factory is not build_modal)
     for key, pane_id in tab_accelerators(nodes):
         action = f"textui_activate_tab('{pane_id}')"
         if isinstance(host, App):

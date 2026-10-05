@@ -1,8 +1,10 @@
 import pytest
 from textual.screen import Screen
+from textual.containers import Vertical
 
-from textui import DocumentLoader, DocumentValidationError, ElementNotFoundError, ProjectApp, ProjectSource, TextUI
+from textui import ComponentRegistry, ComponentSpec, DocumentLoader, DocumentValidationError, ElementNotFoundError, ProjectApp, ProjectSource, TextUI
 from textui.widgets.builtin_widgets import default_component_registry
+from textui.widgets.tabbed import register_tabs
 
 
 MARKUP = '''<ui>
@@ -54,6 +56,23 @@ async def test_printable_accelerator_is_literal_while_an_input_has_focus():
         await pilot.pause()
         assert prompt.value == "u"
         assert tabs.active == "dashboard"
+
+
+@pytest.mark.asyncio
+async def test_custom_container_named_modal_keeps_main_screen_accelerators():
+    registry = ComponentRegistry()
+    registry.register(ComponentSpec("modal", lambda context: Vertical(*context.children), child_policy="widgets"))
+    register_tabs(registry)
+    definition = DocumentLoader(registry).from_string('''<ui><modal>
+      <tabbed-content id="tabs" initial="home">
+        <tab-pane id="home" title="Home"/>
+        <tab-pane id="details" title="Details" accelerator="d" accelerator-scope="document"/>
+      </tabbed-content>
+    </modal></ui>''')
+    app = TextUI(definition)
+    async with app.run_test() as pilot:
+        await pilot.press("d")
+        assert app.document.get_by_id("tabs").active == "details"
 
 
 @pytest.mark.asyncio
