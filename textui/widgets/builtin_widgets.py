@@ -15,6 +15,10 @@ from .runtime_list import register_runtime_list
 from .bars import GradientLabel, register_bars
 from .command_button import register_command_button
 from .modal import register_modal
+from ..content import NativeChildren
+
+SPLIT_CHILDREN = NativeChildren(Pane, "split requires exactly two pane children", minimum=2, maximum=2)
+NAV_CHILDREN = NativeChildren(NavItem, "nav requires nav-item children")
 
 from ..registry import (
     AttributeSpec,
@@ -60,8 +64,7 @@ def build_pane(context: BuildContext) -> Pane:
 
 
 def build_split(context: BuildContext) -> Split:
-    if len(context.children) != 2 or any(not isinstance(child, Pane) for child in context.children):
-        raise ValueError("split requires exactly two pane children")
+    SPLIT_CHILDREN.validate_build(context.children)
     return Split(*context.children, direction=context.attributes["direction"])
 
 
@@ -70,8 +73,7 @@ def build_nav_item(context: BuildContext) -> NavItem:
 
 
 def build_nav(context: BuildContext) -> Nav:
-    if any(not isinstance(child, NavItem) for child in context.children):
-        raise ValueError("nav requires nav-item children")
+    NAV_CHILDREN.validate_build(context.children)
     return Nav(*context.children)
 
 
@@ -169,4 +171,5 @@ def default_component_registry() -> ComponentRegistry:
     register_bars(registry)
     register_command_button(registry)
     register_modal(registry)
-    return registry
+    from .metadata import enrich_builtin_registry
+    return enrich_builtin_registry(registry)

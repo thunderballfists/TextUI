@@ -10,6 +10,8 @@ The product is described as HTML-like markup; its parsing rules are unchanged. S
 
 ## Unreleased component guidance
 
+Existing `AttributeSpec(converter)` and `ComponentSpec(child_policy=...)` registrations remain valid. Optional frozen attribute types, explicit `content` constraints and `describe()` methods add inspectable metadata; they do not change markup. Native-factory aliases retain their existing rules. See the [metadata guide](registry-metadata.md) before adding custom constraints or describing a callable converter.
+
 For runtime lists inside reusable components, pass record formats through a component property, such as `row-format="{name}"` at the call site and `item-label="{row-format}"` in the template. Direct braces in templates refer to component properties; doubled braces do not escape component substitution. See the [component formatting example](project-runtime.md#reusable-components).
 
 ## Interface reboot in 0.2

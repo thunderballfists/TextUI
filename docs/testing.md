@@ -26,3 +26,5 @@ Generate and review baselines using the same supported Python and Textual lockfi
 GitHub Actions compares the visual suite on Ubuntu 24.04 with Python 3.12. On a visual failure, it regenerates and uploads SVG artifacts for review. Reproduce the comparison locally with the same command above, using the matching platform baselines.
 
 The separate `tests/wheel_smoke.py` runs with `python -I` in a fresh wheel-only environment outside the checkout. Its temporary linked-controller project combines reusable components, runtime-list record formatting and selection, streamed transcript updates, and a component-private tab shortcut inside a modal opened twice. CI runs this installed integration on Python 3.11, 3.12 and 3.14; it also checks that imaging dependencies remain absent.
+
+The installed smoke also inspects built-in registry metadata and loads/builds a custom typed component with content constraints. `tests/test_registry_metadata.py` pins 52 pre-refactor validation failures, including source locations, error ordering and construction-stage diagnostics, alongside converter and custom-registration compatibility.

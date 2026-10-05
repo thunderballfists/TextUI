@@ -3,14 +3,21 @@
 import asyncio
 import importlib.metadata
 import importlib.util
+import json
 from pathlib import Path
 import sys
 import subprocess
 import tempfile
 
 import textui
-from textui import ActionContext, DocumentLoader, ElementNotFoundError, ProjectApp, ProjectSource, TextUI
+from textui import (ActionContext, AttributeSpec, ComponentSpec, DocumentLoader, DocumentValidationError,
+                    ElementNotFoundError, ProjectApp, ProjectSource, TextUI)
+from textui.content import Children, Count, ElementRef, Only
+from textui.metadata import Int
+from textui.widgets.builtin_widgets import default_component_registry
+from textual.containers import Vertical
 from textual.content import Content
+from textual.widgets import Label
 
 
 async def main() -> None:
@@ -29,6 +36,26 @@ async def main() -> None:
     assert "textual-imageview" not in installed
     for module in ("PIL", "textual_imageview"):
         assert importlib.util.find_spec(module) is None
+
+    registry = default_component_registry()
+    described = registry.describe()
+    json.dumps(described)
+    assert registry.get("tabbed-content").describe()["content"]["rules"][0]["minimum"] == 1
+    registry.register(ComponentSpec("count-label", lambda context: Label(str(context.attributes["count"])),
+                                    attributes={"count": AttributeSpec(Int(minimum=0), required=True)}))
+    registry.register(ComponentSpec("count-stack", lambda context: Vertical(*context.children), child_policy="widgets",
+                                    content=Children((Count(minimum=1, message="counts required"),
+                                                      Only((ElementRef("count-label"),), "count labels required")))))
+    loader = DocumentLoader(registry)
+    try:
+        loader.from_string('<ui><count-stack/></ui>')
+    except DocumentValidationError as error:
+        assert error.message == "counts required"
+    else:
+        raise AssertionError("Installed content constraints were not enforced")
+    metadata_app = TextUI(loader.from_string('<ui><count-stack><count-label id="count" count="3"/></count-stack></ui>'))
+    async with metadata_app.run_test():
+        assert str(metadata_app.document.get_by_id("count").render()) == "3"
 
     def save(context: ActionContext) -> None:
         name = context.document.get_by_id("name").value

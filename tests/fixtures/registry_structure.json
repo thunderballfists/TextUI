@@ -1,0 +1,829 @@
+[
+  {
+    "markup": "<ui>\n<vertical><modal/></vertical>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "modal must be a document root",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "modal"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<modal/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "modal requires an id",
+      "attribute": "id",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "modal"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<option value=\"x\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "option must be a direct child of select",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "option"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<select/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "select requires option children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "select"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<select><label/></select>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "select requires option children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "select"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<select><option value=\"x\"/><option value=\"x\"/></select>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "select option values must be unique",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "select"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<select value=\"z\"><option value=\"x\"/></select>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "select value must match an option",
+      "attribute": "value",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "select"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tab-pane title=\"X\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tab-pane must be a direct child of tabbed-content",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tab-pane"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content><tab-pane title=\"X\"/></tabbed-content>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tab-pane requires an id",
+      "attribute": "id",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tab-pane"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content><tab-pane id=\"x\" title=\"X\" accelerator=\"x\"/></tabbed-content>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tab-pane accelerator requires accelerator-scope=document",
+      "attribute": "accelerator-scope",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tab-pane"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content><tab-pane id=\"x\" title=\"X\" accelerator-scope=\"document\"/></tabbed-content>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "accelerator-scope requires an accelerator",
+      "attribute": "accelerator-scope",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tab-pane"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tabbed-content requires tab-pane children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tabbed-content"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content><label/></tabbed-content>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tabbed-content requires tab-pane children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tabbed-content"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content initial=\"missing\"><tab-pane id=\"x\" title=\"X\"/></tabbed-content>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "initial tab must name a child pane",
+      "attribute": "initial",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tabbed-content"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<radio-set/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "radio-set requires radio-button children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "radio-set"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<radio-set><label/></radio-set>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "radio-set requires radio-button children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "radio-set"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<radio-set><radio-button value=\"true\"/><radio-button value=\"true\"/></radio-set>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "radio-set accepts at most one selected button",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "radio-set"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<radio-set><radio-button on-changed=\"go\"/></radio-set>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "radio-button inside radio-set cannot declare events; use on-changed on radio-set",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "radio-button"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<progress-bar total=\"1\" progress=\"2\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "progress cannot exceed total",
+      "attribute": "progress",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "progress-bar"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<range min=\"4\" max=\"3\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "range min must be less than max",
+      "attribute": "min",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "range"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<range min=\"0\" max=\"10\" step=\"3\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "range step must divide the declared bounds",
+      "attribute": "step",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "range"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<range min=\"0\" max=\"10\" value=\"11\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "range value must be within min and max",
+      "attribute": "value",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "range"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<range min=\"0\" max=\"10\" step=\"2\" value=\"3\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "range value must align to step",
+      "attribute": "value",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "range"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<left/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "slot must be a direct child of header or status-bar",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "left"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<header><label/></header>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "header accepts only left, center, and right slots",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "header"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<status-bar><left/><left/></status-bar>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "status-bar accepts each slot at most once",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "status-bar"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<column key=\"x\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "column has an invalid parent",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "column"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<row key=\"x\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "row has an invalid parent",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "row"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<cell/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "cell has an invalid parent",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "cell"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tree-node key=\"x\" label=\"X\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tree-node has an invalid parent",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tree-node"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><column key=\"x\" id=\"forbidden\"/></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "column accepts no common widget attributes",
+      "attribute": "id",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "column"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><row key=\"x\"><label/></row></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "data-table rows require columns",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "data-table"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><label/></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "data-table accepts only column and row children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "data-table"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><row key=\"x\"/></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "data-table rows require columns",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "data-table"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><row key=\"x\"><cell/></row><column key=\"x\"/></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "data-table columns must precede rows",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "data-table"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><column key=\"x\"/><column key=\"x\"/></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "data-table column keys must be unique",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "data-table"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><column key=\"x\"/><row key=\"x\"><cell/></row><row key=\"x\"><cell/></row></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "data-table row keys must be unique",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "data-table"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><column key=\"x\"/><row key=\"x\"/></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "row cell count must match column count",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "row"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tree label=\"X\"><label/></tree>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tree accepts only tree-node children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tree"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tree label=\"X\"><tree-node key=\"x\" label=\"X\"><label/></tree-node></tree>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tree accepts only tree-node children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tree-node"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tree label=\"X\"><tree-node key=\"x\" label=\"X\"/><tree-node key=\"x\" label=\"X\"/></tree>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "tree-node keys must be unique within a tree",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tree"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<nav-item target=\"missing\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "navigation target 'missing' is not a content-switcher child",
+      "attribute": "target",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "nav-item"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<content-switcher initial=\"missing\"><label id=\"x\"/></content-switcher>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "initial content target is not a child",
+      "attribute": "initial",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "content-switcher"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<label id=\"x\"/><label id=\"x\"/>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "duplicate id",
+      "attribute": "id",
+      "value": "x",
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "label"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content><tab-pane id=\"x\" title=\"X\" accelerator=\"d\" accelerator-scope=\"document\"/><tab-pane id=\"y\" title=\"Y\" accelerator=\"d\" accelerator-scope=\"document\"/></tabbed-content>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "document accelerators must be unique",
+      "attribute": null,
+      "value": null,
+      "location": null
+    }
+  },
+  {
+    "markup": "<ui>\n<split><label/><label/></split>\n</ui>",
+    "stage": "build",
+    "expected": {
+      "class": "ComponentBuildError",
+      "message": "split requires exactly two pane children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "split"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<split><pane/></split>\n</ui>",
+    "stage": "build",
+    "expected": {
+      "class": "ComponentBuildError",
+      "message": "split requires exactly two pane children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "split"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<nav><label/></nav>\n</ui>",
+    "stage": "build",
+    "expected": {
+      "class": "ComponentBuildError",
+      "message": "nav requires nav-item children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "nav"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<tabbed-content initial=\"bad\"><tab-pane title=\"X\"/></tabbed-content>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "initial tab must name a child pane",
+      "attribute": "initial",
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "tabbed-content"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><label/><row key=\"x\"/></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "data-table accepts only column and row children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "data-table"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<data-table><column key=\"x\"/><row key=\"y\"><label/></row></data-table>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "row accepts only cell children",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "row"
+      }
+    }
+  },
+  {
+    "markup": "<ui>\n<select value=\"bad\"><option value=\"x\"/><option value=\"x\"/></select>\n</ui>",
+    "stage": "load",
+    "expected": {
+      "class": "DocumentValidationError",
+      "message": "select option values must be unique",
+      "attribute": null,
+      "value": null,
+      "location": {
+        "source": "contract.ui",
+        "line": 2,
+        "column": null,
+        "tag": "select"
+      }
+    }
+  }
+]
