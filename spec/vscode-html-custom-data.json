@@ -3,7 +3,7 @@
   "tags": [
     {
       "name": "vertical",
-      "description": "TextUI vertical; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI vertical; text: none; children: widgets. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -45,7 +45,7 @@
     },
     {
       "name": "horizontal",
-      "description": "TextUI horizontal; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI horizontal; text: none; children: widgets. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -87,7 +87,7 @@
     },
     {
       "name": "label",
-      "description": "TextUI label; text: text; children: none. XML syntax required.",
+      "description": "TextUI label; text: text; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -129,7 +129,7 @@
     },
     {
       "name": "button",
-      "description": "TextUI button; text: text; children: none. XML syntax required.",
+      "description": "TextUI button; text: text; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -196,7 +196,7 @@
     },
     {
       "name": "input",
-      "description": "TextUI input; text: none; children: none. XML syntax required.",
+      "description": "TextUI input; text: none; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -270,7 +270,7 @@
     },
     {
       "name": "checkbox",
-      "description": "TextUI checkbox; text: text; children: none. XML syntax required.",
+      "description": "TextUI checkbox; text: text; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -328,7 +328,7 @@
     },
     {
       "name": "pane",
-      "description": "TextUI pane; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI pane; text: none; children: widgets. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -378,7 +378,7 @@
     },
     {
       "name": "split",
-      "description": "TextUI split; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI split; text: none; children: widgets. XML syntax required. split requires exactly two pane children",
       "attributes": [
         {
           "name": "id",
@@ -440,7 +440,7 @@
     },
     {
       "name": "nav-item",
-      "description": "TextUI nav-item; text: text; children: none. XML syntax required.",
+      "description": "TextUI nav-item; text: text; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -486,7 +486,7 @@
     },
     {
       "name": "nav",
-      "description": "TextUI nav; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI nav; text: none; children: widgets. XML syntax required. nav requires nav-item children",
       "attributes": [
         {
           "name": "id",
@@ -532,7 +532,7 @@
     },
     {
       "name": "content-switcher",
-      "description": "TextUI content-switcher; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI content-switcher; text: none; children: widgets. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -578,7 +578,7 @@
     },
     {
       "name": "option",
-      "description": "TextUI option; text: text; children: none. XML syntax required.",
+      "description": "TextUI option; text: text; children: none. XML syntax required. option must be a direct child of select option accepts no common widget attributes",
       "attributes": [
         {
           "name": "value",
@@ -588,7 +588,7 @@
     },
     {
       "name": "select",
-      "description": "TextUI select; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI select; text: none; children: widgets. XML syntax required. select requires option children select requires option children Unique option values; initial value names an option.",
       "attributes": [
         {
           "name": "id",
@@ -654,7 +654,7 @@
     },
     {
       "name": "switch",
-      "description": "TextUI switch; text: none; children: none. XML syntax required.",
+      "description": "TextUI switch; text: none; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -712,7 +712,7 @@
     },
     {
       "name": "text-area",
-      "description": "TextUI text-area; text: verbatim; children: none. XML syntax required.",
+      "description": "TextUI text-area; text: verbatim; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -814,7 +814,7 @@
     },
     {
       "name": "tab-pane",
-      "description": "TextUI tab-pane; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI tab-pane; text: none; children: widgets. XML syntax required. tab-pane must be a direct child of tabbed-content tab-pane requires an id tab-pane accelerator requires accelerator-scope=document accelerator-scope requires an accelerator",
       "attributes": [
         {
           "name": "id",
@@ -873,7 +873,7 @@
     },
     {
       "name": "tabbed-content",
-      "description": "TextUI tabbed-content; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI tabbed-content; text: none; children: widgets. XML syntax required. tabbed-content requires tab-pane children tabbed-content requires tab-pane children Initial names a direct child pane ID.",
       "attributes": [
         {
           "name": "id",
@@ -923,7 +923,7 @@
     },
     {
       "name": "radio-button",
-      "description": "TextUI radio-button; text: text; children: none. XML syntax required.",
+      "description": "TextUI radio-button; text: text; children: none. XML syntax required. Nested radio buttons declare events on their radio set.",
       "attributes": [
         {
           "name": "id",
@@ -981,7 +981,7 @@
     },
     {
       "name": "radio-set",
-      "description": "TextUI radio-set; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI radio-set; text: none; children: widgets. XML syntax required. radio-set requires radio-button children radio-set requires radio-button children At most one radio button is selected.",
       "attributes": [
         {
           "name": "id",
@@ -1027,7 +1027,7 @@
     },
     {
       "name": "collapsible",
-      "description": "TextUI collapsible; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI collapsible; text: none; children: widgets. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -1093,7 +1093,7 @@
     },
     {
       "name": "progress-bar",
-      "description": "TextUI progress-bar; text: none; children: none. XML syntax required.",
+      "description": "TextUI progress-bar; text: none; children: none. XML syntax required. Progress cannot exceed a declared total.",
       "attributes": [
         {
           "name": "id",
@@ -1133,11 +1133,11 @@
         },
         {
           "name": "total",
-          "description": "number; minimum=0"
+          "description": "number; minimum=0, exclusive_minimum=true, finite=true"
         },
         {
           "name": "progress",
-          "description": "number; minimum=0; default=0.0"
+          "description": "number; minimum=0, exclusive_minimum=false, finite=true; default=0.0"
         },
         {
           "name": "show-bar",
@@ -1179,7 +1179,7 @@
     },
     {
       "name": "rule",
-      "description": "TextUI rule; text: none; children: none. XML syntax required.",
+      "description": "TextUI rule; text: none; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -1266,7 +1266,7 @@
     },
     {
       "name": "range",
-      "description": "TextUI range; text: none; children: none. XML syntax required.",
+      "description": "TextUI range; text: none; children: none. XML syntax required. Ordered bounds, dividing step and aligned value within bounds.",
       "attributes": [
         {
           "name": "id",
@@ -1340,7 +1340,7 @@
     },
     {
       "name": "column",
-      "description": "TextUI column; text: text; children: none. XML syntax required.",
+      "description": "TextUI column; text: text; children: none. XML syntax required. column has an invalid parent data-only children accept no common widget attributes or events",
       "attributes": [
         {
           "name": "key",
@@ -1373,12 +1373,12 @@
     },
     {
       "name": "cell",
-      "description": "TextUI cell; text: text; children: none. XML syntax required.",
+      "description": "TextUI cell; text: text; children: none. XML syntax required. cell has an invalid parent data-only children accept no common widget attributes or events",
       "attributes": []
     },
     {
       "name": "row",
-      "description": "TextUI row; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI row; text: none; children: widgets. XML syntax required. row has an invalid parent data-only children accept no common widget attributes or events row accepts only cell children",
       "attributes": [
         {
           "name": "key",
@@ -1388,7 +1388,7 @@
     },
     {
       "name": "data-table",
-      "description": "TextUI data-table; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI data-table; text: none; children: widgets. XML syntax required. data-table accepts only column and row children Seeded rows require declared columns. data-table columns must precede rows Unique column/row keys; cell counts match column count.",
       "attributes": [
         {
           "name": "id",
@@ -1496,7 +1496,7 @@
     },
     {
       "name": "tree-node",
-      "description": "TextUI tree-node; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI tree-node; text: none; children: widgets. XML syntax required. tree-node has an invalid parent data-only children accept no common widget attributes or events tree accepts only tree-node children",
       "attributes": [
         {
           "name": "key",
@@ -1522,7 +1522,7 @@
     },
     {
       "name": "tree",
-      "description": "TextUI tree; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI tree; text: none; children: widgets. XML syntax required. tree accepts only tree-node children Tree-node keys are unique within each tree.",
       "attributes": [
         {
           "name": "id",
@@ -1584,7 +1584,7 @@
     },
     {
       "name": "log",
-      "description": "TextUI log; text: none; children: none. XML syntax required.",
+      "description": "TextUI log; text: none; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -1682,7 +1682,7 @@
     },
     {
       "name": "list",
-      "description": "TextUI list; text: none; children: none. XML syntax required.",
+      "description": "TextUI list; text: none; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -1732,7 +1732,7 @@
     },
     {
       "name": "left",
-      "description": "TextUI left; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI left; text: none; children: widgets. XML syntax required. slot must be a direct child of header or status-bar",
       "attributes": [
         {
           "name": "id",
@@ -1774,7 +1774,7 @@
     },
     {
       "name": "center",
-      "description": "TextUI center; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI center; text: none; children: widgets. XML syntax required. slot must be a direct child of header or status-bar",
       "attributes": [
         {
           "name": "id",
@@ -1816,7 +1816,7 @@
     },
     {
       "name": "right",
-      "description": "TextUI right; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI right; text: none; children: widgets. XML syntax required. slot must be a direct child of header or status-bar",
       "attributes": [
         {
           "name": "id",
@@ -1858,7 +1858,7 @@
     },
     {
       "name": "header",
-      "description": "TextUI header; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI header; text: none; children: widgets. XML syntax required. header accepts only left, center, and right slots header accepts each slot at most once Slots construct native HeaderSlot instances with unique positions.",
       "attributes": [
         {
           "name": "id",
@@ -1900,7 +1900,7 @@
     },
     {
       "name": "status-bar",
-      "description": "TextUI status-bar; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI status-bar; text: none; children: widgets. XML syntax required. status-bar accepts only left, center, and right slots status-bar accepts each slot at most once Slots construct native HeaderSlot instances with unique positions.",
       "attributes": [
         {
           "name": "id",
@@ -1942,7 +1942,7 @@
     },
     {
       "name": "command-button",
-      "description": "TextUI command-button; text: none; children: none. XML syntax required.",
+      "description": "TextUI command-button; text: none; children: none. XML syntax required. ",
       "attributes": [
         {
           "name": "id",
@@ -2009,7 +2009,7 @@
     },
     {
       "name": "modal",
-      "description": "TextUI modal; text: none; children: widgets. XML syntax required.",
+      "description": "TextUI modal; text: none; children: widgets. XML syntax required. modal must be a document root modal requires an id",
       "attributes": [
         {
           "name": "id",
@@ -2058,6 +2058,108 @@
               "name": "false"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "ui",
+      "description": "TextUI ui; text: grammar; children: grammar. XML syntax required. Attribute-free project/document root.",
+      "attributes": []
+    },
+    {
+      "name": "style",
+      "description": "TextUI style; text: grammar; children: grammar. XML syntax required. Entry-root embedded TCSS, or src/preset (mutually exclusive).",
+      "attributes": [
+        {
+          "name": "src",
+          "description": "string"
+        },
+        {
+          "name": "preset",
+          "description": "`compact` / `borders`",
+          "values": [
+            {
+              "name": "compact"
+            },
+            {
+              "name": "borders"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "script",
+      "description": "TextUI script; text: grammar; children: grammar. XML syntax required. Entry-root linked trusted Python controller; never embedded Python.",
+      "attributes": [
+        {
+          "name": "src",
+          "description": "string; required"
+        }
+      ]
+    },
+    {
+      "name": "include",
+      "description": "TextUI include; text: grammar; children: grammar. XML syntax required. Expand a local attribute-free ui fragment.",
+      "attributes": [
+        {
+          "name": "src",
+          "description": "string; required"
+        }
+      ]
+    },
+    {
+      "name": "component",
+      "description": "TextUI component; text: grammar; children: grammar. XML syntax required. Entry-root import (src/as), or attribute-free component-file root.",
+      "attributes": [
+        {
+          "name": "src",
+          "description": "string"
+        },
+        {
+          "name": "as",
+          "description": "string"
+        }
+      ]
+    },
+    {
+      "name": "props",
+      "description": "TextUI props; text: grammar; children: grammar. XML syntax required. Component property declarations, before its widget root.",
+      "attributes": []
+    },
+    {
+      "name": "prop",
+      "description": "TextUI prop; text: grammar; children: grammar. XML syntax required. Empty component property declaration; required=true excludes default.",
+      "attributes": [
+        {
+          "name": "name",
+          "description": "string; required"
+        },
+        {
+          "name": "default",
+          "description": "string"
+        },
+        {
+          "name": "required",
+          "description": "`true` / `false`; default=false",
+          "values": [
+            {
+              "name": "true"
+            },
+            {
+              "name": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "slot",
+      "description": "TextUI slot; text: grammar; children: grammar. XML syntax required. Named/default template slot with optional fallback, or named instance content.",
+      "attributes": [
+        {
+          "name": "name",
+          "description": "string"
         }
       ]
     }

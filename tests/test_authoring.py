@@ -80,3 +80,39 @@ def test_generator_never_calls_widget_factories(monkeypatch):
         registry.register(replace(spec, factory=forbidden))
     monkeypatch.setattr(textui.authoring, "default_component_registry", lambda: registry)
     assert set(artifacts()) == EXPECTED
+
+
+def test_completion_data_includes_project_grammar_and_content_rules():
+    from textui.authoring import artifacts
+
+    generated = artifacts()
+    html = {tag["name"]: tag for tag in json.loads(generated["spec/vscode-html-custom-data.json"])["tags"]}
+    web = {tag["name"]: tag for tag in json.loads(generated["spec/web-types.json"])["contributions"]["html"]["elements"]}
+    for tag in ("ui", "style", "script", "include", "component", "props", "prop", "slot"):
+        assert tag in html and tag in web
+    assert html["ui"]["attributes"] == []
+    assert {attr["name"] for attr in html["script"]["attributes"]} == {"src"}
+    preset = next(attr for attr in html["style"]["attributes"] if attr["name"] == "preset")
+    assert {value["name"] for value in preset["values"]} == {"compact", "borders"}
+    assert "tab-pane" in html["tabbed-content"]["description"]
+    attributes = {attr["name"]: attr for attr in web["tab-pane"]["attributes"]}
+    scope = attributes["accelerator-scope"]
+    assert scope["value"]["type"] == "enum"
+    assert scope["values"] == [{"name": "document"}]
+    assert attributes["id"]["required"] is True
+
+
+def test_reference_reports_positive_finite_number_domain():
+    from textui.authoring import artifacts
+
+    reference = artifacts()["docs/markup-reference.md"].split("### `<progress-bar>`")[1].split("### ")[0]
+    assert "exclusive_minimum=true" in reference
+    assert "finite=true" in reference
+
+
+def test_llm_reference_covers_named_document_rules():
+    from textui.authoring import artifacts
+
+    reference = artifacts()["docs/llm-reference.md"]
+    for rule in default_component_registry().describe()["document_rules"]:
+        assert rule["name"] in reference

@@ -84,7 +84,7 @@ associations: `.ui` is also used by Qt Designer. Do not add an `xml-model` proce
 | `radio-button` | text / none | `id`: string; `class`: string; default=[]; `style`: string; `disabled`: `true` / `false`; default=false; `autofocus`: `true` / `false`; default=false; `value`: `true` / `false`; default=false | `on-changed` |
 | `radio-set` | none / widgets | `id`: string; `class`: string; default=[]; `style`: string; `disabled`: `true` / `false`; default=false; `autofocus`: `true` / `false`; default=false | `on-changed` |
 | `collapsible` | none / widgets | `id`: string; `class`: string; default=[]; `style`: string; `disabled`: `true` / `false`; default=false; `autofocus`: `true` / `false`; default=false; `title`: string; default="Toggle"; `collapsed`: `true` / `false`; default=true | `on-collapsed`, `on-expanded` |
-| `progress-bar` | none / none | `id`: string; `class`: string; default=[]; `style`: string; `disabled`: `true` / `false`; default=false; `autofocus`: `true` / `false`; default=false; `total`: number; minimum=0; `progress`: number; minimum=0; default=0.0; `show-bar`: `true` / `false`; default=true; `show-percentage`: `true` / `false`; default=true; `show-eta`: `true` / `false`; default=true | None |
+| `progress-bar` | none / none | `id`: string; `class`: string; default=[]; `style`: string; `disabled`: `true` / `false`; default=false; `autofocus`: `true` / `false`; default=false; `total`: number; minimum=0, exclusive_minimum=true, finite=true; `progress`: number; minimum=0, exclusive_minimum=false, finite=true; default=0.0; `show-bar`: `true` / `false`; default=true; `show-percentage`: `true` / `false`; default=true; `show-eta`: `true` / `false`; default=true | None |
 | `rule` | none / none | `id`: string; `class`: string; default=[]; `style`: string; `disabled`: `true` / `false`; default=false; `autofocus`: `true` / `false`; default=false; `orientation`: `horizontal` / `vertical`; default="horizontal"; `line-style`: `ascii` / `blank` / `dashed` / `double` / `heavy` / `hidden` / `none` / `solid` / `thick`; default="solid" | None |
 | `range` | none / none | `id`: string; `class`: string; default=[]; `style`: string; `disabled`: `true` / `false`; default=false; `autofocus`: `true` / `false`; default=false; `min`: integer; default=0; `max`: integer; default=100; `step`: integer; minimum=1; default=1; `value`: integer; `show-value`: `true` / `false`; default=false | `on-changed` |
 | `column` | text / none | `key`: string; validation="nonempty-key"; required; `label`: string; `align`: `left` / `center` / `right`; default="left"; `width`: integer; minimum=1 | None |
@@ -105,6 +105,12 @@ associations: `.ui` is also used by Qt Designer. Do not add an `xml-model` proce
 
 ## Explicit structural rules
 
+- **duplicate-ids** (lowering): IDs are unique across the lowered document.
+- **navigation-targets** (references): Navigation and initial switcher IDs name direct switcher children.
+- **document-accelerators** (document-final): Declared tab accelerators are unique across the document.
+- **data-only-attributes** (lowering): Data-only tag names reject common attributes, including autofocus.
+- **common-identifiers** (lowering): Nonempty IDs and whitespace-separated classes follow native Textual identifier validation.
+- **inline-styles** (styling): Inline and linked TCSS follow the native Textual stylesheet parser.
 - `split`: `{"rule": "native-children", "widget_type": "textui.widgets.split.Pane", "minimum": 2, "maximum": 2, "message": "split requires exactly two pane children", "phase": "build"}`
 - `nav`: `{"rule": "native-children", "widget_type": "textui.widgets.navigation.NavItem", "minimum": 0, "maximum": null, "message": "nav requires nav-item children", "phase": "build"}`
 - `option`: `{"rule": "parent", "root_only": false, "allowed": [{"tag": "select", "match": "factory"}], "message": "option must be a direct child of select", "phase": "document"}`

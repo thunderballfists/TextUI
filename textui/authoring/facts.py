@@ -1,6 +1,8 @@
 """Non-registry project grammar and packaged canonical examples."""
 from importlib.resources import files
 
+from ..presets import STYLE_PRESETS
+
 
 EXAMPLES = {
     path: files(__package__).joinpath("samples", path).read_text(encoding="utf-8")
@@ -9,6 +11,27 @@ EXAMPLES = {
         "examples/components/agent-card.ui", "examples/components/app.ui",
     )
 }
+
+
+def _text_attribute(*, required: bool = False) -> dict:
+    return {"type": {"type": "string"}, "required": required}
+
+
+# Project directives are parser grammar, not widget registrations. Keep their
+# completion descriptions together with the grammar rather than fake factories.
+DIRECTIVES = (
+    {"tag": "ui", "doc": "Attribute-free project/document root.", "attributes": {}},
+    {"tag": "style", "doc": "Entry-root embedded TCSS, or src/preset (mutually exclusive).", "attributes": {
+        "src": _text_attribute(), "preset": {"type": {"type": "enum", "values": list(STYLE_PRESETS)}, "required": False}}},
+    {"tag": "script", "doc": "Entry-root linked trusted Python controller; never embedded Python.", "attributes": {"src": _text_attribute(required=True)}},
+    {"tag": "include", "doc": "Expand a local attribute-free ui fragment.", "attributes": {"src": _text_attribute(required=True)}},
+    {"tag": "component", "doc": "Entry-root import (src/as), or attribute-free component-file root.", "attributes": {"src": _text_attribute(), "as": _text_attribute()}},
+    {"tag": "props", "doc": "Component property declarations, before its widget root.", "attributes": {}},
+    {"tag": "prop", "doc": "Empty component property declaration; required=true excludes default.", "attributes": {
+        "name": _text_attribute(required=True), "default": _text_attribute(),
+        "required": {"type": {"type": "boolean", "values": ["true", "false"]}, "required": False, "default": False}}},
+    {"tag": "slot", "doc": "Named/default template slot with optional fallback, or named instance content.", "attributes": {"name": _text_attribute()}},
+)
 
 GRAMMAR = """Use one attribute-free `<ui>` root. Write well-formed UTF-8 markup with quoted attributes,
 closed/self-closed lowercase kebab-case tags, and boolean literals `true` or `false`.

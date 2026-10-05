@@ -55,6 +55,8 @@ def llm_reference(description: dict) -> str:
         events = ", ".join(f"`on-{name}`" for name in component["events"])
         lines.append(f"| `{component['tag']}` | {component['text_policy']} / {component['content']['policy']} | {_cell(attr_text)} | {events or 'None'} |")
     lines.extend(["", "## Explicit structural rules", ""])
+    for rule in description["document_rules"]:
+        lines.append(f"- **{rule['name']}** ({rule['phase']}): {rule['doc']}")
     for component in description["components"]:
         for rule in component["content"]["rules"]:
             lines.append(f"- `{component['tag']}`: `{json.dumps(rule, ensure_ascii=False)}`")

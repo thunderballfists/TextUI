@@ -435,8 +435,8 @@ Text: **none**. Child policy: **none**.
 | `style` | string |
 | `disabled` | `true` / `false`; default=false |
 | `autofocus` | `true` / `false`; default=false |
-| `total` | number; minimum=0 |
-| `progress` | number; minimum=0; default=0.0 |
+| `total` | number; minimum=0, exclusive_minimum=true, finite=true |
+| `progress` | number; minimum=0, exclusive_minimum=false, finite=true; default=0.0 |
 | `show-bar` | `true` / `false`; default=true |
 | `show-percentage` | `true` / `false`; default=true |
 | `show-eta` | `true` / `false`; default=true |
