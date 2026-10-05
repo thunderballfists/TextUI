@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 
 import textui
-from textui import ActionContext, DocumentLoader, ProjectApp, ProjectSource, TextUI
+from textui import ActionContext, DocumentLoader, ElementNotFoundError, ProjectApp, ProjectSource, TextUI
 from textual.content import Content
 
 
@@ -50,8 +50,47 @@ async def main() -> None:
         assert str(app.document.get_by_id("status").render()) == "Saved wheel"
     with tempfile.TemporaryDirectory() as directory:
         project = Path(directory)
-        (project / "app.ui").write_text('<ui><script src="controller.py"/><button id="go" on-pressed="click">Go</button></ui>', encoding="utf-8")
-        (project / "controller.py").write_text('from textui import action\n@action\ndef click():\n    window.app.clicked = True\n', encoding="utf-8")
+        (project / "records.ui").write_text('''<component>
+          <props><prop name="row-format" required="true"/></props>
+          <list item-label="{row-format}" style="height: 3;"/>
+        </component>''', encoding="utf-8")
+        (project / "tabs.ui").write_text('''<component>
+          <tabbed-content initial="home" style="height: 5; width: 40;">
+            <tab-pane id="home" title="Home"><label>Home</label></tab-pane>
+            <tab-pane id="details" title="Details" accelerator="d" accelerator-scope="document"><label>Details</label></tab-pane>
+          </tabbed-content>
+        </component>''', encoding="utf-8")
+        (project / "app.ui").write_text('''<ui>
+          <script src="controller.py"/>
+          <component src="records.ui" as="record-list"/>
+          <component src="tabs.ui" as="detail-tabs"/>
+          <vertical>
+            <button id="go" on-pressed="click">Go</button>
+            <record-list id="records" row-format="{name}: {count:03d}"/>
+            <log id="stream" style="height: 4;"/>
+          </vertical>
+          <modal id="details">
+            <detail-tabs id="modal-tabs"/>
+            <button id="close" on-pressed="close">Close</button>
+          </modal>
+        </ui>''', encoding="utf-8")
+        (project / "controller.py").write_text('''from textui import action
+
+async def on_ready():
+    await window.document.get_by_id("records").set_items([{"name": "Alpha", "count": 2}])
+    window.document.get_by_id("stream").append_inline("wheel ")
+
+@action
+async def click(context):
+    window.app.clicked = True
+    window.document.get_by_id("stream").append_inline("ready")
+    window.document.get_by_id("stream").commit_line()
+    await context.push_modal("details")
+
+@action
+def close(context):
+    context.dismiss_modal("closed")
+''', encoding="utf-8")
         checked = subprocess.run(
             [sys.executable, "-I", "-m", "textui", "check", str(project / "app.ui")],
             cwd=directory, capture_output=True, text=True,
@@ -61,8 +100,34 @@ async def main() -> None:
         assert checked.stderr == ""
         project_app = ProjectApp(ProjectSource.discover(project / "app.ui"))
         async with project_app.run_test() as pilot:
-            assert await pilot.click("#go")
-            assert project_app.clicked is True
+            records = project_app.document.get_by_id("records")
+            assert str(records.items[0].children[0].render()) == "Alpha: 002"
+            assert await pilot.click(records.items[0].children[0], offset=(1, 0))
+            assert records.selected == {"name": "Alpha", "count": 2}
+            prior_tabs = None
+            for _ in range(2):
+                await pilot.press("d")  # Dormant modal bindings must be unavailable.
+                assert await pilot.click("#go")
+                await pilot.pause()
+                assert project_app.clicked is True
+                assert project_app.screen.id == "details"
+                tabs = project_app.document.get_by_id("modal-tabs")
+                assert tabs is not prior_tabs
+                assert tabs.active.endswith("_home")
+                await pilot.press("d")
+                assert tabs.active.endswith("_details")
+                try:
+                    project_app.document.get_by_id(tabs.active)
+                except ElementNotFoundError:
+                    pass
+                else:
+                    raise AssertionError("Component-private IDs leaked through public lookup")
+                assert await pilot.click("#close")
+                await pilot.pause()
+                assert len(project_app.screen_stack) == 1
+                prior_tabs = tabs
+            stream = project_app.document.get_by_id("stream")
+            assert [line.text.rstrip() for line in stream.lines] == ["wheel ready", "ready"]
     controls = DocumentLoader().from_string('''<ui>
       <select id="state" value="new" allow-blank="false"><option value="new">New</option></select>
       <switch id="enabled" value="true" />

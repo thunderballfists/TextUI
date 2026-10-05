@@ -4,6 +4,14 @@ All notable changes to TextUI are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Tab accelerators now activate component-private panes while keeping their IDs out of public document lookup. Shortcuts follow the active screen; dormant or dismissed modal panes cannot intercept keys, and modal shortcuts work again when reopened.
+
+### Added
+
+- Component authoring guidance for passing runtime-list record formats through a separate property, preserving record fields and literal braces without recursive component substitution.
+
 ### Planned
 
 - Optional image components remain outside the core package.

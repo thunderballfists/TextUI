@@ -16,6 +16,7 @@ from textual.widget import Widget
 from textual.widgets import Button, Checkbox, Input, RadioButton, RadioSet, Select, Switch, TabbedContent, TabPane, TextArea
 
 from .actions import ActionCallback, ActionContext
+from .accelerators import install_tab_accelerators
 from .invocations import InvocationOwner
 from .errors import (
     ActionExecutionError, ComponentBuildError, DocumentStateError,
@@ -197,8 +198,10 @@ class BoundDocument:
             raise ComponentBuildError(str(error), location=node.location) from error
         if node.common['style'] is not None:
             apply_inline(widget, node.common['style'], node.location)
-        if node.common['id'] is not None and not node.private_id:
+        if node.common['id'] is not None:
             widgets[node.common['id']] = widget
+        if isinstance(widget, MarkupModal):
+            install_tab_accelerators(widget, node.children)
         for event_name, action in node.events.items():
             event = node.spec.events[event_name]
             bindings.setdefault(event.message_type, []).append((widget, event, action, node))
@@ -441,12 +444,19 @@ class BoundDocument:
                 task.cancel()
         self._command_tasks.clear()
 
+    def _get_mounted_widget(self, element_id: str) -> Widget | None:
+        """Look up owned widgets internally, including component-private IDs."""
+        widget = self._widgets.get(element_id)
+        if widget is None or not widget.is_mounted or not self.app.is_mounted(widget):
+            return None
+        return widget
+
     def get_by_id(self, element_id: str) -> Widget:
         """Look up declared IDs only, and only while the widget is mounted."""
         if element_id not in self._declared_ids:
             raise ElementNotFoundError(f'No document element has ID {element_id!r}')
-        widget = self._widgets.get(element_id)
-        if widget is None or not widget.is_mounted or not self.app.is_mounted(widget):
+        widget = self._get_mounted_widget(element_id)
+        if widget is None:
             raise DocumentStateError(f'Element {element_id!r} is not mounted', location=self._declared_ids[element_id])
         return widget
 

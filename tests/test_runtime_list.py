@@ -3,7 +3,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from textui import DocumentLoader, DocumentValidationError, TextUI
+from textui import DocumentLoader, DocumentValidationError, ProjectApp, ProjectSource, TextUI
 
 
 MARKUP = '''<ui>
@@ -111,3 +111,24 @@ async def test_list_rejects_rows_that_cannot_fill_its_label_pattern():
         agents = app.document.get_by_id("agents")
         with pytest.raises(ValueError, match="name"):
             await agents.set_items([{"id": "alpha"}])
+
+
+@pytest.mark.asyncio
+async def test_component_property_passes_record_format_without_recursive_substitution(tmp_path):
+    (tmp_path / "records.ui").write_text('''<component>
+      <props><prop name="row-format" required="true"/></props>
+      <list item-label="{row-format}"/>
+    </component>''', encoding="utf-8")
+    (tmp_path / "app.ui").write_text('''<ui>
+      <component src="records.ui" as="record-list"/>
+      <record-list id="records" row-format="{name}: {count:03d} {{literal}}"/>
+    </ui>''', encoding="utf-8")
+    app = ProjectApp(ProjectSource.discover(tmp_path / "app.ui"))
+    async with app.run_test() as pilot:
+        records = app.document.get_by_id("records")
+        assert records.item_label == "{name}: {count:03d} {{literal}}"
+        await records.set_items([{"name": "Alpha", "count": 2}])
+        await pilot.pause()
+        assert str(records.items[0].children[0].render()) == "Alpha: 002 {literal}"
+        assert await pilot.click(records.items[0].children[0], offset=(1, 0))
+        assert records.selected == {"name": "Alpha", "count": 2}

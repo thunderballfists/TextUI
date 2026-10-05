@@ -12,7 +12,7 @@ from .widgets.navigation import Nav
 from .widgets.runtime_list import RuntimeList
 from .widgets.range_control import RangeControl
 from .widgets.transcript import TranscriptLog
-from .accelerators import activate_tab, install_tab_accelerators
+from .accelerators import activate_tab, install_tab_accelerators, tab_available
 
 from .actions import ActionCallback
 from .document import Document
@@ -31,6 +31,11 @@ class TextUI(App):
 
     def action_textui_activate_tab(self, pane_id: str) -> None:
         activate_tab(self.document, pane_id)
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        if action == "textui_activate_tab":
+            return tab_available(self.document, parameters[0])
+        return super().check_action(action, parameters)
 
     def exit(self, result: Any = None, return_code: int = 0, message: Any = None) -> None:
         self.document.close()
