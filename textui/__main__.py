@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 from collections.abc import Sequence
 import sys
 import traceback
@@ -12,6 +13,7 @@ from .checking import check_project
 from .errors import TextUIError
 from .project import ProjectSource
 from .project_app import ProjectApp
+from .static_check import check_static, diagnostic
 
 
 class _CLIProjectApp(ProjectApp):
@@ -56,8 +58,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         command = commands.add_parser(name, help=help_text, description=help_text)
         command.add_argument("path", help="entry .ui file")
         command.add_argument("--debug", action="store_true", default=argparse.SUPPRESS, help="show tracebacks for project errors")
+        if name == "check":
+            command.add_argument("--static", action="store_true", help="check built-in markup without executing linked Python or constructing widgets")
+            command.add_argument("--format", choices=("text", "json"), default="text", help="static-check diagnostic format")
     arguments = parser.parse_args(argv)
+    if arguments.command == "check" and arguments.format == "json" and not arguments.static:
+        parser.error("--format json requires check --static")
     try:
+        if arguments.command == "check" and arguments.static:
+            try:
+                check_static(arguments.path)
+            except TextUIError as error:
+                if arguments.format == "json":
+                    print(json.dumps([diagnostic(error, arguments.path)], ensure_ascii=False))
+                    return 1
+                raise
+            print("[]" if arguments.format == "json" else f"Checked {arguments.path} (static)")
+            return 0
         source = ProjectSource.discover(arguments.path)
         if arguments.command == "check":
             asyncio.run(check_project(source))
