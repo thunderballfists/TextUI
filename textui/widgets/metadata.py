@@ -13,7 +13,7 @@ DOCUMENT_RULES = (
     NamedCheck("duplicate-ids", "IDs are unique across the lowered document.", phase="lowering"),
     NamedCheck("navigation-targets", "Navigation and initial switcher IDs name direct switcher children.", phase="references"),
     NamedCheck("document-accelerators", "Declared tab accelerators are unique across the document.", phase="document-final"),
-    NamedCheck("data-only-attributes", "Data-only tag names reject common attributes, including autofocus, and events.", phase="lowering"),
+    NamedCheck("data-only-attributes", "Data-only tag names reject common attributes, including autofocus.", phase="lowering"),
     NamedCheck("common-identifiers", "Nonempty IDs and whitespace-separated classes follow native Textual identifier validation.", phase="lowering"),
     NamedCheck("inline-styles", "Inline and linked TCSS follow the native Textual stylesheet parser.", phase="styling"),
 )
@@ -82,6 +82,8 @@ def _builtin_rules(spec: ComponentSpec) -> tuple[Rule, ...]:
         return (Only(tuple(ElementRef(tag) for tag in SLOT_FACTORIES), f"{spec.tag} accepts only left, center, and right slots"),
                 UniqueSlots(f"{spec.tag} accepts each slot at most once"),
                 NamedCheck("bar-native-slots", "Slots construct native HeaderSlot instances with unique positions.", phase="build"))
+    if spec.factory is build_bar:
+        return (NamedCheck("bar-native-slots", "Slots construct native HeaderSlot instances with unique positions.", phase="build"),)
     return next((content for factory, content in rules.items() if spec.factory is factory), ())
 
 

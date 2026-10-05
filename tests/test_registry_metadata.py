@@ -169,6 +169,48 @@ def test_split_description_exposes_native_count_and_preserves_build_failure():
         tuple(TextUI(definition).document.compose())
 
 
+def test_data_only_lowering_description_keeps_custom_named_row_events():
+    from textui import EventSpec
+    from textual.message import Message
+    class Ping(Message):
+        pass
+    registry = ComponentRegistry()
+    registry.register(ComponentSpec("row", lambda context: None,
+                                    events={"ping": EventSpec(Ping, lambda event: None)}))
+    definition = DocumentLoader(registry).from_string('<ui><row on-ping="handle"/></ui>')
+    assert definition.nodes[0].events["ping"] == "handle"
+    description = next(rule for rule in registry.describe()["document_rules"] if rule["name"] == "data-only-attributes")
+    assert "events" not in description["doc"]
+
+
+def test_bar_alias_describes_its_native_construction_check():
+    from textui import ComponentBuildError, TextUI
+    from textui.widgets.bars import build_bar
+    registry = ComponentRegistry()
+    registry.register(ComponentSpec("toolbar", build_bar, child_policy="widgets"))
+    from textui.widgets.builtin_widgets import build_label
+    registry.register(ComponentSpec("label", build_label, text_policy="text"))
+    definition = DocumentLoader(registry).from_string('<ui><toolbar><label>Invalid native slot</label></toolbar></ui>')
+    with pytest.raises(ComponentBuildError, match="header accepts left, center, and right slots"):
+        tuple(TextUI(definition).document.compose())
+    assert registry.get("toolbar").describe()["content"]["rules"] == [{
+        "rule": "named", "name": "bar-native-slots",
+        "doc": "Slots construct native HeaderSlot instances with unique positions.", "phase": "build",
+    }]
+
+
+def test_forbid_common_description_exposes_nondefault_value_predicates():
+    from textui.widgets.form_controls import build_option, build_select
+    registry = ComponentRegistry()
+    registry.register(ComponentSpec("choice", build_select, child_policy="widgets"))
+    registry.register(ComponentSpec("entry", build_option, attributes={"value": AttributeSpec(required=True)}))
+    definition = DocumentLoader(registry).from_string('<ui><choice><entry value="one" disabled="false" class="" autofocus="true"/></choice></ui>')
+    assert definition.nodes[0].children[0].common["autofocus"] is True
+    rule = registry.get("entry").describe()["content"]["rules"][1]
+    assert rule["attributes"] == {"id": "present", "class": "nonempty-normalized-tokens",
+                                   "style": "present", "disabled": "true"}
+
+
 CASES = json.loads((Path(__file__).parent / "fixtures" / "registry_structure.json").read_text())
 
 

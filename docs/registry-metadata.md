@@ -59,6 +59,8 @@ Rules run in declaration order, before descending into children. Failures retain
 
 Available document constraints are `Parent`, `RequireCommon`, `Needs`, `Only`, `Count`, `Sequence`, `UniqueSlots` and `ForbidCommon`. `NamedCheck(name, doc, check)` describes explicit compound code. Its callback receives `(node, parent)`; inspection never calls it. Non-document phases describe checks owned by other validation stages.
 
+`ForbidCommon` describes value-sensitive predicates: present `id`/`style`, nonempty normalized class tokens and `disabled=true`. Native data children also reject declared events. The earlier tag-based lowering check rejects any common attribute on canonical data-only tags, including `disabled=false` or `autofocus`; unrelated custom factories with those tag names can still declare events.
+
 `NativeChildren(widget_type, message, minimum=0, maximum=None)` describes construction-time instance checks. Builders call `validate_build(context.children)` when native children exist; it accepts subclasses. Declaring this rule does not move it into loading or automatically call it from custom builders.
 
 ## Migrated and explicit rules

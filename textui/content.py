@@ -164,7 +164,8 @@ class ForbidCommon(Rule):
             _fail(node, self.message)
 
     def describe(self) -> dict[str, object]:
-        return {"rule": "forbid-common", "attributes": ["id", "class", "style", "disabled"],
+        return {"rule": "forbid-common", "attributes": {"id": "present", "class": "nonempty-normalized-tokens",
+                                                        "style": "present", "disabled": "true"},
                 "events": self.events, "message": self.message, "phase": "document"}
 
 

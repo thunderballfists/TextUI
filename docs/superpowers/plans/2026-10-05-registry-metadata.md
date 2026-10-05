@@ -54,5 +54,5 @@ Files: `docs/registry-metadata.md`, README, migration/changelog/testing/roadmap 
 - [x] Document exact APIs, custom-converter limitations, migrated/deferred rule inventory and future generator boundary.
 - [x] Extend wheel smoke with built-in and custom metadata inspection.
 - [x] Run full pytest, opt-in visual comparisons, Pyflakes, lock validation, builds and fresh wheel-only smoke.
-- [ ] Obtain independent review, implement verified feedback, and commit/push a PR linked to #96 without closing the remaining generator work.
+- [x] Obtain independent review, implement verified feedback, and commit/push a PR linked to #96 without closing the remaining generator work.
 - [ ] Verify Python 3.11/3.12/3.14 and Linux visual CI, address/resolve PR feedback, merge and verify the merged tree.
