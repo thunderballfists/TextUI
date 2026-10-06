@@ -15,10 +15,14 @@ In this repository, run through `uvx --python 3.12 --from poetry==2.4.3 poetry r
 
 | File | Use | Limits |
 | --- | --- | --- |
-| `spec/textui.xsd` | Built-in-only or expanded markup; precise child completions | Rejects unknown component aliases and template placeholders. Does not resolve includes/imports. |
-| `spec/textui-authoring.xsd` | Raw projects using reusable components, includes and templates | Permits aliases in containers and skips template bodies; unknown aliases and misplaced children can pass. |
+| `spec/textui.xsd` | Built-in markup without includes, or expanded structure; precise child completions | Rejects unexpanded includes in every position, component imports/aliases and template placeholders. |
+| `spec/textui-authoring.xsd` | Raw projects using reusable components, includes and templates | Skips widget bodies and templates, so aliases that shadow built-ins work; unknown tags, attributes, values and misplaced children can pass. Static checking is required. |
 
-Both profiles use no target namespace. The strict schema describes exact booleans/enums, required attributes, simple child choices/counts/sequences, data-only attributes and bar slots. IDs/references stay strings rather than `xs:NCName`; native Textual identifiers have their own rules. Integer lexical syntax is checked, while numeric bounds, finite numbers, dependent attributes, duplicate IDs, references, compound rules, TCSS and parser restrictions require TextUI. The executable [exception list](../tests/fixtures/schema_exceptions.json) records structural rules that the XSD cannot fully express; these remain authoritative static checks.
+Both profiles use no target namespace. The strict schema describes exact booleans/enums, required attributes, simple child choices/counts/sequences, data-only attributes and bar slots. IDs/references stay strings rather than `xs:NCName`; native Textual identifiers have their own rules. Integer lexical syntax is checked, while numeric bounds, finite numbers, dependent attributes, duplicate IDs, references, compound rules, TCSS and parser restrictions require TextUI. Global element declarations can also validate standalone elements; TextUI enforces the document's `<ui>` root. The executable [exception list](../tests/fixtures/schema_exceptions.json) records structural rules that the XSD cannot fully express; these remain authoritative static checks.
+
+An alias such as `<component src="card.ui" as="input" />` can render a label or container instead of the built-in input. Applying a built-in schema type to it would report false errors. The permissive profile therefore skips body validation entirely; its global declarations retain authoring metadata, but static expansion determines the actual types and validates their properties. Use the strict profile when precise child/value completion and schema validation are needed for built-in-only markup.
+
+Includes may supply several children, such as both panes of a split. The strict profile applies child models to the expanded structure and intentionally rejects raw `<include>` directives, including at the root. Select the permissive profile for raw include-based projects and run static checking; do not apply the strict profile directly to those files. Tests cover root and nested includes, constrained containers and the resulting expanded strict grammar.
 
 Use the [generated markup reference](markup-reference.md) for types, defaults, events, grammar and validation phases, or the self-contained [LLM reference](llm-reference.md) when generating markup.
 
@@ -35,7 +39,7 @@ Install Red Hat's XML extension. `.ui` also belongs to Qt Designer in some edito
 }
 ```
 
-Point `systemId` to `spec/textui-authoring.xsd` instead for reusable-component projects. If you generated into another directory, adjust the path. Workspace schema mappings provide completion and validation without modifying markup; see the extension's [file association documentation](https://github.com/redhat-developer/vscode-xml/blob/main/docs/Validation.md#xml-file-association-with-xsd).
+Point `systemId` to `spec/textui-authoring.xsd` instead for projects using reusable components or includes. If you generated into another directory, adjust the path. Workspace schema mappings provide completion and validation without modifying markup; see the extension's [file association documentation](https://github.com/redhat-developer/vscode-xml/blob/main/docs/Validation.md#xml-file-association-with-xsd).
 
 Do not add `xmlns:xsi`, `xsi:noNamespaceSchemaLocation` or an `<?xml-model ...?>` instruction. The loader rejects namespaces, root attributes and processing instructions; regression tests confirm that `xml-model` is rejected.
 

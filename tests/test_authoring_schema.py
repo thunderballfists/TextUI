@@ -156,6 +156,74 @@ def test_component_placeholders_are_checked_after_substitution(tmp_path):
         check_static(entry)
 
 
+@pytest.mark.parametrize("alias", ["input", "tree", "tab-pane"])
+def test_authoring_profile_accepts_aliases_that_shadow_builtin_attributes(tmp_path, alias):
+    (tmp_path / "card.ui").write_text(
+        '<component><props><prop name="caption" required="true"/></props>'
+        '<label>{caption}</label></component>', encoding="utf-8",
+    )
+    markup = f'<ui><component src="card.ui" as="{alias}"/><{alias} caption="Hi"/></ui>'
+    entry = tmp_path / "app.ui"
+    entry.write_text(markup, encoding="utf-8")
+    document = check_static(entry)
+    assert document.nodes[0].spec.tag == "label"
+    assert document.nodes[0].text == "Hi"
+    assert AUTHORING.validate(etree.fromstring(markup.encode())), AUTHORING.error_log
+    assert STRICT.validate(expanded_markup(document)), STRICT.error_log
+
+
+@pytest.mark.parametrize("alias", ["input", "button"])
+def test_authoring_profile_accepts_aliases_that_shadow_builtin_children(tmp_path, alias):
+    (tmp_path / "card.ui").write_text('<component><vertical><slot/></vertical></component>', encoding="utf-8")
+    markup = f'<ui><component src="card.ui" as="{alias}"/><vertical><{alias}><label>Hi</label></{alias}></vertical></ui>'
+    entry = tmp_path / "app.ui"
+    entry.write_text(markup, encoding="utf-8")
+    assert STRICT.validate(expanded_markup(check_static(entry))), STRICT.error_log
+    assert AUTHORING.validate(etree.fromstring(markup.encode())), AUTHORING.error_log
+
+
+def test_permissive_profile_leaves_widget_literals_to_static_check(tmp_path):
+    markup = '<ui><switch value="wrong"/></ui>'
+    assert AUTHORING.validate(etree.fromstring(markup.encode()))
+    entry = tmp_path / "app.ui"
+    entry.write_text(markup, encoding="utf-8")
+    with pytest.raises(TextUIError, match="expected true or false"):
+        check_static(entry)
+
+
+def test_strict_style_preset_schema_preserves_known_values(tmp_path):
+    for preset in ("compact", "borders"):
+        markup = f'<ui><style preset="{preset}"/></ui>'
+        assert STRICT.validate(etree.fromstring(markup.encode())), STRICT.error_log
+        DocumentLoader().from_string(markup)
+    markup = '<ui><style preset="typo"/></ui>'
+    assert not STRICT.validate(etree.fromstring(markup.encode()))
+    with pytest.raises(TextUIError, match="unknown style preset"):
+        DocumentLoader().from_string(markup)
+    for schema in (STRICT, AUTHORING):
+        # Global declarations provide metadata even when a permissive body's
+        # dynamic aliases prevent applying that metadata as validation rules.
+        assert not schema.validate(etree.fromstring(b'<style preset="typo"/>'))
+
+
+@pytest.mark.parametrize("container,fragment", [
+    (None, '<label>Hi</label>'),
+    ("vertical", '<label>Hi</label>'),
+    ("split", '<pane/><pane/>'),
+    ("select", '<option value="one">One</option>'),
+])
+def test_include_projects_use_authoring_profile_and_expanded_strict_schema(tmp_path, container, fragment):
+    (tmp_path / "body.ui").write_text(f'<ui>{fragment}</ui>', encoding="utf-8")
+    include = '<include src="body.ui"/>'
+    body = f'<{container}>{include}</{container}>' if container else include
+    markup = f'<ui>{body}</ui>'
+    entry = tmp_path / "app.ui"
+    entry.write_text(markup, encoding="utf-8")
+    assert AUTHORING.validate(etree.fromstring(markup.encode())), AUTHORING.error_log
+    assert not STRICT.validate(etree.fromstring(markup.encode()))
+    assert STRICT.validate(expanded_markup(check_static(entry))), STRICT.error_log
+
+
 def test_readme_examples_validate_with_explicit_custom_registry_exception(tmp_path):
     readme = (ROOT / "README.md").read_text()
     markup_examples = []

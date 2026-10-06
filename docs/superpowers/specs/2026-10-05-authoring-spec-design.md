@@ -16,9 +16,9 @@ Generate `docs/markup-reference.md`, `spec/textui.xsd`, `spec/textui-authoring.x
 
 ## Schema scope
 
-The strict no-namespace XSD describes built-in vocabulary, exact boolean/enum literals, required attributes, simple containment/count/sequence rules and data-only attribute restrictions. XML Schema cannot fully capture contextual references, Python Unicode identifier and number domains, native TCSS, or arbitrary reusable-component aliases. Such cases have explicit test allowlists and prose limits. Do not use `xs:NCName` for references: it would narrow the runtime's string/reference domain.
+The strict no-namespace XSD describes built-in vocabulary, exact boolean/enum literals, required attributes, simple containment/count/sequence rules and data-only attribute restrictions. It applies to built-in markup without includes or to expanded built-in structure; raw includes are rejected in every position because they may supply multiple children. XML Schema cannot fully capture contextual references, Python Unicode identifier and number domains, native TCSS, or arbitrary reusable-component aliases. Such cases have explicit test allowlists and prose limits. Do not use `xs:NCName` for references: it would narrow the runtime's string/reference domain.
 
-The additional authoring profile permits dynamic component aliases and placeholders, and validates known built-ins where possible. It deliberately cannot reject unknown aliases and skips component template bodies. Raw examples use that profile; their expanded built-in documents also validate against the strict schema. Static checking is authoritative for aliases and compound rules. Processing instructions remain rejected; editor schema association is workspace configuration.
+The additional authoring profile permits dynamic component aliases and placeholders. Because aliases may shadow any built-in name, it skips widget bodies and component templates rather than applying a possibly incorrect built-in type. Global declarations retain metadata; static checking validates the resolved project. Raw examples use that profile; their expanded built-in documents also validate against the strict schema. Static checking is authoritative for aliases and compound rules. Processing instructions remain rejected; editor schema association is workspace configuration.
 
 ## Delivery gates
 

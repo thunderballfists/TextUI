@@ -47,16 +47,21 @@ This does not validate controller-defined registrations, callable action/command
 native constructor constraints, TCSS or mounted behavior. Run the existing trusted `textui check PATH`
 for those checks; it executes linked Python, setup and close hooks. Neither mode is a sandbox.
 
-`spec/textui.xsd` is the strict built-in grammar: no target namespace, exact booleans/enums,
+`spec/textui.xsd` is the strict built-in grammar without includes, or after declarative expansion:
+no target namespace, exact booleans/enums,
 required attributes and simple content models. References remain strings, not `xs:NCName`,
 so the schema does not narrow native Textual ID semantics. Integer lexical syntax is checked;
 bounds, finite numbers, Unicode/native identifiers, compound checks and TCSS require static/runtime checks.
-Duplicate IDs, reference resolution, dependent attributes, unique slots and other named rules are not fully
+Duplicate IDs, reference resolution, dependent attributes and named compound rules are not fully
 expressible in this XSD. Parser restrictions such as DTD/PI rejection also require TextUI's parser.
+Global element declarations also accept standalone elements; TextUI's parser enforces the ui document root.
 
-`spec/textui-authoring.xsd` permits aliases, includes and template placeholders. It deliberately permits
-unknown aliases in widget containers and skips template bodies, so a schema pass is not project validation.
-Use it for raw reusable-component files; use the strict schema for expanded/built-in-only markup.
+`spec/textui-authoring.xsd` permits aliases, includes and template placeholders. Aliases can shadow built-in
+names, so this profile deliberately skips all ui widget bodies and component templates, including literal
+attribute checks. A schema pass is not project validation; run static checking for those rules.
+Use it for raw component/include projects; use the strict schema for built-in markup without includes
+or for the expanded built-in structure. Includes can supply multiple children; no unexpanded include
+position is checked by the strict profile. The checker resolves them before validating child models.
 HTML custom data and web-types provide completions/hover only. Keep the XML parser and use workspace
 associations: `.ui` is also used by Qt Designer. Do not add an `xml-model` processing instruction.
 
