@@ -10,6 +10,9 @@ All notable changes to TextUI are documented here.
 
 ### Added
 
+- `textui check --static` validates built-in markup, includes and reusable components without executing controllers or constructing widgets; `--format json` emits source-aware diagnostic records.
+- `textui spec` generates registry-derived markup/LLM references, strict and permissive authoring XSD profiles, VS Code/JetBrains completion data and `llms.txt`, including from an installed wheel. Editor setup documents each schema's validation limits.
+
 - Inspectable registry metadata: frozen callable attribute types, attribute/component/registry descriptions, ordered declarative content constraints, and named compound checks. Existing converters, markup diagnostics and construction-time validation remain compatible.
 - Component authoring guidance for passing runtime-list record formats through a separate property, preserving record fields and literal braces without recursive component substitution.
 

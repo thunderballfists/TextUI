@@ -41,6 +41,8 @@ include = [
     { path = "poetry.lock", format = "sdist" },
     { path = "examples", format = "sdist" },
     { path = "docs", format = "sdist" },
+    { path = "spec", format = "sdist" },
+    { path = "llms.txt", format = "sdist" },
 ]
 
 [tool.poetry.group.test.dependencies]

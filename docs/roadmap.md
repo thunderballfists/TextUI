@@ -1,6 +1,6 @@
 # TextUI Roadmap
 
-Updated: 2026-10-05. Status: Phase 0, Phase 1A/1B, PyPI publication and registry metadata complete; generated authoring artifacts for Phase 1C next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
+Updated: 2026-10-05. Status: Phase 0 and Phase 1A/1B/1C complete, including PyPI publication, registry metadata and generated authoring tools; Phase 1D is next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
 
 This is the current delivery order. The [extension triage](2026-09-19-extension-triage.md) retains the historical library comparisons and adoption rationale. Its external compatibility claims are dated evidence and must be checked again before adding a dependency.
 
@@ -26,7 +26,7 @@ The initial review ran 389 committed headless tests successfully, but separate b
 
 Delivered 0A, 0B and 0C as separate logical commits in one reviewed reliability PR. All completion gates above are met. Independent review found no actionable issues; the Python 3.11/3.12/3.14 test, build and clean-wheel matrix, lint and Linux visual checks passed. Local visual comparison passed all six checks without baseline changes. GitHub feedback was checked before and after merge; no comments or unresolved threads were present.
 
-Next: generated authoring artifacts and static checking for 1C, using the registry metadata described below.
+Next: Phase 1D authoring diagnostics and documentation consistency, using the generated reference as the contract.
 
 Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-reliability-design.md) and [implementation plan](superpowers/plans/2026-09-30-runtime-reliability.md).
 
@@ -36,7 +36,7 @@ Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-re
 | --- | --- | --- |
 | 1A (completed) | Dependable setup and showcase launch | Document one isolated environment path and a module-based launch; verify from a clean checkout and another working directory. A small launcher may wrap the existing Poetry workflow. |
 | 1B (completed) | Project validation and CLI diagnostics | Add a headless `textui check` workflow, concise expected-error output and stable exit codes; missing files, markup, TCSS and action errors retain their source location. Keep tracebacks available for unexpected failures/debugging. |
-| 1C | Registry-derived authoring reference | Generate tags, attributes, defaults, events and examples from registry metadata; provide machine-readable completion data. Compound structural rules remain explicit, and custom components remain supported. |
+| 1C (delivered) | Registry-derived authoring reference | Generate tags, attributes, defaults, events and examples from registry metadata; provide machine-readable completion data. Compound structural rules remain explicit, and custom components remain supported. |
 | 1D | Documentation consolidation | Separate current reference from historical design records; reconcile migration/examples/testing guidance and shipped roadmap items; make install, launch and extension paths easy to find. |
 
 Delivered 1A in [PR #94](https://github.com/thunderballfists/TextUI/pull/94), merged at `e5dfc23`. The executable `./showcase` launcher selects Python 3.12, installs the locked project through isolated Poetry 2.4.3 in its cache, then launches through `python -m textui`. README, example and testing commands follow that environment policy; the source archive includes the executable launcher and lockfile.
@@ -53,13 +53,13 @@ Verification: 464 full headless tests, including 28 new cases; 30 CLI checks on 
 
 1. Publication (completed): `textui-markup` 0.7.0 distribution metadata, markup wording, migration guidance and a tested tag-driven trusted-publishing workflow. The [release guide](releases.md) covers publisher/environment setup and future releases.
 2. Registry metadata (completed): inspectable attribute types, ordered containment constraints and named compound checks, preserving existing converters, diagnostics and validation stages. See the [metadata guide](registry-metadata.md).
-3. Deliver 1C: generated markup reference, editor completion data, an XSD with documented limits, LLM guidance, and a non-executing `textui check --static` with structured diagnostics. Keep the existing trusted `check` behavior unchanged; verify artifact drift and schema/loader agreement.
+3. Delivered 1C: `textui spec` generates the markup reference, editor completion data, strict/permissive XSD profiles, `llms.txt` and LLM guidance; `textui check --static --format json` provides nonexecuting structural diagnostics. Artifact drift, structural schema exceptions, every example and installed-wheel generation/checking are covered by tests. See [editor setup](editors.md) for schema limits and the remaining manual IDE completion check.
 
 Delivered publishing preparation in [PR #97](https://github.com/thunderballfists/TextUI/pull/97), merged at `e0c69e3`. Imports and CLI remain `textui`; markup and runtime behavior are unchanged. Verification: 464 headless tests, six unchanged visual checks, lint, lock validation, build and Twine checks, clean wheel and source-archive installs, release-tag rejection probes, and workflow validation. The full Python 3.11/3.12/3.14 CI matrix passed. Independent review found no actionable issues; the GitHub bot's PyPI README link finding was fixed, verified in built metadata and resolved before merge. No publication, release tag, environment or credential was created.
 
 Published [textui-markup 0.7.0](https://pypi.org/project/textui-markup/0.7.0/) on 2026-10-01 from tag `v0.7.0` at `4281a10`. [PR #98](https://github.com/thunderballfists/TextUI/pull/98) finalized the dated release notes; its comparison-link feedback was fixed and resolved. The [release workflow](https://github.com/thunderballfists/TextUI/actions/runs/36902383953) passed the full matrix, lint, visual, build and clean-wheel checks, then published through the configured trusted publisher and protected `pypi` environment. Both PyPI artifact hashes match the reviewed build; all 24 published README links are absolute HTTPS URLs. A fresh Python 3.12 install from PyPI passed dependency consistency, the headless installed-wheel smoke and console-command verification, with no imaging dependencies.
 
-1D can proceed alongside 1C. The trusted-controller validation boundary is established; registry metadata must precede generators. The schema is now scoped in issue #96, with rules it cannot express recorded explicitly. The metadata foundation is implemented; generated authoring deliverables remain pending, so issue #96 stays open.
+1C is delivered with bounded schema profiles and explicit exceptions rather than a claim of complete runtime validation. Unknown reusable aliases and template bodies require static expansion; controller registrations, callable exposure, native TCSS and mounted behavior require trusted checks. The issue #96 implementation gates are covered by generation drift, loader/schema corpus, example and fresh-wheel checks. Manual IDE completion verification remains a maintainer check documented in [editor setup](editors.md). 1D can now use the generated reference to audit documentation consistency.
 
 ## Phase 2 — Compatibility and maintenance
 

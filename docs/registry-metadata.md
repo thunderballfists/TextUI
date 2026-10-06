@@ -1,6 +1,6 @@
 # Registry metadata
 
-Registrations describe attribute domains, defaults, events and ordered content rules. Inspection does not run converters, factories, linked scripts or lifecycle hooks. This is the metadata foundation for [issue #96](https://github.com/thunderballfists/TextUI/issues/96); generated schemas, editor data and static validation are a separate deliverable.
+Registrations describe attribute domains, defaults, events and ordered content rules. Inspection does not run converters, factories, linked scripts or lifecycle hooks. This is the metadata foundation for [issue #96](https://github.com/thunderballfists/TextUI/issues/96). `textui spec` now generates built-in references, schemas and completion data from these descriptions; see [authoring tools and validation limits](editors.md).
 
 ## Inspect registrations
 
@@ -80,4 +80,4 @@ Available document constraints are `Parent`, `RequireCommon`, `Needs`, `Only`, `
 
 Built-in declarations are centralized in `textui/widgets/metadata.py`. Legacy registrations reusing a native factory inherit its existing structural rules when no explicit content is supplied. Unrelated factories using built-in tag names retain their existing behavior. Some lowering/reference checks are historically tag-based; their named descriptions record that boundary.
 
-Developer-authored registrations and documents remain trusted. The current `textui check` still executes trusted linked scripts; metadata inspection does not change that command into static checking.
+Developer-authored registrations and documents remain trusted. Ordinary `textui check` still executes trusted linked scripts. The separate `textui check --static` mode uses the built-in registry plus declarative components and includes; it cannot infer Python registrations without execution. Neither mode is a sandbox.

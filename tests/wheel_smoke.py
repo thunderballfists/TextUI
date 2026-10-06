@@ -14,6 +14,7 @@ from textui import (ActionContext, AttributeSpec, ComponentSpec, DocumentLoader,
                     ElementNotFoundError, ProjectApp, ProjectSource, TextUI)
 from textui.content import Children, Count, ElementRef, Only
 from textui.metadata import Int
+from textui.authoring import artifacts
 from textui.widgets.builtin_widgets import default_component_registry
 from textual.containers import Vertical
 from textual.content import Content
@@ -118,6 +119,30 @@ async def click(context):
 def close(context):
     context.dismiss_modal("closed")
 ''', encoding="utf-8")
+        generated = subprocess.run(
+            [sys.executable, "-I", "-m", "textui", "spec", "--output", str(project / "authoring")],
+            cwd=directory, capture_output=True, text=True,
+        )
+        assert generated.returncode == 0, generated.stderr
+        assert "Generated 7" in generated.stdout
+        for relative, content in artifacts().items():
+            assert (project / "authoring" / relative).read_text(encoding="utf-8") == content
+        controller = project / "controller.py"
+        source = controller.read_text(encoding="utf-8")
+        marker = project / "controller-ran"
+        controller.write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).touch()\nraise RuntimeError('must not execute')\n",
+            encoding="utf-8",
+        )
+        static = subprocess.run(
+            [sys.executable, "-I", "-m", "textui", "check", "--static", "--format", "json", str(project / "app.ui")],
+            cwd=directory, capture_output=True, text=True,
+        )
+        assert static.returncode == 0, static.stderr
+        assert json.loads(static.stdout) == []
+        assert static.stderr == ""
+        assert not marker.exists()
+        controller.write_text(source, encoding="utf-8")
         checked = subprocess.run(
             [sys.executable, "-I", "-m", "textui", "check", str(project / "app.ui")],
             cwd=directory, capture_output=True, text=True,

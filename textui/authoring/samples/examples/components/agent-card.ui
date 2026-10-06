@@ -1,0 +1,11 @@
+<component>
+  <props>
+    <prop name="name" required="true" />
+    <prop name="status" default="Waiting" />
+  </props>
+  <vertical class="agent-card">
+    <label id="name">{name}</label>
+    <label>{status}</label>
+    <slot name="actions"><button>Details</button></slot>
+  </vertical>
+</component>

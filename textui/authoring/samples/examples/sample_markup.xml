@@ -1,0 +1,15 @@
+<ui>
+  <style>
+    #sample { padding: 1 2; }
+    Horizontal { height: auto; }
+    .accent { color: $accent; }
+  </style>
+  <vertical id="sample">
+    <label class="accent">Welcome to TextUI [literal text]</label>
+    <input id="name" placeholder="Your name" />
+    <checkbox id="notify" value="false">A native checkbox</checkbox>
+    <horizontal>
+      <button id="sample-button" variant="primary">A native button</button>
+    </horizontal>
+  </vertical>
+</ui>
