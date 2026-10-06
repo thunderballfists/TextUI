@@ -8,7 +8,9 @@ Use a fresh virtual environment when migrating an existing installation. Alterna
 
 The product is described as HTML-like markup; its parsing rules are unchanged. See the README [Syntax](../README.md#syntax) and [HTML differences](../README.md#not-a-subset-of-html).
 
-## Unreleased component guidance
+## Unreleased additions on main
+
+The following additions require a current checkout or a wheel built from it; they are not included in PyPI 0.7.0. Follow [checkout setup](../README.md#install-and-run) before using its Poetry commands.
 
 Authoring tools are additive: `python -m textui spec --output DIR` generates references and editor data, and `python -m textui check --static --format json app.ui` checks declarative markup without executing controllers or constructing widgets. Existing trusted `check` and runtime markup are unchanged. Static checks use built-ins and local declarative components; Python-registered custom tags still need the trusted registry/runtime. See [editor setup](editors.md) for the strict and permissive schema profiles and their limits. Keep schema associations in workspace settings; namespaces and `xml-model` processing instructions remain rejected.
 
@@ -17,6 +19,8 @@ Existing `AttributeSpec(converter)` and `ComponentSpec(child_policy=...)` regist
 For runtime lists inside reusable components, pass record formats through a component property, such as `row-format="{name}"` at the call site and `item-label="{row-format}"` in the template. Direct braces in templates refer to component properties; doubled braces do not escape component substitution. See the [component formatting example](project-runtime.md#reusable-components).
 
 ## Interface reboot in 0.2
+
+This section records the historical 0.1 → 0.2 break. Later releases added linked scripts, reusable components and more built-ins; the [current runtime guide](project-runtime.md) and [generated catalog](markup-reference.md) describe those additions.
 
 Version 0.2 replaces the experimental 0.1 interface. Documents and APIs intentionally break compatibility. The [README](../README.md), [changelog](../CHANGELOG.md), [examples guide](../examples/README.md), and [editor example](../examples/editor.py) show the current usage and release scope.
 
@@ -30,7 +34,6 @@ Version 0.2 replaces the experimental 0.1 interface. Documents and APIs intentio
 | Nested markup inside labels or buttons | Literal leaf text; use container widgets for composition |
 | Browser-style `get_element_by_id`, `get_widget_by_id`, class/tag queries | Mounted `bound_document.get_by_id("name")`; native App queries for selectors |
 | Custom CSS filtering and dimension rewriting | Native TCSS validation and `Widget.set_styles` for literal inline declarations |
-| Hand-built append-only transcript widgets | `<log>` with controller `append()`, `append_inline()`, and `commit_line()` methods |
 
 ## Load explicitly
 
@@ -54,9 +57,9 @@ Use lowercase kebab-case names (`max-length`, not `max_length`). Booleans are ex
 
 Callbacks receive one `ActionContext`. Register an exact action key and reference it in markup. For example, `on-pressed="save_document"` calls the callback registered under `save_document`. Strings containing expressions, arguments, imports, and dotted names are rejected. Both sync and async callbacks work; callback exceptions become `ActionExecutionError` and propagate with their cause intact.
 
-The convenience `TextUI` App forwards Button.Pressed, Input.Changed, Input.Submitted, and Checkbox.Changed. A normal App must compose the binding and forward these messages itself; the [editor](../examples/editor.py) demonstrates this. Custom registered events always require an explicit host `@on(CustomMessage)` forwarder. Message matching uses the exact registered type, not subclass matching. Native bubbling and initialization events remain in effect.
+The convenience `TextUI` and `ProjectApp` Apps forward the registered built-in events, including controls, navigation, splits, tables, trees, runtime lists, ranges and log selection. Event names and native message types are listed in the [generated reference](markup-reference.md). A normal App must compose the binding and forward these messages itself; the [editor](../examples/editor.py) demonstrates this. Custom registered events always require an explicit host `@on(CustomMessage)` forwarder. Message matching uses the exact registered type, not subclass matching. Native bubbling and initialization events remain in effect.
 
-Bind once after `App.__init__`, before startup. Lookup is available only after mounting and stops working after removal. Bindings have one composition attempt, including failure; create a fresh App and binding to retry. A definition may be shared across independent Apps, but widgets and action mappings belong to their own binding. Recomposition, remounting, and replacement inside a running App are outside the initial lifecycle contract.
+Bind once after `App.__init__`, before startup. Lookup is available only after mounting and stops working after removal. Bindings have one composition attempt, including failure; create a fresh App and binding to retry. A definition may be shared across independent Apps, but widgets and action mappings belong to their own binding. Recomposition, remounting, and replacement inside a running App are unsupported. Normal hosts must call `bound_document.close()` when shutdown begins and on unmount; convenience Apps do this automatically. Closing is idempotent and cancels owned action/command work. See [host integration](../README.md#integrate-with-a-normal-app).
 
 ## Keep native styling semantics
 

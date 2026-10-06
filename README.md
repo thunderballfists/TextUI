@@ -2,7 +2,7 @@
 
 TextUI 0.7 turns declarative, HTML-like markup into native [Textual](https://textual.textualize.io/) widgets. Tags describe structure, TCSS controls appearance, and explicitly registered Python actions handle behavior. Textual owns layout, rendering, messages, and the application lifecycle. A local `.ui` project runtime loads linked files. The distribution is named **`textui-markup`**; Python imports and the command remain **`textui`**.
 
-This is a breaking pre-1.0 reboot. See the [migration guide](https://github.com/thunderballfists/TextUI/blob/main/docs/migration.md) for changes from 0.1, the [changelog](https://github.com/thunderballfists/TextUI/blob/main/CHANGELOG.md) for release history, and the [implemented design](https://github.com/thunderballfists/TextUI/blob/main/docs/superpowers/specs/2026-09-17-textui-core-design.md) for the complete contract.
+This is a breaking pre-1.0 reboot. See the [migration guide](https://github.com/thunderballfists/TextUI/blob/main/docs/migration.md) for changes from 0.1, the [changelog](https://github.com/thunderballfists/TextUI/blob/main/CHANGELOG.md) for release history, and the [documentation index](https://github.com/thunderballfists/TextUI/blob/main/docs/README.md) for current guides and historical design records.
 
 The [roadmap](https://github.com/thunderballfists/TextUI/blob/main/docs/roadmap.md) records current priorities, completion gates, and the reliability implementation plan. Historical library comparisons remain in the [extension triage](https://github.com/thunderballfists/TextUI/blob/main/docs/2026-09-19-extension-triage.md).
 
@@ -117,40 +117,17 @@ TextUI uses strict XML parsing for its own markup vocabulary. Documents must be 
 
 The HTML-like feel does not imply browser compatibility. Tags such as `vertical`, `split`, `switch`, and `data-table` are TextUI controls; shared names such as `input` and `select` have TextUI attributes and content rules. Self-closing `<switch />` and `<data-table />` work here, while HTML parsers ignore `/>` on non-void elements. Bare boolean attributes and HTML named entities such as `&nbsp;` are invalid. `on-pressed="save"` names a Python action, not JavaScript.
 
-| Tag | Content | Attributes beyond common attributes | Events |
-| --- | --- | --- | --- |
-| `vertical`, `horizontal` | Widgets | None | None |
-| `label` | Text | None | None |
-| `button` | Text | `variant`: default, primary, success, warning, error | `pressed` |
-| `input` | None | `value`, `placeholder`, `password`, positive `max-length` | `changed`, `submitted` |
-| `checkbox` | Text | Boolean `value` | `changed` |
-| `split` | Exactly two `pane` children | `direction`: horizontal or vertical | `resized`, `toggled` |
-| `pane` | Widgets | Positive `min-size`, optional `size` | None |
-| `nav` | `nav-item` children | None | `selected` |
-| `nav-item` | Text | Required `target` ID | None |
-| `content-switcher` | Widgets with IDs | Optional `initial` child ID | None |
-| `select` | `option` children | `value`, `prompt`, boolean `allow-blank` | `changed` |
-| `option` | Text | Required `value` | None |
-| `switch` | None | Boolean `value` | `changed` |
-| `text-area` | Verbatim text | `language`, `soft-wrap`, `read-only`, `show-line-numbers`, `tab-behavior`, `placeholder` | `changed` |
-| `tabbed-content` | `tab-pane` children | Optional `initial` pane ID | `tab-activated` |
-| `tab-pane` | Widgets | Required `id` and `title` | None |
-| `radio-set` | `radio-button` children | None | `changed` |
-| `radio-button` | Text | Boolean `value` | `changed` |
-| `collapsible` | Widgets | `title`, boolean `collapsed` | `collapsed`, `expanded` |
-| `progress-bar` | None | Positive `total`, nonnegative `progress`, boolean `show-bar`, `show-percentage`, `show-eta` | None |
-| `range` | None | Integer `min`, `max`, positive `step`, optional aligned `value`, boolean `show-value` | `changed` |
-| `rule` | None | `orientation`, `line-style` | None |
-| `header`, `status-bar` | Optional `left`, `center`, and `right` slots | None | None |
-| `log` | None | Optional `max-lines`, boolean `auto-scroll`, `wrap`, and `highlight` | `on-selection-ended` |
-| `list` | None | Required `item-label` with direct mapping-key fields | `selected` |
-| `modal` | Widgets; document root only | Required `id`, boolean `dismissable` | None |
-| `data-table` | `column` children, then `row` children | `cursor-type`: row, cell, column, none; optional `row-key`; boolean `striped`, `column-borders`, `resizable` | `row-selected`, `cell-selected` |
-| `column`, `row`, `cell` | Column/cell text; rows contain cells | Columns: required `key`, optional `label`, `align`, positive `width`; rows: required `key` | None |
-| `tree` | Nested `tree-node` children | Required `label`, boolean `show-root` | `node-selected` |
-| `tree-node` | Nested `tree-node` children | Required `key` and `label`, boolean `expanded` | None |
+Use the [generated markup reference](https://github.com/thunderballfists/TextUI/blob/main/docs/markup-reference.md) for the complete built-in catalog, attributes, defaults, events and containment rules. It describes current `main`, including unreleased authoring additions; use the release's source archive for documentation matching an installed version.
 
-Mounted widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`; `option`, `column`, `row`, `cell`, and `tree-node` are data-only children and do not accept these attributes. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
+| Widget family | Examples |
+| --- | --- |
+| Layout and navigation | `vertical`, `horizontal`, `split`, `pane`, `nav`, `content-switcher` |
+| Text and form input | `label`, `button`, `input`, `checkbox`, `select`, `switch`, `text-area`, `range` |
+| Choices and disclosure | `tabbed-content`, `tab-pane`, `radio-set`, `radio-button`, `collapsible` |
+| Data and activity | `data-table`, `tree`, runtime `list`, streamed `log` |
+| Application chrome | `header`, `status-bar`, `modal`, `progress-bar`, `rule` |
+
+Mounted widgets accept `id`, whitespace-separated `class`, `disabled`, and literal `style`; `option`, `column`, `row`, `cell`, and `tree-node` are data-only children and do not accept these attributes. `autofocus="true"` requires a focusable widget or a reusable component with a focusable root; labels and layout containers cannot receive autofocus. Boolean values must be `true` or `false`. An event attribute such as `on-pressed="save_document"` names an exact exposed action key; it cannot contain expressions, arguments, or dotted paths. Callbacks take one `ActionContext` containing `event`, `widget`, `app`, and the bound `document`. Both synchronous and asynchronous callbacks work. Initialization events follow Textual's normal behavior. Actions do not automatically stop bubbling or prevent default behavior; errors propagate as `ActionExecutionError` with the original cause.
 
 `split` uses a draggable divider that accepts arrow keys when focused. Set `pane.display = False` to hide a pane; showing it restores its stored size. A `nav-item` target must name a direct child of a `content-switcher`. The `selected` event carries `context.event.target`, which an action can assign to the switcher's `current` property. The [project example](https://github.com/thunderballfists/TextUI/blob/main/examples/project/app.ui) shows these controls together.
 
@@ -169,7 +146,7 @@ A component file has a `<component>` root, optional string `<props>`, and exactl
 
 ## Integrate with a normal App
 
-Bind after `App.__init__` and before the App runs. Compose the binding through the normal Textual hook, then explicitly forward native messages. [The runnable editor](https://github.com/thunderballfists/TextUI/blob/main/examples/editor.py) implements this complete pattern:
+Bind after `App.__init__` and before the App runs. Compose the binding through the normal Textual hook, then explicitly forward native messages. [The runnable editor](https://github.com/thunderballfists/TextUI/blob/main/examples/editor.py) demonstrates binding and message forwarding. The host below also closes owned work during shutdown:
 
 ```python
 from textual import on
@@ -185,6 +162,13 @@ class Host(App):
 
     def compose(self) -> ComposeResult:
         yield from self.document.compose()
+
+    def exit(self, result=None, return_code=0, message=None) -> None:
+        self.document.close()
+        super().exit(result=result, return_code=return_code, message=message)
+
+    def on_unmount(self) -> None:
+        self.document.close()
 
     @on(Button.Pressed)
     @on(Input.Changed)
@@ -235,7 +219,7 @@ loader = DocumentLoader(registry)
 TextUI(loader.from_string('<ui><count-label count="3" /></ui>')).run()
 ```
 
-Declare custom events with `events={"updated": EventSpec(CustomMessage, lambda event: event.widget)}` on the component spec, using the message's actual source-widget property. The host must also implement `@on(CustomMessage)` and `await self.document.dispatch(event)`. Subclassing `TextUI` is sufficient. Dispatch matches the **exact registered message type** and originating widget identity; no handlers are discovered automatically. See the [tested custom component and message example](https://github.com/thunderballfists/TextUI/blob/main/tests/test_extensions.py).
+Declare custom events with `events={"updated": EventSpec(CustomMessage, lambda event: event.widget)}` on the component spec, using the message's actual source-widget property. The host must also implement `@on(CustomMessage)` and `await self.document.dispatch(event)`. Subclassing `TextUI` and adding that forwarder is sufficient. Dispatch matches the **exact registered message type** and originating widget identity; no handlers are discovered automatically. See the [tested custom component and message example](https://github.com/thunderballfists/TextUI/blob/main/tests/test_extensions.py).
 
 ## Styles and trust
 
@@ -243,11 +227,11 @@ Embedded `<style>` blocks use native TCSS and are App-wide. The project runtime 
 
 Styles are validated before document widgets are yielded or document styles are installed. Native validation failures are reported; declarations are never silently removed. Stylesheet integration is isolated in `textui/styling.py` and must be checked when upgrading Textual.
 
-Documents, linked Python, actions, converters, and factories must be developer-controlled. This is **not an untrusted-input sandbox**. No inline scripting, expressions, templates, automatic data binding, hot reload, or browser HTML compatibility is provided.
+Documents, linked Python, actions, converters, and factories must be developer-controlled. This is **not an untrusted-input sandbox**. No inline Python scripting, expression evaluation, automatic data binding, hot reload, or browser HTML compatibility is provided. Reusable declarative component templates support literal property substitution and slots.
 
 ## Development
 
-Use Poetry 2.4.3 in an isolated tool environment:
+First apply the [checkout setup](#install-and-run) environment policy in this shell, then use Poetry 2.4.3 in an isolated tool environment:
 
 ```sh
 uvx --python 3.12 --from poetry==2.4.3 poetry install --with test
@@ -257,6 +241,6 @@ uvx --python 3.12 --from poetry==2.4.3 poetry run python -m examples.editor
 uvx --python 3.12 --from poetry==2.4.3 poetry build
 ```
 
-Tests run headlessly and include actual Pilot interactions, computed styles, custom events, and the example form. CI runs Python 3.11/3.12/3.14, builds the distribution, and installs each wheel into a clean environment for an image-free headless smoke test.
+Tests run headlessly and include actual Pilot interactions, computed styles, custom events, and the example form. CI runs Python 3.11/3.12/3.14, builds the distribution, and installs each wheel into a clean environment for an image-free headless smoke test. See the [testing guide](https://github.com/thunderballfists/TextUI/blob/main/docs/testing.md) for opt-in visuals, generated-artifact checks and installed-wheel verification.
 
 TextUI is released under the [MIT License](https://github.com/thunderballfists/TextUI/blob/main/LICENSE).

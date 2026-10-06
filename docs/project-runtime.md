@@ -44,7 +44,7 @@ Use `<include src="views/workspace.ui"/>` wherever a widget child is allowed. In
 
 ## Project validation
 
-For nonexecuting authoring checks, use `python -m textui check --static --format json app.ui`. It resolves declarative components/includes and runs built-in document rules without importing controllers, invoking hooks or constructing widgets. It cannot validate controller-registered tags, callable exposure, native constructors, TCSS or mounted behavior. See [editor and static-check guidance](editors.md) for structured diagnostics and schema limits. The ordinary trusted `check` boundary below is unchanged.
+Static checking is unreleased on `main`, not part of PyPI 0.7.0; use the current checkout after [setup](../README.md#install-and-run). For nonexecuting authoring checks, use `python -m textui check --static --format json app.ui`. It resolves declarative components/includes and runs built-in document rules without importing controllers, invoking hooks or constructing widgets. It cannot validate controller-registered tags, callable exposure, native constructors, TCSS or mounted behavior. See [editor and static-check guidance](editors.md) for structured diagnostics and schema limits. The ordinary trusted `check` boundary below is unchanged.
 
 Use `python -m textui check /absolute/path/app.ui` with the project's installed interpreter. From a checkout, follow [setup](../README.md#install-and-run), then run:
 

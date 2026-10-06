@@ -1,6 +1,6 @@
 # TextUI Roadmap
 
-Updated: 2026-10-05. Status: Phase 0 and Phase 1A/1B/1C complete, including PyPI publication, registry metadata and generated authoring tools; Phase 1D is next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
+Updated: 2026-10-05. Status: Phase 0 and Phase 1 complete, including PyPI publication, registry metadata, generated authoring tools and documentation consolidation; Phase 2 is next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
 
 This is the current delivery order. The [extension triage](2026-09-19-extension-triage.md) retains the historical library comparisons and adoption rationale. Its external compatibility claims are dated evidence and must be checked again before adding a dependency.
 
@@ -26,7 +26,7 @@ The initial review ran 389 committed headless tests successfully, but separate b
 
 Delivered 0A, 0B and 0C as separate logical commits in one reviewed reliability PR. All completion gates above are met. Independent review found no actionable issues; the Python 3.11/3.12/3.14 test, build and clean-wheel matrix, lint and Linux visual checks passed. Local visual comparison passed all six checks without baseline changes. GitHub feedback was checked before and after merge; no comments or unresolved threads were present.
 
-Next: Phase 1D authoring diagnostics and documentation consistency, using the generated reference as the contract.
+Next: Phase 2 compatibility and maintenance, following the completed developer-experience work.
 
 Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-reliability-design.md) and [implementation plan](superpowers/plans/2026-09-30-runtime-reliability.md).
 
@@ -36,8 +36,8 @@ Detailed artifacts: [reliability design](superpowers/specs/2026-09-30-runtime-re
 | --- | --- | --- |
 | 1A (completed) | Dependable setup and showcase launch | Document one isolated environment path and a module-based launch; verify from a clean checkout and another working directory. A small launcher may wrap the existing Poetry workflow. |
 | 1B (completed) | Project validation and CLI diagnostics | Add a headless `textui check` workflow, concise expected-error output and stable exit codes; missing files, markup, TCSS and action errors retain their source location. Keep tracebacks available for unexpected failures/debugging. |
-| 1C (delivered) | Registry-derived authoring reference | Generate tags, attributes, defaults, events and examples from registry metadata; provide machine-readable completion data. Compound structural rules remain explicit, and custom components remain supported. |
-| 1D | Documentation consolidation | Separate current reference from historical design records; reconcile migration/examples/testing guidance and shipped roadmap items; make install, launch and extension paths easy to find. |
+| 1C (completed) | Registry-derived authoring reference | Generate tags, attributes, defaults, events and examples from registry metadata; provide machine-readable completion data. Compound structural rules remain explicit, and custom components remain supported. |
+| 1D (completed) | Documentation consolidation | Separate current reference from historical design records; reconcile migration/examples/testing guidance and shipped roadmap items; make install, launch and extension paths easy to find. |
 
 Delivered 1A in [PR #94](https://github.com/thunderballfists/TextUI/pull/94), merged at `e5dfc23`. The executable `./showcase` launcher selects Python 3.12, installs the locked project through isolated Poetry 2.4.3 in its cache, then launches through `python -m textui`. README, example and testing commands follow that environment policy; the source archive includes the executable launcher and lockfile.
 
@@ -59,13 +59,19 @@ Delivered publishing preparation in [PR #97](https://github.com/thunderballfists
 
 Published [textui-markup 0.7.0](https://pypi.org/project/textui-markup/0.7.0/) on 2026-10-01 from tag `v0.7.0` at `4281a10`. [PR #98](https://github.com/thunderballfists/TextUI/pull/98) finalized the dated release notes; its comparison-link feedback was fixed and resolved. The [release workflow](https://github.com/thunderballfists/TextUI/actions/runs/36902383953) passed the full matrix, lint, visual, build and clean-wheel checks, then published through the configured trusted publisher and protected `pypi` environment. Both PyPI artifact hashes match the reviewed build; all 24 published README links are absolute HTTPS URLs. A fresh Python 3.12 install from PyPI passed dependency consistency, the headless installed-wheel smoke and console-command verification, with no imaging dependencies.
 
-1C is delivered with bounded schema profiles and explicit exceptions rather than a claim of complete runtime validation. Unknown reusable aliases and template bodies require static expansion; controller registrations, callable exposure, native TCSS and mounted behavior require trusted checks. The issue #96 implementation gates are covered by generation drift, loader/schema corpus, example and fresh-wheel checks. Manual IDE completion verification remains a maintainer check documented in [editor setup](editors.md). 1D can now use the generated reference to audit documentation consistency.
+1C is delivered with bounded schema profiles and explicit exceptions rather than a claim of complete runtime validation. Unknown reusable aliases and template bodies require static expansion; controller registrations, callable exposure, native TCSS and mounted behavior require trusted checks. The issue #96 implementation gates are covered by generation drift, loader/schema corpus, example and fresh-wheel checks. Manual IDE completion verification remains a maintainer check documented in [editor setup](editors.md). 1D uses the generated reference to keep current guidance consistent.
+
+### Documentation consolidation (1D)
+
+The [documentation index](README.md) separates current guides from preserved historical designs, plans, audits and triage. README points to the generated catalog instead of duplicating attributes and events; migration guidance distinguishes the original reboot from current forwarding and shutdown requirements. Examples have a complete entry-point catalog, and testing/release guidance covers artifact regeneration, visual-test counts, installed wheels and the published-versus-checkout boundary.
+
+Local validation passed 104 repository link/anchor checks, static and trusted checks for all eight `.ui` example entries, seven-artifact parity, 669 headless tests, lint, lock validation, builds and a fresh installed-wheel smoke. Built documentation matches source and all root README links remain absolute HTTPS. Delivery: [PR #102](https://github.com/thunderballfists/TextUI/pull/102); its checks and reviews provide the integration evidence. Phase 2 remains pending; this documentation work does not claim compatibility probes or additional platform CI.
 
 ## Phase 2 — Compatibility and maintenance
 
 - Run focused behavioral probes against the lowest and latest allowed Textual versions, supplementing the locked full suite and existing clean-wheel smoke test. Cover styling, gradients, table rendering/resizing, selection, resize hooks, modals and shutdown.
 - Add focused macOS/Windows CI for platform-specific code. Keep mocked clipboard tests; exercise real native tools only in disposable CI environments. Terminal OSC 52 acceptance remains a separate manual check.
-- Expand clean-wheel checks to newer runtime facilities and verify that optional imaging packages remain absent.
+- Maintain the combined component/modal/runtime-list/streamed-log clean-wheel coverage already delivered; extend it as facilities grow and verify optional imaging packages remain absent.
 - Share built-in message forwarding between convenience Apps while preserving exact-type dispatch and explicit custom-event forwarding in normal hosts.
 - Improve public typing and editor support for the injected `window`; introduce type checks incrementally around supported public interfaces.
 
