@@ -65,7 +65,7 @@ Published [textui-markup 0.7.0](https://pypi.org/project/textui-markup/0.7.0/) o
 
 The [documentation index](README.md) separates current guides from preserved historical designs, plans, audits and triage. README points to the generated catalog instead of duplicating attributes and events; migration guidance distinguishes the original reboot from current forwarding and shutdown requirements. Examples have a complete entry-point catalog, and testing/release guidance covers artifact regeneration, visual-test counts, installed wheels and the published-versus-checkout boundary.
 
-Local validation passed 104 repository link/anchor checks, static and trusted checks for all eight `.ui` example entries, seven-artifact parity, 669 headless tests, lint, lock validation, builds and a fresh installed-wheel smoke. Built documentation matches source and all root README links remain absolute HTTPS. Integration and CI evidence will be recorded after review. Phase 2 remains pending; this documentation work does not claim compatibility probes or additional platform CI.
+Local validation passed 104 repository link/anchor checks, static and trusted checks for all eight `.ui` example entries, seven-artifact parity, 669 headless tests, lint, lock validation, builds and a fresh installed-wheel smoke. Built documentation matches source and all root README links remain absolute HTTPS. Delivery: [PR #102](https://github.com/thunderballfists/TextUI/pull/102); its checks and reviews provide the integration evidence. Phase 2 remains pending; this documentation work does not claim compatibility probes or additional platform CI.
 
 ## Phase 2 — Compatibility and maintenance
 
