@@ -865,14 +865,17 @@ async def test_queued_resize_hook_skips_stale_dimensions(tmp_path: Path):
 def on_resize(width, height):
     status = window.document.get_by_id("status")
     window.app.resizes.append((width, height, window.app.screen.size.width, status.size.width))
+    if (width, height) == (70, 22):
+        window.app.resized.set()
 ''')
     app = ProjectApp(source)
     app.resizes = []
+    app.resized = asyncio.Event()
 
-    async with app.run_test(size=(80, 24)) as pilot:
+    async with app.run_test(size=(80, 24)):
         app.post_message(Resize(Size(60, 20), Size(60, 20)))
         app.post_message(Resize(Size(70, 22), Size(70, 22)))
-        await pilot.pause()
+        await asyncio.wait_for(app.resized.wait(), timeout=5)
         assert app.resizes[-1] == (70, 22, 70, 70)
         assert all(width == screen_width == widget_width for width, _, screen_width, widget_width in app.resizes)
 
