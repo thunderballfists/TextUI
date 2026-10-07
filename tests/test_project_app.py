@@ -882,12 +882,16 @@ async def test_resize_hook_stops_after_exit(tmp_path: Path):
     source = project(tmp_path, '<label>Hi</label>', '''
 def on_resize(width, height):
     window.app.resizes.append((width, height))
+    if (width, height) == (60, 20):
+        window.app.resized.set()
 ''')
     app = ProjectApp(source)
     app.resizes = []
+    app.resized = asyncio.Event()
 
     async with app.run_test() as pilot:
         await pilot.resize_terminal(60, 20)
+        await asyncio.wait_for(app.resized.wait(), timeout=5)
         assert app.resizes[-1] == (60, 20)
         app.exit()
         await pilot.resize_terminal(70, 22)
@@ -898,10 +902,13 @@ def on_resize(width, height):
 async def test_resize_hook_error_preserves_script_source(tmp_path: Path):
     source = project(tmp_path, '<label>Hi</label>', '''
 def on_resize(width, height):
+    window.app.resize_attempted.set()
     raise ValueError("cannot repaint")
 ''')
     app = ProjectApp(source)
+    app.resize_attempted = asyncio.Event()
     with pytest.raises(Exception, match="on_resize.*cannot repaint") as caught:
         async with app.run_test() as pilot:
             await pilot.resize_terminal(60, 20)
+            await asyncio.wait_for(app.resize_attempted.wait(), timeout=5)
     assert "controller.py" in str(caught.value)
