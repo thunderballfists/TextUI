@@ -113,7 +113,10 @@ async def click(context):
     window.app.clicked = True
     window.document.get_by_id("stream").append_inline("ready")
     window.document.get_by_id("stream").commit_line()
-    await context.push_modal("details")
+    result = context.push_modal("details")
+    await result.mounted
+    window.app.modal_opened.set()
+    await result
 
 @action
 def close(context):
@@ -151,6 +154,7 @@ def close(context):
         assert str(project / "app.ui") in checked.stdout
         assert checked.stderr == ""
         project_app = ProjectApp(ProjectSource.discover(project / "app.ui"))
+        project_app.modal_opened = asyncio.Event()
         async with project_app.run_test() as pilot:
             records = project_app.document.get_by_id("records")
             assert str(records.items[0].children[0].render()) == "Alpha: 002"
@@ -158,8 +162,10 @@ def close(context):
             assert records.selected == {"name": "Alpha", "count": 2}
             prior_tabs = None
             for _ in range(2):
+                project_app.modal_opened.clear()
                 await pilot.press("d")  # Dormant modal bindings must be unavailable.
                 assert await pilot.click("#go")
+                await asyncio.wait_for(project_app.modal_opened.wait(), timeout=5)
                 await pilot.pause()
                 assert project_app.clicked is True
                 assert project_app.screen.id == "details"

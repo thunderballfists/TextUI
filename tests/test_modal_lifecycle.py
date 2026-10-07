@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 from textual.widgets import Button
 
@@ -20,9 +22,12 @@ MODAL_MARKUP = '''<ui>
 async def test_modal_reopens_with_visible_click_target_and_restores_focus(size):
     """A hidden or stale rebuilt modal must fail through its real button hit target."""
     results = []
+    opened = asyncio.Queue()
 
     async def open_modal(context):
-        results.append(await context.push_modal("pick"))
+        result = context.push_modal("pick")
+        opened.put_nowait(result)
+        results.append(await result)
 
     def choose(context):
         context.dismiss_modal("alpha")
@@ -39,6 +44,8 @@ async def test_modal_reopens_with_visible_click_target_and_restores_focus(size):
             opener = app.document.get_by_id("open")
             opener.focus()
             assert await pilot.click(opener)
+            result = await asyncio.wait_for(opened.get(), timeout=5)
+            await asyncio.wait_for(result.mounted, timeout=5)
             await pilot.pause()
             screen = app.screen
             choose_button = app.document.get_by_id("choose")
@@ -55,6 +62,7 @@ async def test_modal_reopens_with_visible_click_target_and_restores_focus(size):
                 await pilot.press("escape")
             else:
                 assert await pilot.click(choose_button, offset=(choose_button.region.width // 2, 1))
+            assert await asyncio.wait_for(result, timeout=5) == expected
             await pilot.pause()
             assert app.screen is base_screen
             assert app.focused is opener

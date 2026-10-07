@@ -121,3 +121,57 @@ jobs:
             "$GITHUB_WORKSPACE/tests/compatibility_smoke.py" "$TEXTUAL_POLICY"
           "$RUNNER_TEMP/textui-compatibility/bin/python" -I \
             "$GITHUB_WORKSPACE/tests/wheel_smoke.py"
+
+  platform:
+    name: Platform smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install isolated Poetry and locked tests
+        run: |
+          python -m pip install pipx
+          python -m pipx run --spec poetry==2.4.3 poetry env use "$(python -c 'import sys; print(sys.executable)')"
+          python -m pipx run --spec poetry==2.4.3 poetry check --lock
+          python -m pipx run --spec poetry==2.4.3 poetry install --with test --no-interaction
+      - name: Run platform-focused headless tests
+        run: |
+          python -m pipx run --spec poetry==2.4.3 poetry run python -m pytest -q \
+            tests/test_clipboard.py tests/test_project.py \
+            tests/test_project_cli.py tests/test_project_check.py \
+            tests/test_project_app.py tests/test_project_timers.py \
+            tests/test_modal_lifecycle.py tests/test_accelerators.py \
+            tests/test_platform_smoke.py
+      - name: Build distributions
+        run: python -m pipx run --spec poetry==2.4.3 poetry build
+      - name: Verify installed wheel and native clipboard outside checkout
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          import venv
+
+          root = Path(os.environ["GITHUB_WORKSPACE"])
+          directory = Path(os.environ["RUNNER_TEMP"]) / "textui-platform"
+          venv.create(directory, with_pip=True)
+          executable = directory / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+          wheels = list((root / "dist").glob("*.whl"))
+          assert len(wheels) == 1, wheels
+          subprocess.run([str(executable), "-m", "pip", "install", str(wheels[0])], check=True)
+          subprocess.run([str(executable), "-m", "pip", "check"], check=True)
+          for script in ("wheel_smoke.py", "platform_smoke.py"):
+              subprocess.run([str(executable), "-I", str(root / "tests" / script)], cwd=directory, check=True)
+          PY

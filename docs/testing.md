@@ -77,3 +77,9 @@ This shell example targets macOS/Linux; CI repeats it with each matrix interpret
 ## Textual compatibility policies
 
 The reusable test workflow also builds fresh Python 3.12 environments for Textual's **lowest** and **latest allowed** resolution. These run `tests/compatibility_smoke.py` outside the checkout with isolated imports, then the full installed-wheel smoke. They supplement the locked full suite and visuals; they do not change the Poetry lock. See the [compatibility guide](compatibility.md) for reproducible commands, the internal-touchpoint map and explicit platform limits.
+
+## Platform checks
+
+Python 3.12 jobs on macOS and Windows run a focused locked subset: `test_clipboard.py`, `test_project.py`, `test_project_cli.py`, `test_project_check.py`, `test_project_app.py`, `test_project_timers.py`, `test_modal_lifecycle.py`, `test_accelerators.py` and the clipboard-probe guards in `test_platform_smoke.py`. The existing POSIX SIGINT test is skipped on Windows. Linux retains the full Python 3.11/3.12/3.14 suite and visual comparisons.
+
+Each platform builds and installs its wheel into a fresh environment, then runs `wheel_smoke.py` with `python -I`. A separate `platform_smoke.py` requires a real Unicode clipboard round trip via `pbcopy`/`pbpaste` or `clip`/PowerShell on disposable CI runners. It refuses ordinary local invocation; run the mocked clipboard tests locally instead. The `test_platform_smoke.py` guards are normal pytest tests and do not write clipboard content. See [platform limits](compatibility.md#limits-and-upgrade-procedure); a passing native copy does not establish terminal OSC 52 acceptance.

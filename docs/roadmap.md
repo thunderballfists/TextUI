@@ -70,7 +70,7 @@ Local validation passed 104 repository link/anchor checks, static and trusted ch
 ## Phase 2 — Compatibility and maintenance
 
 - 2A (delivered): focused installed-wheel probes for the lowest and latest allowed Textual versions, supplementing the locked full suite and clean-wheel integration. Cover styling, gradients, table rendering/resizing, selection, resize hooks, modals and shutdown. The [compatibility guide](compatibility.md) maps internal touchpoints and records policy/version limits.
-- Add focused macOS/Windows CI for platform-specific code. Keep mocked clipboard tests; exercise real native tools only in disposable CI environments. Terminal OSC 52 acceptance remains a separate manual check.
+- 2B (in progress): focused macOS/Windows Python 3.12 CI for platform-specific code, clean-wheel integration and native Unicode clipboard round trips on disposable runners. Keep mocked clipboard tests; terminal OSC 52 acceptance remains a separate manual check. See the [platform policy](compatibility.md#limits-and-upgrade-procedure).
 - Maintain the combined component/modal/runtime-list/streamed-log clean-wheel coverage already delivered; extend it as facilities grow and verify optional imaging packages remain absent.
 - Share built-in message forwarding between convenience Apps while preserving exact-type dispatch and explicit custom-event forwarding in normal hosts.
 - Improve public typing and editor support for the injected `window`; introduce type checks incrementally around supported public interfaces.
