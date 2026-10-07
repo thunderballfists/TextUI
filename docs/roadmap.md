@@ -1,6 +1,6 @@
 # TextUI Roadmap
 
-Updated: 2026-10-05. Status: Phase 0 and Phase 1 complete, including PyPI publication, registry metadata, generated authoring tools and documentation consolidation; Phase 2 is next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
+Updated: 2026-10-06. Status: Phase 0 and Phase 1 complete; Phase 2A compatibility policies delivered, with remaining Phase 2 maintenance next. Initial review baseline: `f8e472c` (TextUI 0.6.0).
 
 This is the current delivery order. The [extension triage](2026-09-19-extension-triage.md) retains the historical library comparisons and adoption rationale. Its external compatibility claims are dated evidence and must be checked again before adding a dependency.
 
@@ -74,6 +74,8 @@ Local validation passed 104 repository link/anchor checks, static and trusted ch
 - Maintain the combined component/modal/runtime-list/streamed-log clean-wheel coverage already delivered; extend it as facilities grow and verify optional imaging packages remain absent.
 - Share built-in message forwarding between convenience Apps while preserving exact-type dispatch and explicit custom-event forwarding in normal hosts.
 - Improve public typing and editor support for the injected `window`; introduce type checks incrementally around supported public interfaces.
+
+Delivery: [PR #103](https://github.com/thunderballfists/TextUI/pull/103); its checks and reviews provide integration evidence. Local verification passed 669 tests, ten unchanged visuals, both fresh-wheel policies plus complete wheel smoke, actionlint, lint, lock/build, artifact parity and 122 repository links.
 
 2A uses separate fresh Python 3.12 environments and reuses 63 behavioral cases with strict installed-import checks. Both policies currently resolve to Textual 8.2.8; this does not claim coverage of distinct versions. Platform CI, forwarding consolidation and incremental typing remain pending, so Phase 2 as a whole is not complete.
 
