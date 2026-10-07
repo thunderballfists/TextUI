@@ -69,11 +69,13 @@ Local validation passed 104 repository link/anchor checks, static and trusted ch
 
 ## Phase 2 — Compatibility and maintenance
 
-- Run focused behavioral probes against the lowest and latest allowed Textual versions, supplementing the locked full suite and existing clean-wheel smoke test. Cover styling, gradients, table rendering/resizing, selection, resize hooks, modals and shutdown.
+- 2A (delivered): focused installed-wheel probes for the lowest and latest allowed Textual versions, supplementing the locked full suite and clean-wheel integration. Cover styling, gradients, table rendering/resizing, selection, resize hooks, modals and shutdown. The [compatibility guide](compatibility.md) maps internal touchpoints and records policy/version limits.
 - Add focused macOS/Windows CI for platform-specific code. Keep mocked clipboard tests; exercise real native tools only in disposable CI environments. Terminal OSC 52 acceptance remains a separate manual check.
 - Maintain the combined component/modal/runtime-list/streamed-log clean-wheel coverage already delivered; extend it as facilities grow and verify optional imaging packages remain absent.
 - Share built-in message forwarding between convenience Apps while preserving exact-type dispatch and explicit custom-event forwarding in normal hosts.
 - Improve public typing and editor support for the injected `window`; introduce type checks incrementally around supported public interfaces.
+
+2A uses separate fresh Python 3.12 environments and reuses 63 behavioral cases with strict installed-import checks. Both policies currently resolve to Textual 8.2.8; this does not claim coverage of distinct versions. Platform CI, forwarding consolidation and incremental typing remain pending, so Phase 2 as a whole is not complete.
 
 Gate: reviewed compatibility coverage, clean installed-wheel checks, documented Textual internal touchpoints, and no regression in host extension behavior. Preserve the Poetry lock policy; do not hand-edit dependency resolutions.
 

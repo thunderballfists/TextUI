@@ -25,6 +25,7 @@ The generator owns `markup-reference.md`, `llm-reference.md`, root `llms.txt` an
 
 ## Contributors and maintainers
 
+- [Compatibility](compatibility.md): independent minimum/latest Textual resolution, installed behavior probes and internal touchpoints.
 - [Testing](testing.md): headless interactions, artifact parity, opt-in visual baselines and fresh wheel verification.
 - [Releases](releases.md): version preparation, trusted publishing and checks of the published artifacts.
 - [Roadmap](roadmap.md): current priorities, completion gates and shipped work. This is the status authority.
