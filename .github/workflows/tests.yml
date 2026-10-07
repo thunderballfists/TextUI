@@ -80,3 +80,44 @@ jobs:
           name: textui-visual-baselines
           path: tests/visual/__snapshots__/**/*.svg
           if-no-files-found: error
+
+  compatibility:
+    name: Textual compatibility (${{ matrix.policy }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        policy: [lowest, latest]
+    env:
+      POETRY_VIRTUALENVS_IN_PROJECT: "true"
+      TEXTUAL_POLICY: ${{ matrix.policy }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Build wheel with isolated Poetry
+        run: |
+          pipx install poetry==2.4.3
+          poetry env use "$(command -v python)"
+          poetry check --lock
+          poetry install --with test --no-interaction
+          poetry build
+      - name: Resolve independent Textual policy in a fresh environment
+        run: |
+          python -m venv "$RUNNER_TEMP/textui-compatibility"
+          textual_constraint=()
+          if [ "$TEXTUAL_POLICY" = lowest ]; then
+            textual_constraint=("textual==8.2.8")
+          fi
+          "$RUNNER_TEMP/textui-compatibility/bin/python" -m pip install \
+            dist/*.whl "${textual_constraint[@]}" \
+            "pytest>=9.1.1,<10" "pytest-asyncio>=1.4.0,<2"
+          "$RUNNER_TEMP/textui-compatibility/bin/python" -m pip check
+      - name: Run installed behavioral probes and wheel integration
+        run: |
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/textui-compatibility/bin/python" -I \
+            "$GITHUB_WORKSPACE/tests/compatibility_smoke.py" "$TEXTUAL_POLICY"
+          "$RUNNER_TEMP/textui-compatibility/bin/python" -I \
+            "$GITHUB_WORKSPACE/tests/wheel_smoke.py"

@@ -73,3 +73,7 @@ uv pip check --python "$wheel_check_dir/venv/bin/python"
 ```
 
 This shell example targets macOS/Linux; CI repeats it with each matrix interpreter. Keep only the intended wheel in `dist/` when using the glob. The smoke test also generates all authoring artifacts and verifies static checking cannot execute its sentinel controller. The source archive includes runnable examples, documentation, schemas, lockfile and launcher; the wheel includes the library and generator's canonical samples, not a runnable `examples` package.
+
+## Textual compatibility policies
+
+The reusable test workflow also builds fresh Python 3.12 environments for Textual's **lowest** and **latest allowed** resolution. These run `tests/compatibility_smoke.py` outside the checkout with isolated imports, then the full installed-wheel smoke. They supplement the locked full suite and visuals; they do not change the Poetry lock. See the [compatibility guide](compatibility.md) for reproducible commands, the internal-touchpoint map and explicit platform limits.
